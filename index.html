@@ -1051,8 +1051,7 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 /* Workspace */
 
 .getting-started-workspaces{
-  grid-template-columns:minmax(0,760px);
-  justify-content:start;
+  grid-template-columns:repeat(2,minmax(0,1fr));
 }
 .starter-actions-single{
   grid-template-columns:minmax(0,1fr);
@@ -2169,18 +2168,18 @@ function renderWelcome(){
  $('#gettingStartedNav').classList.toggle('active',view==='home');$('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team');$('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){document.body.classList.remove('workspace-home');renderArchive();return}
- $('#title').textContent='Getting Started';$('#breadcrumb').textContent='HOOPLAND LEAGUE STUDIO';$('#subtitle').textContent='Create Hoop Land leagues and manage league images.';$('#status').textContent=league?'League ready':'Choose how to begin';
+ $('#title').textContent='Getting Started';$('#breadcrumb').textContent='HOOP LEAGUE STUDIO';$('#subtitle').textContent='Create Hoop Land leagues and manage league images.';$('#status').textContent=league?'League ready':'Choose how to begin';
  const intro=el('section','card getting-started-intro');intro.append(el('h2','','Get Started'),el('p','','Set up your Image Archive or start working on a league.'));content.append(intro);
  const grid=el('div','starter-grid getting-started-workspaces');
 
  const archiveCard=el('section','card starter-card');
- archiveCard.append(el('p','eyebrow','HOOPLAND LEAGUE STUDIO'),el('h2','','Image Archive'),el('p','','Set up and manage league logos, courts, and ads.'));
+ archiveCard.append(el('p','eyebrow','HOOP LEAGUE STUDIO'),el('h2','','Image Archive'),el('p','','Set up and manage league logos, courts, and ads.'));
  const archiveActions=el('div','starter-actions starter-actions-single'),openArchive=el('button','primary','Open Image Archive');
  openArchive.type='button';openArchive.onclick=()=>{view='images';render()};
  archiveActions.append(openArchive);archiveCard.append(archiveActions);grid.append(archiveCard);
 
  const card=el('section','card starter-card');
- card.append(el('p','eyebrow','HOOPLAND LEAGUE STUDIO'),el('h2','','Create Your League'),el('p','','Start from a template or open your league file.'));
+ card.append(el('p','eyebrow','HOOP LEAGUE STUDIO'),el('h2','','Create Your League'),el('p','','Start from a template or open your league file.'));
  const actions=el('div','starter-actions'),create=el('button','primary','Template'),upload=el('button','','Import League'),restore=el('button','','Load League');
  create.type=upload.type=restore.type='button';
  create.onclick=()=>$('#new').click();upload.onclick=()=>$('#import').click();restore.onclick=()=>$('#restoreProgress').click();
