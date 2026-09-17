@@ -26,7 +26,7 @@ League Name/
 
 The app can be used directly in a web browser or installed as a web app on supported devices. Installing it adds Hoop League Studio to your home screen or app launcher and opens it in its own standalone window for quicker access.
 
-Or use the app directly in your browser here: [Hoop League Studio](https://galileo88.github.io/HL_IMAGES/)
+Or use the app directly in your browser here: [Hoop League Studio](https://galileo88.github.io/HoopLeagueStudio/)
 
 ## What it does not edit
 
