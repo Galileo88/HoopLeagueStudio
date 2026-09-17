@@ -1,0 +1,14 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const html=fs.readFileSync('standalone/Hoopland League Studio.html','utf8');
+const archive=html.slice(html.indexOf('function archiveURL('),html.indexOf('function imageDimensions('));
+const start=html.indexOf('function pickerImageSources('),end=html.indexOf("\n$('#canvas').onmousemove",start);assert.ok(end>start);
+const images=[],nodes=new Map(),ctx={clearRect(){},drawImage(){},getImageData(){return {data:new Uint8ClampedArray([17,34,51,255])}}};
+const node=()=>({width:1,height:1,children:[],style:{},getContext:()=>ctx,replaceChildren(){this.children=[]},append(x){this.children.push(x)},setAttribute(){}});
+const context={URL,Map,Set,Uint8ClampedArray,Image:class{constructor(){images.push(this);this.naturalWidth=1;this.naturalHeight=1}},$:s=>{if(!nodes.has(s))nodes.set(s,node());return nodes.get(s)},el:node,setTimeout:()=>1,clearTimeout(){},sampled(){}};
+const api=vm.runInNewContext('let imageReady=false;const assets=[];'+archive+html.slice(start,end)+';({loadImage,pickerImageSources,ready:()=>imageReady});',context);
+const shared='https://www.dropbox.com/scl/fi/example/BOS.png?rlkey=keep-this&dl=0';
+api.loadImage(shared);assert.equal(new URL(images[0].src).hostname,'dl.dropboxusercontent.com');assert.equal(new URL(images[0].src).searchParams.get('rlkey'),'keep-this');assert.equal(images[0].crossOrigin,'anonymous');images[0].onload();assert.equal(api.ready(),true);assert.equal(nodes.get('#palette').children.length,1);
+api.loadImage(shared);const failing=images.at(-1);failing.onerror();assert.equal(new URL(images.at(-1).src).hostname,'www.dropbox.com');images.at(-1).onload();assert.equal(api.ready(),true);
+api.loadImage(shared);const stale=images.at(-1);api.loadImage('data:image/png;base64,test');stale.onload();assert.equal(api.ready(),false);assert.equal(images.at(-1).crossOrigin,undefined);images.at(-1).onload();assert.equal(api.ready(),true);
+assert.ok(html.includes('function renderTeamLocation('));new vm.Script(html.match(/<script>([\s\S]*)<\/script>/)[1]);
+console.log('Passed: direct Dropbox source, preserved access key, anonymous CORS, fallback, stale-load protection, upload support, palette extraction, updated location code retained.');

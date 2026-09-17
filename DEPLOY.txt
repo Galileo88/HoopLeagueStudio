@@ -1,0 +1,17 @@
+Hoopland League Studio PWA v90
+
+Upload the contents of this folder to the same GitHub Pages directory that serves the app:
+- index.html
+- manifest.webmanifest
+- sw.js
+- icons/
+
+Requirements:
+- The site must be served over HTTPS (GitHub Pages already is).
+- Keep sw.js in the same directory as index.html so it controls the app scope.
+- PWA installation does not work from a local file:// preview.
+
+Install behavior:
+- iPhone/iPad: a dismissible message explains Share > Add to Home Screen > Open as Web App.
+- Android/Chromium desktop: an Install App button appears when the browser reports that installation is available.
+- Once launched as an installed PWA, the install message is hidden.

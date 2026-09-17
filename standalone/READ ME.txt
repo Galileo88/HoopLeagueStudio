@@ -1,0 +1,20 @@
+HOOPLAND LEAGUE STUDIO — STANDALONE
+
+1. Extract the ZIP, if you downloaded it.
+2. Double-click Hoopland League Studio.html. It opens in your browser.
+3. Import a Hoopland league .txt, make your edits, and choose Export .txt.
+
+No installation, ChatGPT account, Node.js, or server is required.
+The optional template, styling, and code are inside the HTML file. No personal archive images or preset repositories are included. You can move it anywhere or copy it to another computer.
+
+Editing and sampling uploaded images work offline. Checking externally hosted logos, courts, and announcer-table images during export requires an internet connection. Remote color sampling also depends on the image host allowing it; upload a copy if necessary.
+
+Use Chrome or Edge. If Copy URL is unavailable, select the URL field and press Ctrl+C.
+Use Save Progress to store your current league draft in this browser. Save Progress lets you choose one of three slots. Restore Progress lists the three slots with league names and save times. Existing single-slot saves appear in Slot 1. Saving is not automatic. Use the same browser and standalone HTML location to restore it. Clearing browser data or using private browsing may remove saved progress. Export remains available for a portable league file.
+
+This is a standalone browser application, not a native Windows .exe. Replace the HTML with a newer release to update the application.
+
+ONLINE TEAM LOCATION LOOKUP
+Team configuration now includes searchable Country → State/Province/Region → City selectors. The lists are fetched only when needed, cached locally when the browser allows it, and are not bundled into the HTML. Selecting a city resolves its latitude/longitude and writes Hoopland's native location values (X = latitude × 100, Y = longitude × 100). The Location section is a collapsible panel above Front Office. City name and X/Y coordinates remain directly editable when offline or when a lookup fails.
+
+The location selector uses CountriesNow for country/state/city lists and Open-Meteo geocoding (GeoNames data) for coordinates. Internet access is required for assisted lookup.
