@@ -1686,8 +1686,11 @@ function retiredNumberPlayerNumber(player){
 function retiredNumberPlayerAge(player){
  const age=Number(player?.age);return Number.isFinite(age)&&age>0&&age<150?age:null;
 }
+function retiredNumberPlayerRetirementYear(player){
+ const year=Number(player?.yearRetired);return Number.isInteger(year)&&year>0?year:null;
+}
 function retiredNumberPlayerStatus(player,source='Active'){
- const yearRetired=Number(player?.yearRetired);return source==='Hall of Fame'?'Hall of Fame':source==='Retired'||player?.retired===true||(Number.isInteger(yearRetired)&&yearRetired>0)?'Retired':'Active';
+ const yearRetired=retiredNumberPlayerRetirementYear(player);return source==='Hall of Fame'?'Hall of Fame':source==='Retired'||player?.retired===true||yearRetired!==null?'Retired':'Active';
 }
 function retiredNumberPlayerStatusRank(status){
  return {Active:1,Retired:2,'Hall of Fame':3}[status]||0;
@@ -1698,11 +1701,12 @@ function retiredNumberPlayers(data=league){
   const id=Number(player?.id);if(!Number.isInteger(id))return;
   const name=[player.fn,player.ln].filter(Boolean).join(' ')||player.name||'Player '+id;
   const teamName=team?teamDisplayName(team):'';
-  const current={id,name,firstName:player.fn||'',lastName:player.ln||'',age:retiredNumberPlayerAge(player),status:retiredNumberPlayerStatus(player,source),num:retiredNumberPlayerNumber(player),teamName,teamId:team?.id};
+  const current={id,name,firstName:player.fn||'',lastName:player.ln||'',age:retiredNumberPlayerAge(player),status:retiredNumberPlayerStatus(player,source),num:retiredNumberPlayerNumber(player),yearRetired:retiredNumberPlayerRetirementYear(player),teamName,teamId:team?.id};
   const existing=byId.get(id);
   if(!existing){byId.set(id,current);return}
   if(existing.num===null&&current.num!==null)existing.num=current.num;
   if(existing.age===null&&current.age!==null)existing.age=current.age;
+  if(existing.yearRetired===null&&current.yearRetired!==null)existing.yearRetired=current.yearRetired;
   if(retiredNumberPlayerStatusRank(current.status)>retiredNumberPlayerStatusRank(existing.status))existing.status=current.status;
   if(!existing.teamName&&current.teamName){existing.teamName=current.teamName;existing.teamId=current.teamId}
  };
@@ -1714,7 +1718,8 @@ function retiredNumberPlayerMatches(players,query){
  const q=String(query||'').trim().toLocaleLowerCase();if(!q)return [];
  const matches=[];
  for(const player of players){
-  const values=[player.name,player.firstName,player.lastName,String(player.id),player.status,player.teamName,player.num===null?'':String(player.num)].map(value=>String(value||'').toLocaleLowerCase());
+  if(player.status==='Active')continue;
+  const values=[player.name,player.firstName,player.lastName].map(value=>String(value||'').toLocaleLowerCase());
   const starts=values.some(value=>value.startsWith(q)),contains=values.some(value=>value.includes(q));
   if(starts||contains)matches.push({player,starts,contains});
  }
@@ -1896,9 +1901,9 @@ function retiredNumberField(row,title,key,value,index,scope,players,change,locke
  wrap.append(el('span','',title));input.min=String(limits[0]);input.max=String(limits[1]);input.step='1';input.disabled=locked;input.setAttribute('aria-label',title);
  if(key==='pid'){
   const currentId=retiredNumberInteger(value),currentPlayer=players.find(player=>player.id===currentId),listId='retired-player-results-'+scope+'-'+index;
-  const results=el('div','retired-player-results'),selectedNote=el('small','retired-player-selected');results.id=listId;results.hidden=true;input.type='search';input.placeholder='Search by name or ID…';input.autocomplete='off';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls',listId);input.setAttribute('aria-expanded','false');input.value=currentPlayer?.name||(currentId?String(currentId):'');selectedNote.textContent=currentPlayer?'Selected player ID: '+currentId:currentId?'Imported player ID: '+currentId:'Search by name or ID to link a player.';
+  const results=el('div','retired-player-results');results.id=listId;results.hidden=true;input.type='search';input.placeholder='Search by player name…';input.autocomplete='off';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls',listId);input.setAttribute('aria-expanded','false');input.value=currentPlayer?.name||(currentId?String(currentId):'');
   let matches=[],active=-1;
-  const restore=()=>{input.value=currentPlayer?.name||(currentId?String(currentId):'');selectedNote.textContent=currentPlayer?'Selected player ID: '+currentId:currentId?'Imported player ID: '+currentId:'Search by name or ID to link a player.';wrap.classList.remove('invalid')};
+  const restore=()=>{input.value=currentPlayer?.name||(currentId?String(currentId):'');wrap.classList.remove('invalid')};
   const close=()=>{results.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1};
   const choose=player=>{input.value=player.name;close();wrap.classList.remove('invalid');if(selectPlayer){if(selectPlayer(player)===false)restore()}else change('pid',player.id)};
   const highlight=()=>{[...results.querySelectorAll('.retired-player-result')].forEach((button,i)=>button.classList.toggle('active',i===active));if(matches[active])input.setAttribute('aria-activedescendant',listId+'-'+matches[active].id)};
@@ -1919,12 +1924,12 @@ function retiredNumberField(row,title,key,value,index,scope,players,change,locke
    if(event.key==='Enter'&&active>=0){event.preventDefault();choose(matches[active])}
   };
   input.onchange=()=>{
-   const raw=input.value.trim(),normalized=raw.toLocaleLowerCase(),exact=players.find(player=>player.name.toLocaleLowerCase()===normalized||String(player.id)===raw);
+   const raw=input.value.trim(),normalized=raw.toLocaleLowerCase(),exact=players.find(player=>player.name.toLocaleLowerCase()===normalized);
    if(exact){choose(exact);return}
    if(raw===''){close();if(change('pid',0)===false)restore();return}
-   const next=Number(raw);if(!Number.isInteger(next)||next<limits[0]||next>limits[1]){wrap.classList.add('invalid');restore();return}if(change('pid',next)===false)restore();
+   wrap.classList.add('invalid');restore();
   };
-  input.onblur=()=>setTimeout(()=>{if(!results.contains(document.activeElement)&&!results.hidden)input.onchange();close()},180);wrap.append(input,selectedNote,results);
+  input.onblur=()=>setTimeout(()=>{if(!results.contains(document.activeElement)&&!results.hidden)input.onchange();close()},180);wrap.append(input,results);
  }else{
   input.type='number';input.value=String(retiredNumberInteger(value));wrap.append(input);
   input.onchange=()=>{const next=Number(input.value);if(!Number.isInteger(next)||next<limits[0]||next>limits[1]){wrap.classList.add('invalid');return}if(change(key,next)===false){input.value=String(retiredNumberInteger(value));return}wrap.classList.remove('invalid')};
@@ -1933,19 +1938,19 @@ function retiredNumberField(row,title,key,value,index,scope,players,change,locke
 }
 function renderRetiredNumberRow(parent,entry,index,entries,scope,change,remove,locked=false,selectPlayer=null){
  const row=el('div','retired-number-row'),players=retiredNumberPlayers();
+ retiredNumberField(row,'Player Name','pid',entry.pid,index,scope,players,change,locked,selectPlayer);
  retiredNumberField(row,'Number','num',entry.num,index,scope,players,change,locked);
- retiredNumberField(row,'Player ID','pid',entry.pid,index,scope,players,change,locked,selectPlayer);
- retiredNumberField(row,'Retirement Year','yr',entry.yr,index,scope,players,change,locked);
+ retiredNumberField(row,'Year Number Retired','yr',entry.yr,index,scope,players,change,locked);
  const button=el('button','retired-number-remove',locked?'League-wide':'Remove');button.type='button';button.disabled=locked;button.setAttribute('aria-label',(locked?'League-wide retired number ':'Remove retired number ')+(entry.num??''));button.onclick=remove;row.append(button);parent.append(row);
 }
 function renderLeagueRetiredNumbers(parent){
- const section=el('details','retired-numbers-editor'),summary=el('summary',''),help=el('p','retired-numbers-help','The game stores retired numbers per team. Add a league-wide retirement here and Hoop League Studio will apply it to every team that does not already have that number. Search the Player ID field by name or ID to fill the player ID, jersey number, and retirement year. Leave it blank when no player record needs to be linked.'),list=el('div','retired-numbers-list'),actions=el('div','retired-numbers-actions'),add=el('button','primary','Add League-wide Number');add.type='button';actions.append(add);section.append(summary,help,list,actions);parent.append(section);
- const draw=()=>{const entries=leagueRetiredNumbers();summary.textContent='League-wide Retired Numbers · '+entries.length;list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No league-wide numbers.'));for(const [index,entry]of entries.entries())renderRetiredNumberRow(list,entry,index,entries,'league',(key,value)=>{if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired league-wide.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,[key]:value}:candidate);setLeagueRetiredNumbers(next);draw()},()=>{setLeagueRetiredNumbers(entries.filter((_,i)=>i!==index));draw()},false,player=>{const number=retiredNumberPlayerNumber(player);if(number!==null&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===number)){toast('That player jersey number is already retired league-wide.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,pid:player.id,num:number===null?candidate.num:number,yr:retiredNumberInteger(candidate.yr)||defaultRetiredNumberYear()}:candidate);setLeagueRetiredNumbers(next);draw();return true})};
+ const section=el('details','retired-numbers-editor'),summary=el('summary',''),help=el('p','retired-numbers-help','Add a league-wide retired number to apply it to every team that hasn’t already retired it. Search by player name to auto-fill the player ID, jersey number, and retirement year.'),list=el('div','retired-numbers-list'),actions=el('div','retired-numbers-actions'),add=el('button','primary','Add League-wide Number');add.type='button';actions.append(add);section.append(summary,help,list,actions);parent.append(section);
+ const draw=()=>{const entries=leagueRetiredNumbers();summary.textContent='Retired Numbers · '+entries.length;list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No league-wide numbers.'));for(const [index,entry]of entries.entries())renderRetiredNumberRow(list,entry,index,entries,'league',(key,value)=>{if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired league-wide.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,[key]:value}:candidate);setLeagueRetiredNumbers(next);draw()},()=>{setLeagueRetiredNumbers(entries.filter((_,i)=>i!==index));draw()},false,player=>{const number=retiredNumberPlayerNumber(player);if(number!==null&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===number)){toast('That player jersey number is already retired league-wide.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,pid:player.id,num:number===null?candidate.num:number,yr:player.yearRetired||retiredNumberInteger(candidate.yr)||defaultRetiredNumberYear()}:candidate);setLeagueRetiredNumbers(next);draw();return true})};
  add.onclick=()=>{const entries=leagueRetiredNumbers(),allNumbers=[...entries,...retiredNumberTeams().flatMap(team=>team.retiredNumbers||[])],next=[...entries,{num:nextRetiredNumber(allNumbers),pid:0,yr:defaultRetiredNumberYear()}];setLeagueRetiredNumbers(next);section.open=true;draw()};draw();
 }
 function renderTeamRetiredNumbers(parent,team,path){
  const section=el('details','retired-numbers-editor'),summary=el('summary',''),globalNumbers=()=>new Set(leagueRetiredNumbers().map(entry=>retiredNumberInteger(entry.num))),help=el('p','retired-numbers-help'),list=el('div','retired-numbers-list'),actions=el('div','retired-numbers-actions'),add=el('button','primary','Add Retired Number');add.type='button';actions.append(add);section.append(summary,help,list,actions);parent.append(section);
- const draw=()=>{const entries=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[],leagueNumbers=globalNumbers();summary.textContent='Retired Jersey Numbers · '+entries.length;help.textContent=leagueNumbers.size?'League-wide numbers are unavailable to every team and are read-only here. Search Player ID by name or ID to fill the number, player ID, and year. Leave it blank when no player record needs to be linked.':'Add a team retirement using the game-compatible number, player ID, and retirement year fields. Search Player ID by name or ID to fill the number, player ID, and year.';list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No retired numbers for this team.'));for(const [index,entry]of entries.entries()){const locked=leagueNumbers.has(retiredNumberInteger(entry.num));renderRetiredNumberRow(list,entry,index,entries,'team-'+team.id,(key,value)=>{if(locked)return false;if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired for this team.');return false}set([...path,index,key],value)},()=>{if(locked)return;set(path,entries.filter((_,i)=>i!==index));draw()},locked,player=>{if(locked)return false;const number=retiredNumberPlayerNumber(player);if(number!==null&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===number)){toast('That player jersey number is already retired for this team.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,pid:player.id,num:number===null?candidate.num:number,yr:retiredNumberInteger(candidate.yr)||defaultRetiredNumberYear()}:candidate);set(path,next);draw();return true})}};
+ const draw=()=>{const entries=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[],leagueNumbers=globalNumbers();summary.textContent='Retired Numbers · '+entries.length;help.textContent=leagueNumbers.size?'League-wide retired numbers are read-only here. Search by player name to auto-fill the player ID, jersey number, and retirement year.':'Add a retired number for this team. Search by player name to auto-fill the player ID, jersey number, and retirement year.';list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No retired numbers for this team.'));for(const [index,entry]of entries.entries()){const locked=leagueNumbers.has(retiredNumberInteger(entry.num));renderRetiredNumberRow(list,entry,index,entries,'team-'+team.id,(key,value)=>{if(locked)return false;if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired for this team.');return false}set([...path,index,key],value)},()=>{if(locked)return;set(path,entries.filter((_,i)=>i!==index));draw()},locked,player=>{if(locked)return false;const number=retiredNumberPlayerNumber(player);if(number!==null&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===number)){toast('That player jersey number is already retired for this team.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,pid:player.id,num:number===null?candidate.num:number,yr:player.yearRetired||retiredNumberInteger(candidate.yr)||defaultRetiredNumberYear()}:candidate);set(path,next);draw();return true})}};
  add.onclick=()=>{const entries=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[],allNumbers=[...entries,...leagueRetiredNumbers()],next=[...entries,{num:nextRetiredNumber(allNumbers),pid:0,yr:defaultRetiredNumberYear()}];set(path,next);section.open=true;draw()};draw();
 }
 const seasonGroups={
