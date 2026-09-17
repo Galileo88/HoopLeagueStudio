@@ -1,0 +1,175 @@
+name: Final repository cleanup v3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/repo-cleanup-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create pre-cleanup backup ZIP
+        run: git archive --format=zip --output=HoopLeagueStudio-pre-cleanup.zip 3cbb54888a3884c47bee3c8788df24acf8657eaf
+
+      - name: Upload pre-cleanup backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: HoopLeagueStudio-pre-cleanup-v3
+          path: HoopLeagueStudio-pre-cleanup.zip
+          if-no-files-found: error
+
+      - name: Update app references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          replacements=[
+            ('./manifest-v100.webmanifest','./manifest.webmanifest'),
+            ('<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">','<link rel="icon" type="image/png" href="./favicon.png">'),
+            ('https://raw.githubusercontent.com/Galileo88/HL_IMAGES/refs/heads/main/hlls_logo.png','./hls_logo.png'),
+            ('alt="Hoop Land League Studio logo"','alt="Hoop League Studio logo"'),
+          ]
+          for old,new in replacements:
+              if text.count(old)!=1:
+                  raise SystemExit(f'Expected one occurrence of {old!r}, found {text.count(old)}')
+              text=text.replace(old,new,1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          git mv hlls_logo.png hls_logo.png
+
+      - name: Update README
+        run: |
+          cat > README.md <<'EOF'
+          # Hoop League Studio
+
+          Hoop League Studio is a browser app for creating and editing Hoop Land leagues.
+
+          Use it to:
+          - Create a league from a template
+          - Import and edit an existing league
+          - Manage league settings, teams, courts, logos, and ads
+          - Save league drafts
+          - Export leagues for Hoop Land
+
+          ## Image Archive
+
+          For images, you can connect a local folder or a public GitHub repository.
+
+          League image folders use this structure:
+
+          ```text
+          League Name/
+            Logos/
+            Courts/
+            Ads/
+          ```
+
+          ## Web App
+
+          The app can be used directly in a web browser or installed as a web app on supported devices. Installing it adds Hoop League Studio to your home screen or app launcher and opens it in its own standalone window for quicker access.
+
+          Or use the app directly in your browser here: [Hoop League Studio](https://galileo88.github.io/HoopLeagueStudio/)
+
+          ## What it does not edit
+
+          Hoop League Studio does not edit rosters, individual players, coaches, or other staff data. Existing roster and staff information in an imported league is preserved when you export the league again.
+
+          If you want to change rosters, players, coaches, or staff, you can edit them directly in Hoop Land after loading the league in game.
+          EOF
+
+      - name: Update PWA files
+        run: |
+          cat > manifest.webmanifest <<'EOF'
+          {
+            "id": "./",
+            "name": "Hoop League Studio",
+            "short_name": "Hoop League Studio",
+            "description": "Create and customize Hoop Land leagues, teams, courts, logos, and ads.",
+            "start_url": "./",
+            "scope": "./",
+            "display": "standalone",
+            "orientation": "any",
+            "background_color": "#071a2b",
+            "theme_color": "#071a2b",
+            "icons": [
+              {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+              {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+              {"src":"./icons/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+            ]
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('sw.js')
+          text=p.read_text(encoding='utf-8')
+          if "const CACHE_NAME='hlls-pwa-v100';" not in text:
+              raise SystemExit('Expected v100 cache name not found')
+          if "'./manifest-v100.webmanifest'," not in text:
+              raise SystemExit('Expected versioned manifest reference not found')
+          text=text.replace("const CACHE_NAME='hlls-pwa-v100';","const CACHE_NAME='hls-pwa-v101';",1)
+          text=text.replace("'./manifest-v100.webmanifest',","'./manifest.webmanifest',\n  './favicon.png',\n  './hls_logo.png',",1)
+          p.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Remove obsolete files
+        run: |
+          rm -rf standalone tests
+          rm -f DEPLOY.txt build-standalone.mjs
+          rm -f verify-*.cjs verify-standalone*.mjs
+          rm -f .github/workflows/repo-cleanup.yml .github/workflows/repo-cleanup-v2.yml .github/workflows/repo-cleanup-v3.yml
+
+      - name: Validate app
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re,subprocess,tempfile
+          html=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script\b[^>]*>(.*?)</script>',html,flags=re.I|re.S)
+          if not scripts:
+              raise SystemExit('No script blocks found in index.html')
+          with tempfile.TemporaryDirectory() as tmp:
+              for i,script in enumerate(scripts,1):
+                  p=Path(tmp)/f'script-{i}.js'
+                  p.write_text(script,encoding='utf-8')
+                  subprocess.run(['node','--check',str(p)],check=True)
+          json.loads(Path('manifest.webmanifest').read_text(encoding='utf-8'))
+          print(f'Validated {len(scripts)} HTML script block(s) and manifest JSON.')
+          PY
+          node --check sw.js
+          test -f hls_logo.png
+          test -f favicon.png
+          test -f manifest.webmanifest
+          test -f icons/icon-192.png
+          test -f icons/icon-512.png
+          test -f icons/icon-maskable-512.png
+          test -f icons/apple-touch-icon.png
+          grep -q './hls_logo.png' index.html
+          grep -q './favicon.png' index.html
+          grep -q './manifest.webmanifest' index.html
+          ! grep -q 'HL_IMAGES' index.html
+          ! grep -q 'hlls_logo.png' index.html
+          ! grep -q 'manifest-v100.webmanifest' index.html
+          ! test -e standalone
+          ! compgen -G 'verify-*' > /dev/null
+
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'Finalize Hoop League Studio repository'
+          git push origin HEAD:main
