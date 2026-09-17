@@ -1074,6 +1074,59 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 .configuration-shell{
   min-width:0;
 }
+.retired-numbers-editor{
+  grid-column:1/-1;
+}
+.retired-numbers-help{
+  margin:0 0 14px;
+}
+.retired-numbers-list{
+  display:grid;
+  gap:12px;
+}
+.retired-number-row{
+  display:grid;
+  grid-template-columns:minmax(100px,.8fr) minmax(170px,1.4fr) minmax(120px,.8fr) auto;
+  gap:12px;
+  align-items:end;
+  padding:14px;
+  background:#0b3263;
+  border:2px solid #237db7;
+}
+.retired-number-row .field{
+  min-width:0;
+}
+.retired-number-remove{
+  min-height:44px;
+  white-space:nowrap;
+}
+.retired-number-empty{
+  margin:0;
+  padding:12px;
+  border:1px dashed #2e8cc3;
+  color:#bcd8f2;
+}
+.retired-numbers-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+@media(max-width:760px){
+  .retired-number-row{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .retired-number-remove{
+    grid-column:1/-1;
+  }
+}
+@media(max-width:560px){
+  .retired-number-row{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .retired-number-remove{
+    grid-column:auto;
+  }
+}
 .page-nav{
   display:none;
 }
@@ -1389,6 +1442,7 @@ let league,template,assets=[],view='home',selected=0,teamList='teams',dirty=fals
 const locationSelections=new Map(),LOCATION_API='https://countriesnow.space/api/v0.1/countries',LOCATION_GEOCODER='https://geocoding-api.open-meteo.com/v1/search',LOCATION_CACHE_PREFIX='hls-location-v1:',LOCATION_CACHE_TTL=30*24*60*60*1000;
 const protectedKeys=new Set(['roster','staff','announcers','coaches','commissioner','referees','media','draftClass','freeAgents','threePointContestants','retirees','hallOfFame','contractOffers','records','career','currentGame','history','headToHeads','inbox','startingLineup','currentLineup','lineupPreset','draftPicks','scoringOptions','quickPlays','championships','workshop']);
 const hiddenState=new Set(['news','draftWorkouts','schedule','tradeOffers','playoffs','posts','playerHistory']);
+const LEAGUE_RETIRED_NUMBERS_KEY='__hoopLeagueStudioRetiredNumbers';
 const label=k=>({meta:'Countries',gender:'League Gender',sliders:'Game Style Sliders',season:'Season Settings',optimization:'Save Data Optimization',progressionRate:'XP Progression Rate',ageAppearance:'Appearance Aging',cpuTrading:'CPU Trading',hidePotential:'Hide Player Potential',HOFbar:'Hall of Fame Eligibility',cpuRosterChanges:'CPU Roster Changes',cpuTradeBlock:'CPU Auto Trade Block',cpuProgression:'CPU Auto Progression',overrideCPU:'Override CPU Decisions',seriesLength:'Round Length',simulationPreset:'Simulation Preset',dunkAccuracy:'Dunk Distance',insideAccuracy:'Inside Shot Accuracy',midrangeAccuracy:'Midrange Shot Accuracy',threePointAccuracy:'3PT Shot Accuracy',fatigueStrength:'Fatigue Effect Strength',playerVSCPUAccuracy:'Player vs CPU Shot Accuracy',shootingFouls:'Shooting Fouls',offFouls:'Offensive Fouls',bonus:'Bonus Situation',foulOut:'Foul Out',oneAndOne:'1-and-1 Free Throw',backcourt:'Backcourt / Eight Seconds',defGoaltending:'Defensive Goaltending',offGoaltending:'Offensive Goaltending',offThreeSeconds:'Offensive Three Seconds',gameLength:'Game Length (Minutes)',totalPeriods:'Total Periods',shotClock:'Shot Clock (Seconds)',difficulty:'Game Difficulty',rules:'Game Rules',gameStyle:'Game Style',CPUShotTiming:'CPU Shot Timing',CPUPlayerSpeed:'CPU Player Speed',CPUReactionTime:'CPU Defensive Strength',pg:'PG',sg:'SG',sf:'SF',pf:'PF',c:'C'}[k]||String(k).replace(/URL/g,' URL').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()));
 const get=p=>p.reduce((o,k)=>o[k],league);
 function applySettingPreset(data,p,v){
@@ -1561,6 +1615,41 @@ function renderTeamDistributionSummary(parent){
  const unassigned=teams.filter(t=>!Number.isInteger(t.division)||t.division<0||t.division>=divisions.length).length;if(unassigned)summary.append(el('div','team-distribution-unassigned','Unassigned — '+unassigned));parent.append(summary);return summary;
 }
 function set(p,v){let o=league;for(const k of p.slice(0,-1))o=o[k];o[p.at(-1)]=v;const scheduleChanged=p.length===2&&p[0]==='season'&&p[1]==='totalGames';if(scheduleChanged)applyScheduleDefaults(league,v);for(const n of document.querySelectorAll('[data-country-percentage]'))n.syncValue();for(const n of document.querySelectorAll('[data-playoff-count]'))n.syncCount();for(const n of document.querySelectorAll('[data-country-balance]'))n.syncBalance();for(const n of document.querySelectorAll('[data-contract-amount]'))n.syncAmount();const presetChanged=applySettingPreset(league,p,v);if(presetChanged||scheduleChanged)syncSettingFields();dirty=true;$('#status').textContent='Unsaved changes';for(const n of document.querySelectorAll('[data-color-path]'))n.syncColor();if(['conferences','divisions'].includes(p[0])||(['teams','starTeams'].includes(p[0])&&(['division','city','name','shortName'].includes(p.at(-1))||p.includes('teamColors'))))listTeams();}
+function retiredNumberInteger(value,fallback=0){const n=Number(value);return Number.isInteger(n)?n:fallback}
+function retiredNumberRecord(entry){return {num:retiredNumberInteger(entry?.num),pid:retiredNumberInteger(entry?.pid),yr:retiredNumberInteger(entry?.yr)}}
+function retiredNumberKey(entry){const record=retiredNumberRecord(entry);return record.num+'|'+record.pid+'|'+record.yr}
+function retiredNumberTeams(data=league){return [...(data?.teams||[]),...(data?.starTeams||[])]}
+function defineLeagueRetiredNumbers(data,entries){Object.defineProperty(data,LEAGUE_RETIRED_NUMBERS_KEY,{value:entries,writable:true,configurable:true,enumerable:false});return entries}
+function inferLeagueRetiredNumbers(data){
+ const teams=retiredNumberTeams(data);if(!teams.length)return [];
+ const first=Array.isArray(teams[0].retiredNumbers)?teams[0].retiredNumbers:[],seen=new Set(),result=[];
+ for(const entry of first){const record=retiredNumberRecord(entry),key=retiredNumberKey(record);if(seen.has(key))continue;if(teams.every(team=>(team.retiredNumbers||[]).some(candidate=>retiredNumberKey(candidate)===key))){seen.add(key);result.push(record)}}
+ return result;
+}
+function leagueRetiredNumbers(data=league){const current=data?.[LEAGUE_RETIRED_NUMBERS_KEY];return Array.isArray(current)?current:defineLeagueRetiredNumbers(data,inferLeagueRetiredNumbers(data))}
+function retiredNumberPlayers(data=league){
+ const players=[],seen=new Set();
+ for(const player of [...(data?.retirees||[]),...(data?.hallOfFame||[])]){
+  const id=Number(player?.id);if(!Number.isInteger(id)||seen.has(id))continue;seen.add(id);const name=[player.fn,player.ln].filter(Boolean).join(' ')||player.name||'Player '+id;players.push({id,name})
+ }
+ return players.sort((a,b)=>a.name.localeCompare(b.name)||a.id-b.id);
+}
+function defaultRetiredNumberYear(){return retiredNumberInteger(league?.season?.startingYear,new Date().getFullYear())}
+function nextRetiredNumber(entries){const used=new Set((entries||[]).map(entry=>retiredNumberInteger(entry?.num)));for(let number=0;number<=100;number++)if(!used.has(number))return number;return 0}
+function syncLeagueRetiredNumberTeams(previous,next,data=league){
+ const previousKeys=new Set(previous.map(retiredNumberKey)),nextKeys=new Set(next.map(retiredNumberKey));
+ for(const team of retiredNumberTeams(data)){
+  const current=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[];
+  const kept=current.filter(entry=>!previousKeys.has(retiredNumberKey(entry))||nextKeys.has(retiredNumberKey(entry)));
+  for(const entry of next){const record=retiredNumberRecord(entry);if(!kept.some(candidate=>retiredNumberInteger(candidate?.num)===record.num))kept.push({...record})}
+  team.retiredNumbers=kept;
+ }
+}
+function setLeagueRetiredNumbers(entries){
+ const previous=leagueRetiredNumbers().map(retiredNumberRecord),seenNumbers=new Set(),next=[];
+ for(const entry of entries||[]){const record=retiredNumberRecord(entry);if(seenNumbers.has(record.num))continue;seenNumbers.add(record.num);next.push(record)}
+ set([LEAGUE_RETIRED_NUMBERS_KEY],next);syncLeagueRetiredNumberTeams(previous,next);return next;
+}
 function resolvedColor(value,path){const index=['PRI','SEC','TER'].indexOf(value);if(index>=0&&['teams','starTeams'].includes(path[0]))value=league[path[0]][path[1]].teamColors?.[index];return /^[a-f0-9]{6}$/i.test(value)?'#'+value:'#ffffff';}
 function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').style.display='none',3500)}
 function safeURL(s){if(typeof s==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+$/i.test(s))return true;try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)}catch{return false}}
@@ -1715,6 +1804,34 @@ function entryLabel(path,key,value){
  if(path.at(-1)==='uniforms')return ['Home','Away','Alt 1','Alt 2'][key]||'Uniform '+(Number(key)+1);
  if(path.at(-1)==='facilities')return ['Medical','Training','Analytics','Arena'][value?.type]||'Unknown facility ('+value?.type+')';
  return label(key);
+}
+function retiredNumberField(row,title,key,value,index,scope,players,change,locked=false){
+ const wrap=el('label','field'),input=el('input'),limits=key==='num'?[0,100]:key==='pid'?[0,2147483647]:[0,9999];
+ wrap.append(el('span','',title));input.type='number';input.min=String(limits[0]);input.max=String(limits[1]);input.step='1';input.value=String(retiredNumberInteger(value));input.disabled=locked;input.setAttribute('aria-label',title);
+ if(key==='pid'){
+  const list=el('datalist'),listId='retired-players-'+scope+'-'+index;list.id=listId;input.setAttribute('list',listId);
+  for(const player of players){const option=el('option');option.value=String(player.id);option.label=player.name;list.append(option)}
+  if(!players.some(player=>player.id===retiredNumberInteger(value))&&retiredNumberInteger(value)){const option=el('option');option.value=String(retiredNumberInteger(value));option.label='Imported player ID';list.append(option)}
+  wrap.append(input,list);
+ }else wrap.append(input);
+ input.onchange=()=>{const next=Number(input.value);if(!Number.isInteger(next)||next<limits[0]||next>limits[1]){wrap.classList.add('invalid');return}if(change(key,next)===false){input.value=String(retiredNumberInteger(value));return}wrap.classList.remove('invalid')};row.append(wrap);return input;
+}
+function renderRetiredNumberRow(parent,entry,index,entries,scope,change,remove,locked=false){
+ const row=el('div','retired-number-row'),players=retiredNumberPlayers();
+ retiredNumberField(row,'Number','num',entry.num,index,scope,players,change,locked);
+ retiredNumberField(row,'Player ID','pid',entry.pid,index,scope,players,change,locked);
+ retiredNumberField(row,'Retirement Year','yr',entry.yr,index,scope,players,change,locked);
+ const button=el('button','retired-number-remove',locked?'League-wide':'Remove');button.type='button';button.disabled=locked;button.setAttribute('aria-label',(locked?'League-wide retired number ':'Remove retired number ')+(entry.num??''));button.onclick=remove;row.append(button);parent.append(row);
+}
+function renderLeagueRetiredNumbers(parent){
+ const section=el('details','retired-numbers-editor'),summary=el('summary',''),help=el('p','retired-numbers-help','The game stores retired numbers per team. Add a league-wide retirement here and Hoop League Studio will apply it to every team that does not already have that number. Use Player ID 0 when no player record needs to be linked.'),list=el('div','retired-numbers-list'),actions=el('div','retired-numbers-actions'),add=el('button','primary','Add League-wide Number');add.type='button';actions.append(add);section.append(summary,help,list,actions);parent.append(section);
+ const draw=()=>{const entries=leagueRetiredNumbers();summary.textContent='League-wide Retired Numbers · '+entries.length;list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No league-wide numbers. Team-specific retirements are edited on each team.'));for(const [index,entry]of entries.entries())renderRetiredNumberRow(list,entry,index,entries,'league', (key,value)=>{if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired league-wide.');return false}const next=entries.map((candidate,i)=>i===index?{...candidate,[key]:value}:candidate);setLeagueRetiredNumbers(next);draw()},()=>{setLeagueRetiredNumbers(entries.filter((_,i)=>i!==index));draw()})};
+ add.onclick=()=>{const entries=leagueRetiredNumbers(),allNumbers=[...entries,...retiredNumberTeams().flatMap(team=>team.retiredNumbers||[])],next=[...entries,{num:nextRetiredNumber(allNumbers),pid:0,yr:defaultRetiredNumberYear()}];setLeagueRetiredNumbers(next);section.open=true;draw()};draw();
+}
+function renderTeamRetiredNumbers(parent,team,path){
+ const section=el('details','retired-numbers-editor'),summary=el('summary',''),globalNumbers=()=>new Set(leagueRetiredNumbers().map(entry=>retiredNumberInteger(entry.num))),help=el('p','retired-numbers-help'),list=el('div','retired-numbers-list'),actions=el('div','retired-numbers-actions'),add=el('button','primary','Add Retired Number');add.type='button';actions.append(add);section.append(summary,help,list,actions);parent.append(section);
+ const draw=()=>{const entries=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[],leagueNumbers=globalNumbers();summary.textContent='Retired Jersey Numbers · '+entries.length;help.textContent=leagueNumbers.size?'League-wide numbers are unavailable to every team and are read-only here. Add team-specific numbers below. Use Player ID 0 when no player record needs to be linked.':'Add a team retirement using the game-compatible number, player ID, and retirement year fields. Use Player ID 0 when no player record needs to be linked.';list.replaceChildren();if(!entries.length)list.append(el('p','retired-number-empty','No retired numbers for this team.'));for(const [index,entry]of entries.entries()){const locked=leagueNumbers.has(retiredNumberInteger(entry.num));renderRetiredNumberRow(list,entry,index,entries,'team-'+team.id,(key,value)=>{if(locked)return false;if(key==='num'&&entries.some((candidate,i)=>i!==index&&retiredNumberInteger(candidate.num)===value)){toast('That number is already retired for this team.');return false}set([...path,index,key],value)},()=>{if(locked)return;set(path,entries.filter((_,i)=>i!==index));draw()},locked)}};
+ add.onclick=()=>{const entries=Array.isArray(team.retiredNumbers)?team.retiredNumbers:[],allNumbers=[...entries,...leagueRetiredNumbers()],next=[...entries,{num:nextRetiredNumber(allNumbers),pid:0,yr:defaultRetiredNumberYear()}];set(path,next);section.open=true;draw()};draw();
 }
 const seasonGroups={
  General:['startingYear','totalGames','divisionGames','conferenceGames','nonConferenceGames'],
@@ -2000,7 +2117,7 @@ function renderFacilities(parent,facilities,path){
  if(!section.children.length)section.append(el('p','','No facilities in this team.'));
  parent.append(section);
 }
-function renderObject(parent,obj,path,depth=0,seasonSubset=false){if(path.length===1&&path[0]==='sliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'gameStyle',league.settings?.gameStyle??0,['settings','gameStyle'])}if(path.length===1&&path[0]==='awards'){renderAwards(parent);return}if(path.length===1&&path[0]==='simulationSliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'simulationPreset',league.season?.simulationPreset??0,['season','simulationPreset'])}if(path.length===2&&path[0]==='meta'&&path[1]==='generatedCountries'&&Array.isArray(obj)){renderCountries(parent,path);return}if(path.length===1&&path[0]==='season'&&!seasonSubset){renderSeason(parent,obj);return}if(path.at(-1)==='teamColors'){renderTeamColors(parent,path);return}const teamRoot=path.length===2&&['teams','starTeams'].includes(path[0]);const fields=el('div','fields');parent.append(fields);for(const [k,v]of orderedFields(obj,path)){if(path.length===0&&k==='conferences'){renderLeagueStructure(parent);continue}if(path.length===0&&k==='divisions')continue;if(path.length===0&&['gameballs','courts','settings','optimization','coachSettings'].includes(k))continue;if(path.length===1&&path[0]==='settings'&&['gameBall','referee','gameStyle'].includes(k))continue;if(path.length===1&&path[0]==='rules'&&['blockingFouls','partialShotClock'].includes(k))continue;if(path.length===1&&path[0]==='difficulty'&&['defensiveAssistance','offensiveAssistance'].includes(k))continue;if(teamRoot&&k==='frontOffice')renderTeamLocation(parent,obj,path);if(path.at(-1)==='frontOffice'&&['coins','condition','morale','fans','adsURL','adSize','scoutAssignment'].includes(k))continue;if(path.at(-1)==='frontOffice'&&k==='facilities'){renderFacilities(parent,v,[...path,k]);continue}if(protectedKeys.has(k)||hiddenState.has(k)||(['teams','starTeams'].includes(k)&&path.length===0))continue;if((teamRoot&&['city','location','logoSize'].includes(k))||(path.length===0&&k==='logoSize'))continue;if(path[0]==='teams'||path[0]==='starTeams'){if(['id','isPlayer','season','coinFlip','status','rnk','following'].includes(k))continue}if(path.length===1&&path[0]==='meta'&&!['generatedCountries'].includes(k))continue;
+function renderObject(parent,obj,path,depth=0,seasonSubset=false){if(path.length===1&&path[0]==='sliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'gameStyle',league.settings?.gameStyle??0,['settings','gameStyle'])}if(path.length===1&&path[0]==='awards'){renderAwards(parent);return}if(path.length===1&&path[0]==='simulationSliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'simulationPreset',league.season?.simulationPreset??0,['season','simulationPreset'])}if(path.length===2&&path[0]==='meta'&&path[1]==='generatedCountries'&&Array.isArray(obj)){renderCountries(parent,path);return}if(path.length===1&&path[0]==='season'&&!seasonSubset){renderSeason(parent,obj);return}if(path.at(-1)==='teamColors'){renderTeamColors(parent,path);return}const teamRoot=path.length===2&&['teams','starTeams'].includes(path[0]);if(path.length===0)renderLeagueRetiredNumbers(parent);if(teamRoot)renderTeamRetiredNumbers(parent,obj,[...path,'retiredNumbers']);const fields=el('div','fields');parent.append(fields);for(const [k,v]of orderedFields(obj,path)){if(teamRoot&&k==='retiredNumbers')continue;if(path.length===0&&k==='conferences'){renderLeagueStructure(parent);continue}if(path.length===0&&k==='divisions')continue;if(path.length===0&&['gameballs','courts','settings','optimization','coachSettings'].includes(k))continue;if(path.length===1&&path[0]==='settings'&&['gameBall','referee','gameStyle'].includes(k))continue;if(path.length===1&&path[0]==='rules'&&['blockingFouls','partialShotClock'].includes(k))continue;if(path.length===1&&path[0]==='difficulty'&&['defensiveAssistance','offensiveAssistance'].includes(k))continue;if(teamRoot&&k==='frontOffice')renderTeamLocation(parent,obj,path);if(path.at(-1)==='frontOffice'&&['coins','condition','morale','fans','adsURL','adSize','scoutAssignment'].includes(k))continue;if(path.at(-1)==='frontOffice'&&k==='facilities'){renderFacilities(parent,v,[...path,k]);continue}if(protectedKeys.has(k)||hiddenState.has(k)||(['teams','starTeams'].includes(k)&&path.length===0))continue;if((teamRoot&&['city','location','logoSize'].includes(k))||(path.length===0&&k==='logoSize'))continue;if(path[0]==='teams'||path[0]==='starTeams'){if(['id','isPlayer','season','coinFlip','status','rnk','following'].includes(k))continue}if(path.length===1&&path[0]==='meta'&&!['generatedCountries'].includes(k))continue;
  const p=[...path,k];if(path.length===1&&path[0]==='meta'&&k==='generatedCountries'){renderCountries(parent,p);continue}if(v!==null&&typeof v==='object'){const d=el('details'),summary=el('summary','',entryLabel(path,k,v)+(Array.isArray(v)&&k!=='awards'?` · ${v.length}`:''));d.append(summary);parent.append(d);d.addEventListener('toggle',()=>{if(d.open&&!d.dataset.built){d.dataset.built='1';if(Array.isArray(v)&&!v.length)d.append(el('p','','No entries in this league.'));else renderObject(d,v,p,depth+1)}},{once:false})}else field(fields,k,v,p);if(k==='court'&&path.length===2&&['teams','starTeams'].includes(path[0]))renderAnnouncerTable(parent,obj,path)}
  if(!fields.children.length)fields.remove();}
 function renderAnnouncerTable(parent,team,path){if(!team.frontOffice)return;const section=el('details');section.append(el('summary','','Announcer Table'));const fields=el('div','fields');section.append(fields);for(const key of ['adsURL','adSize'])if(Object.hasOwn(team.frontOffice,key))field(fields,key,team.frontOffice[key],[...path,'frontOffice',key]);parent.append(section)}
@@ -2554,7 +2671,7 @@ function archiveLeague(asset){return asset.collection||asset.group||leagueAssetP
 function renderArchive(){ renderPageNav();$('#status').hidden=true;$('#title').textContent='Image Archive';$('#breadcrumb').textContent='ASSETS / ARCHIVE';$('#subtitle').textContent='Manage logos, courts, and ads for your leagues.';const c=$('#content'),setup=el('details','archive-setup'),setupSummary=el('summary','archive-setup-summary'),setupLabel=el('span','','Image Archive Setup'),setupArrow=el('span','archive-setup-arrow','▼'),setupBody=el('div','archive-setup-body'),filters=el('div','filters'),search=el('input');search.placeholder='Search images…';search.setAttribute('aria-label','Search images');const kind=el('select'),group=el('select');group.setAttribute('aria-label','League Name');for(const s of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',s);option.value=s;group.append(option)}kind.setAttribute('aria-label','Image type');for(const s of ['All types','Logos','Courts','Ads'])kind.append(el('option','',s));const download=el('button','','Download URL List');download.onclick=()=>saveFile('hoopland-image-urls.json',JSON.stringify(assets.map(({local,...a})=>a),null,2));const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);filters.append(search,group,kind,refresh,download);const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);archiveGettingStarted(c);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);function draw(){grid.replaceChildren();const matches=assets.filter(a=>(group.value==='All leagues'||archiveLeague(a)===group.value)&&(kind.value==='All types'||a.kind===kind.value)&&(a.name+' '+a.path).toLowerCase().includes(search.value.toLowerCase()));count.textContent=matches.length+' '+(matches.length===1?'image':'images')+' shown · '+assets.length+' total';for(const a of matches){const card=el('article','asset'),img=el('img');img.src=a.local;img.alt=a.name;img.loading='lazy';const body=el('div','asset-body');body.append(el('h3','',label(a.name)),el('p','',`${archiveLeague(a)} / ${a.kind}`));card.append(img,body);grid.append(card)}if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'))}search.oninput=group.onchange=kind.onchange=draw;draw()}
 function saveFile(name,text){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function validate(data){if(!data||typeof data!=='object'||Array.isArray(data)||typeof data.leagueName!=='string'||!Array.isArray(data.teams)||!data.teams.length||!Array.isArray(data.conferences)||!Array.isArray(data.divisions))throw Error('Choose a Hoopland league file with a league name, teams, conferences and divisions.');if(data.teams.some(t=>!t||typeof t!=='object'||Array.isArray(t)))throw Error('The file contains an invalid team.');if(data.teams.length>64)throw Error('This editor supports a maximum of 64 league teams.');return data}
-function load(data){league=validate(data);syncTeamCountMeta(league);activeDraftSlot=null;locationSelections.clear();selected=0;teamList='teams';view='league';dirty=false;$('#status').textContent='Ready to edit';render()}
+function load(data){league=validate(data);leagueRetiredNumbers(league);syncTeamCountMeta(league);activeDraftSlot=null;locationSelections.clear();selected=0;teamList='teams';view='league';dirty=false;$('#status').textContent='Ready to edit';render()}
 let activeDraftSlot=null;
 function draftStore(mode,record,slot=0){
  if(!Number.isInteger(slot)||slot<0||slot>2)return Promise.reject(Error('Invalid save slot'));const key=slot===0?'current':'slot-'+slot;
