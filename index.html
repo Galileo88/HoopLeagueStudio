@@ -1447,9 +1447,7 @@ body.pwa-install-open{
 
 
 /* Image Archive metadata */
-.archive-image-address{margin:10px 0 0;color:#bcd8f2;font-size:11px;line-height:1.35}
-.archive-image-address code{display:block;max-height:48px;overflow:auto;overflow-wrap:anywhere;white-space:normal;color:#b8ddf7}
-.archive-image-dimensions{display:block;margin-top:6px;color:#79fff4;font-size:12px;font-weight:700}
+.archive-image-dimensions{display:block;margin:-1px 0 9px;color:#79fff4;font-size:12px;font-weight:700}
 
 </style>
 </head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
@@ -2812,12 +2810,11 @@ function renderArchive(){
   count.textContent=matches.length+' '+(matches.length===1?'image':'images')+' shown · '+assets.length+' total';
   for(const a of matches){
    const card=el('article','asset'),img=el('img');img.src=a.local;img.alt=a.name;img.loading='lazy';
-   const body=el('div','asset-body'),address=el('p','archive-image-address'),addressCode=el('code','',a.isLocal?(a.path||a.name):(a.url||a.path||a.local||'')),dimensions=el('small','archive-image-dimensions');
-   address.append(addressCode);
+   const body=el('div','asset-body'),dimensions=el('small','archive-image-dimensions');
    const showDimensions=()=>{const width=Number(a.width)||img.naturalWidth,height=Number(a.height)||img.naturalHeight;if(width>0&&height>0){a.width=width;a.height=height;dimensions.textContent=width+' × '+height+' px'}else dimensions.textContent='Dimensions unavailable'};
    if(Number(a.width)>0&&Number(a.height)>0)showDimensions();else dimensions.textContent='Loading dimensions…';
    img.addEventListener('load',showDimensions,{once:true});img.addEventListener('error',()=>{dimensions.textContent='Dimensions unavailable'},{once:true});
-   body.append(el('h3','',label(a.name)),el('p','',`${archiveLeague(a)} / ${a.kind}`),address,dimensions);
+   body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
    card.append(img,body);grid.append(card);
   }
   if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'));
