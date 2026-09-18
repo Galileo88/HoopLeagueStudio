@@ -1048,6 +1048,43 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
   }
 }
 
+/* Image Archive builder */
+.archive-entry-card{padding:0;overflow:hidden}
+.archive-entry-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:62px;padding:12px 16px;list-style:none;cursor:pointer}
+.archive-entry-summary::-webkit-details-marker{display:none}
+.archive-entry-summary-text{min-width:0}
+.archive-entry-card .archive-step-label{margin:0 0 3px!important}
+.archive-entry-summary h2{margin:0;font-size:19px}
+.archive-entry-arrow{flex:0 0 auto;color:#79fff4;font-size:16px;transition:transform .15s ease}
+.archive-entry-card[open]>.archive-entry-summary{border-bottom:2px solid #267cb9;margin-bottom:14px;color:#79fff4}
+.archive-entry-card[open]>.archive-entry-summary .archive-entry-arrow{transform:rotate(180deg)}
+.archive-entry-card>:not(summary){margin-left:16px;margin-right:16px}
+.archive-entry-card>:last-child{margin-bottom:16px}
+.archive-entry-description{margin-top:0!important;margin-left:0!important;margin-right:0!important;padding-left:16px;padding-right:16px}
+@media(max-width:760px){.archive-entry-description{padding-left:12px;padding-right:12px}}
+@media(max-width:760px){.archive-entry-summary{min-height:56px;padding:10px 12px}.archive-entry-card>:not(summary){margin-left:12px;margin-right:12px}.archive-entry-card>:last-child{margin-bottom:12px}}
+.archive-entry-card .archive-step-label{margin-bottom:3px!important}
+.archive-builder-name,.archive-entry-card>.archive-folder-picker{display:block;box-sizing:border-box;width:min(calc((100% - 20px)/2),440px);max-width:none;padding-left:0;padding-right:0}
+.archive-builder-name{margin-bottom:16px}
+.archive-builder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.archive-builder-category{min-width:0;padding:12px;background:#0b3263;border:2px solid #237db7}
+.archive-builder-category h3{margin:0 0 8px;color:#79fff4;font-size:16px;text-transform:uppercase;letter-spacing:.5px}
+.archive-builder-dropzone{display:flex;flex-direction:column;min-height:118px;align-items:center;justify-content:center;text-align:center;padding:14px;border:2px dashed #4b9ccc;background:#082b56;cursor:pointer;outline:none}
+.archive-builder-dropzone:hover,.archive-builder-dropzone:focus-visible,.archive-builder-dropzone.dragover{border-color:#4cf5ed;background:#0c3968}
+.archive-builder-dropzone strong,.archive-builder-dropzone small{display:block}
+.archive-builder-dropzone small{margin-top:6px;color:#bcd8f2}
+.archive-builder-files{display:grid;gap:6px;margin-top:10px}
+.archive-builder-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 8px;background:#092c55;border:1px solid #267cb9}
+.archive-builder-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.archive-builder-file button{min-height:34px;padding:4px 8px;font-size:12px}
+.archive-builder-empty{margin:9px 0 0;font-size:12px;color:#bcd8f2;text-align:center}
+.archive-builder-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.archive-builder-actions button{flex:0 1 auto}
+.archive-builder-status{display:block;margin-top:10px;color:#bcd8f2}
+.archive-builder-status.ready{color:#79fff4}
+@media(max-width:900px){.archive-builder-name,.archive-entry-card>.archive-folder-picker{width:100%}}
+@media(max-width:760px){.archive-builder-grid{grid-template-columns:1fr}.archive-builder-actions button{flex:1 1 180px}}
+
 /* Workspace */
 
 .getting-started-workspaces{
@@ -2478,6 +2515,7 @@ function render(){
  renderObject(card,view==='league'?league:t,view==='league'?[]:[teamList,selected]);
 }
 let localAssets=[],archiveSources=[],openSourceEditor=false,archiveSourceTab='online';
+let archiveBuilder={leagueName:'',files:{Logos:[],Courts:[],Ads:[]},confirmed:false,sourceId:''};
 function sourceKey(source){return source.repository.toLowerCase()+'@'+source.branch}
 function syncArchiveList(){assets.sort((a,b)=>a.name.localeCompare(b.name));$('#assetCount').textContent=assets.length;const picker=$('#pickArchive');picker.replaceChildren();for(const a of assets){const o=el('option','',a.name+' · '+a.era+' · '+a.kind);o.value=a.local;picker.append(o)}}
 function renderConnectedSources(parent){
@@ -2539,35 +2577,90 @@ function localAssetImporter(parent){
 let archiveSource={repository:'',branch:'main',folders:[]};
 
 function archiveStepCard(number,title,body){
- const card=el('section','card archive-step-card');
- card.append(el('p','eyebrow archive-step-label','STEP '+number),el('h2','',title));
- if(body)card.append(el('p','',body));
+ const card=el('details','card archive-step-card archive-entry-card'),summary=el('summary','archive-entry-summary'),heading=el('div','archive-entry-summary-text'),arrow=el('span','archive-entry-arrow','▼');
+ heading.append(el('p','eyebrow archive-step-label','OPTION '+number),el('h2','',title));
+ summary.append(heading,arrow);card.append(summary);
+ if(body)card.append(el('p','archive-entry-description',body));
  return card;
 }
-function archiveGettingStarted(parent){
- const intro=el('section','card archive-getting-started');
- intro.append(el('h2','','Get Started'),el('p','','Set up your image folders, then connect either a local folder or a public GitHub repository.'));
- parent.append(intro);
-}
-function archiveSetupSteps(parent){
- const step1=archiveStepCard(1,'Download Folder Template','Enter your league name and download the required folder template.');
- const templateRow=el('div','archive-template-row'),name=el('input'),download=el('button','primary','Download Folder Template');
- name.placeholder='League name';name.setAttribute('aria-label','League name for folder template');
- download.type='button';download.onclick=()=>downloadLeagueFolders(name.value);
- templateRow.append(name,download);step1.append(templateRow);parent.append(step1);
-
- const step2=archiveStepCard(2,'Extract','Extract the downloaded ZIP before adding images.');
- const directions=el('div','archive-extract-directions');
- directions.append(el('span','','Windows: Right-click the ZIP → Extract All.'),el('span','','macOS: Double-click the ZIP.'));
- step2.append(directions);parent.append(step2);
-
- const step3=archiveStepCard(3,'Place Your League Assets','Put each image in the matching folder. Keep the folder names unchanged.');
- const folders=el('div','archive-folder-grid');
- for(const [name,desc]of [['Logos','Team and league logos'],['Courts','Court and floor images'],['Ads','Arena advertisement images']]){
-  const item=el('div','archive-folder-item');item.append(el('strong','',name),el('small','',desc));folders.append(item);
+function archiveBuilderAccepted(file){return Boolean(file&&(/^image\/(png|jpeg|webp)$/i.test(file.type)||/\.(png|jpg|jpeg|webp)$/i.test(file.name)))}
+function archiveBuilderAdd(kind,fileList){
+ const incoming=[...fileList].filter(archiveBuilderAccepted),existing=archiveBuilder.files[kind];
+ for(const file of incoming){
+  const key=file.name+'|'+file.size+'|'+file.lastModified;
+  if(!existing.some(current=>current.name+'|'+current.size+'|'+current.lastModified===key))existing.push(file);
  }
- step3.append(folders);parent.append(step3);
+ archiveBuilder.confirmed=false;
+ if(incoming.length!==[...fileList].length)toast('Only PNG, JPG, JPEG, and WebP images are added.');
 }
+function archiveBuilderRemove(kind,index){archiveBuilder.files[kind].splice(index,1);archiveBuilder.confirmed=false}
+function archiveBuilderCount(){return Object.values(archiveBuilder.files).reduce((sum,list)=>sum+list.length,0)}
+function archiveBuilderName(){return String(archiveBuilder.leagueName||'').trim()}
+function validArchiveFolderName(name){return Boolean(name)&&!/[<>:"/\\|?*]/.test(name)&&name!=='.'&&name!=='..'}
+function zipCrc32(data){let crc=0xffffffff;for(const byte of data){crc^=byte;for(let i=0;i<8;i++)crc=(crc>>>1)^((crc&1)?0xedb88320:0)}return (crc^0xffffffff)>>>0}
+function downloadStoredZip(filename,entries){
+ const enc=new TextEncoder(),chunks=[],central=[];let offset=0,total=0;
+ const header=size=>{const bytes=new Uint8Array(size);return {bytes,v:new DataView(bytes.buffer)}};
+ for(const entry of entries){
+  const fileName=enc.encode(entry.path),data=entry.data instanceof Uint8Array?entry.data:new Uint8Array(entry.data||0),crc=zipCrc32(data),local=header(30);
+  local.v.setUint32(0,0x04034b50,true);local.v.setUint16(4,20,true);local.v.setUint16(6,0x800,true);local.v.setUint16(8,0,true);local.v.setUint32(14,crc,true);local.v.setUint32(18,data.length,true);local.v.setUint32(22,data.length,true);local.v.setUint16(26,fileName.length,true);
+  chunks.push(local.bytes,fileName,data);
+  const c=header(46);c.v.setUint32(0,0x02014b50,true);c.v.setUint16(4,20,true);c.v.setUint16(6,20,true);c.v.setUint16(8,0x800,true);c.v.setUint16(10,0,true);c.v.setUint32(16,crc,true);c.v.setUint32(20,data.length,true);c.v.setUint32(24,data.length,true);c.v.setUint16(28,fileName.length,true);c.v.setUint32(38,entry.directory?0x10:0,true);c.v.setUint32(42,offset,true);
+  central.push(c.bytes,fileName);total+=46+fileName.length;offset+=30+fileName.length+data.length;
+ }
+ const end=header(22);end.v.setUint32(0,0x06054b50,true);end.v.setUint16(8,entries.length,true);end.v.setUint16(10,entries.length,true);end.v.setUint32(12,total,true);end.v.setUint32(16,offset,true);
+ const url=URL.createObjectURL(new Blob([...chunks,...central,end.bytes],{type:'application/zip'})),a=el('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function downloadArchiveBuilderZip(){
+ const leagueName=archiveBuilderName();
+ if(!validArchiveFolderName(leagueName)){toast('Enter a valid league name before downloading.');return}
+ if(!archiveBuilder.confirmed){toast('Confirm completion before downloading the ZIP.');return}
+ const entries=[];
+ for(const kind of ['Logos','Courts','Ads']){
+  entries.push({path:leagueName+'/'+kind+'/',data:new Uint8Array(0),directory:true});
+  for(const file of archiveBuilder.files[kind])entries.push({path:leagueName+'/'+kind+'/'+file.name,data:new Uint8Array(await file.arrayBuffer())});
+ }
+ downloadStoredZip(leagueName+' Assets.zip',entries);
+}
+async function confirmArchiveBuilder(){
+ const leagueName=archiveBuilderName(),total=archiveBuilderCount();
+ if(!validArchiveFolderName(leagueName)){toast('Enter a valid league name.');return false}
+ if(!total){toast('Add at least one image before confirming.');return false}
+ const sourceId=archiveBuilder.sourceId||('builder:'+Date.now()),added=[];
+ try{
+  for(const kind of ['Logos','Courts','Ads'])for(const file of archiveBuilder.files[kind]){
+   const local=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)}),size=await imageDimensions(local),path=leagueName+'/'+kind+'/'+file.name;
+   added.push({sourceId,sourceName:leagueName+' · Built here',path,name:file.name,collection:leagueName,group:leagueName,era:leagueName,kind,url:local,local,width:size.width,height:size.height,aliases:[],isLocal:true});
+  }
+  archiveBuilder.sourceId=sourceId;archiveBuilder.confirmed=true;archiveBuilder.leagueName=leagueName;
+  localAssets=localAssets.filter(a=>a.sourceId!==sourceId);assets=assets.filter(a=>a.sourceId!==sourceId);localAssets.push(...added);assets.push(...added);syncArchiveList();dirty=true;render();
+  const setup=document.querySelector('.archive-setup');if(setup)setup.open=true;
+  toast(total+' '+(total===1?'image':'images')+' added to the archive. ZIP download is ready.');return true;
+ }catch(error){toast('Could not build the archive: '+error.message);return false}
+}
+function archiveBuilderEditor(parent){
+ const card=archiveStepCard(1,'Build Archive Here','Drag images into the categories below. Confirm completion to fill the Image Library, then download a ZIP for future use.');
+ const nameLabel=el('label','field archive-builder-name'),name=el('input');name.placeholder='League name';name.value=archiveBuilder.leagueName;name.setAttribute('aria-label','League name for archive builder');
+ name.addEventListener('input',()=>{archiveBuilder.leagueName=name.value;archiveBuilder.confirmed=false;updateActions()});nameLabel.append(el('span','','League Name'),name);card.append(nameLabel);
+ const grid=el('div','archive-builder-grid'),categoryViews={};card.append(grid);
+ const renderCategory=kind=>{
+  const view=categoryViews[kind];view.list.replaceChildren();const files=archiveBuilder.files[kind];view.count.textContent=files.length+' '+(files.length===1?'file':'files');
+  if(!files.length)view.list.append(el('p','archive-builder-empty','No images added yet.'));
+  files.forEach((file,index)=>{const row=el('div','archive-builder-file'),remove=el('button','','Remove');remove.type='button';remove.onclick=()=>{archiveBuilderRemove(kind,index);renderCategory(kind);updateActions()};row.append(el('span','',file.name),remove);view.list.append(row)});
+ };
+ for(const kind of ['Logos','Courts','Ads']){
+  const box=el('section','archive-builder-category'),drop=el('div','archive-builder-dropzone'),title=el('strong','',kind),count=el('small'),input=el('input'),list=el('div','archive-builder-files');input.type='file';input.multiple=true;input.accept='image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp';input.hidden=true;
+  drop.tabIndex=0;drop.setAttribute('role','button');drop.setAttribute('aria-label','Add '+kind+' images');drop.append(title,count,input);
+  const choose=()=>input.click();drop.addEventListener('click',event=>{if(event.target!==input)choose()});drop.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();choose()}});
+  drop.addEventListener('dragover',event=>{event.preventDefault();drop.classList.add('dragover')});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',event=>{event.preventDefault();drop.classList.remove('dragover');archiveBuilderAdd(kind,event.dataTransfer.files);renderCategory(kind);updateActions()});
+  input.addEventListener('change',()=>{archiveBuilderAdd(kind,input.files);input.value='';renderCategory(kind);updateActions()});
+  box.append(el('h3','',kind),drop,list);grid.append(box);categoryViews[kind]={list,count};renderCategory(kind);
+ }
+ const actions=el('div','archive-builder-actions'),confirm=el('button','primary','Done'),download=el('button','','Download ZIP'),status=el('small','archive-builder-status');confirm.type=download.type='button';
+ const updateActions=()=>{const total=archiveBuilderCount();confirm.disabled=!total||!validArchiveFolderName(archiveBuilderName());download.disabled=!archiveBuilder.confirmed;status.classList.toggle('ready',archiveBuilder.confirmed);status.textContent=archiveBuilder.confirmed?'Archive confirmed · '+total+' '+(total===1?'image':'images')+' · ZIP ready':'Add images, then confirm completion.'};
+ confirm.onclick=()=>void confirmArchiveBuilder();download.onclick=()=>void downloadArchiveBuilderZip();actions.append(confirm,download);card.append(actions,status);updateActions();parent.append(card);
+}
+function archiveSetupSteps(parent){archiveBuilderEditor(parent)}
 
 function normalizeGitHubRepository(value){
  return String(value||'').trim()
@@ -2671,102 +2764,41 @@ async function loadArchiveSource(source,force=false){
 }
 
 function archiveSourceEditor(parent){
- const tabsCard=el('section','card archive-source-card'),tabs=el('div','archive-source-tabs'),onlineTab=el('button','','GitHub / Online'),localTab=el('button','','Local Sources'),panel=el('div','archive-source-panel');
- onlineTab.type=localTab.type='button';onlineTab.setAttribute('role','tab');localTab.setAttribute('role','tab');tabs.setAttribute('role','tablist');tabs.append(onlineTab,localTab);tabsCard.append(tabs);parent.append(tabsCard,panel);
+ const localCard=archiveStepCard(2,'Use Local Folder','Choose an existing local league folder.');
+ localAssetImporter(localCard);parent.append(localCard);
 
- const show=mode=>{
-  archiveSourceTab=mode;onlineTab.setAttribute('aria-selected',String(mode==='online'));localTab.setAttribute('aria-selected',String(mode==='local'));panel.replaceChildren();
+ const githubCard=archiveStepCard(3,'Use GitHub','Connect to a public GitHub repository and read the archive from it.');
+ const fields=el('div','fields archive-source-fields'),repo=el('input'),branch=el('select'),branchStatus=el('small','archive-branch-status','Enter a public repository to load branches.'),add=el('button','primary','Add Repository');
+ repo.placeholder='owner/repository or GitHub URL';branch.disabled=true;add.type='button';add.disabled=true;branch.append(el('option','','Enter repository first'));
+ const repoLabel=el('label','field'),branchLabel=el('label','field'),branchRow=el('div','archive-branch-row');repoLabel.append(el('span','','Repository'),repo);branchRow.append(branch,add);branchLabel.append(el('span','','Branch'),branchRow,branchStatus);fields.append(repoLabel,branchLabel);githubCard.append(fields);parent.append(githubCard);
 
-  if(mode==='online'){
-   const step4=archiveStepCard(4,'Push the League Folder to GitHub','Upload the extracted league folder to a public GitHub repository. Private repositories cannot be connected.');
-   panel.append(step4);
-
-   const step5=archiveStepCard(5,'Paste Your Repository','Paste owner/repository or a GitHub URL. Available branches will load automatically.');
-   const fields=el('div','fields archive-source-fields'),repo=el('input'),branch=el('select'),branchStatus=el('small','archive-branch-status','Enter a public repository to load branches.'),add=el('button','primary','Add Repository');
-   repo.placeholder='owner/repository or GitHub URL';
-   branch.disabled=true;add.type='button';add.disabled=true;
-   branch.append(el('option','','Enter repository first'));
-   const repoLabel=el('label','field'),branchLabel=el('label','field'),branchRow=el('div','archive-branch-row');
-   repoLabel.append(el('span','','Repository'),repo);
-   branchRow.append(branch,add);branchLabel.append(el('span','','Branch'),branchRow,branchStatus);
-   fields.append(repoLabel,branchLabel);step5.append(fields);panel.append(step5);
-
-   let branchRequest=0,branchTimer,branchLoadPromise=null,branchLoadRepo='';
-   const setBranchState=(message,isError=false)=>{
-    branchStatus.textContent=message;
-    branchStatus.classList.toggle('error',isError);
-   };
-   const syncAddState=()=>{add.disabled=!isValidGitHubRepositoryInput(repo.value)};
-   const loadBranches=async()=>{
-    const value=repo.value.trim(),normalized=normalizeGitHubRepository(value);
-    clearTimeout(branchTimer);
-    if(branch.dataset.repo===normalized&&!branch.disabled)return;
-    if(branchLoadPromise&&branchLoadRepo===normalized)return branchLoadPromise;
-    const request=++branchRequest;
-    branchLoadRepo=normalized;
-    branch.replaceChildren();branch.disabled=true;
-    branchLoadPromise=(async()=>{
-    if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized)){
-     branch.append(el('option','','Enter repository first'));
-     setBranchState('Enter a public repository to load branches.');
-     syncAddState();
-     return;
-    }
-    branch.append(el('option','','Loading branches…'));setBranchState('Checking public repository…');
-    try{
-     const result=await fetchPublicGitHubBranches(normalized);
-     if(request!==branchRequest)return;
-     repo.value=result.repository;
-     branch.replaceChildren();
-     if(!result.branches.length){
-      branch.append(el('option','','No branches found'));setBranchState('No branches found in this repository.',true);return;
-     }
-     for(const name of result.branches){const option=el('option','',name);option.value=name;branch.append(option)}
-     branch.value=result.defaultBranch&&result.branches.includes(result.defaultBranch)?result.defaultBranch:result.branches[0];
-     branch.dataset.repo=result.repository;branch.disabled=false;syncAddState();
-     setBranchState(result.warning||'',Boolean(result.warning));
-    }catch(error){
-     if(request!==branchRequest)return;
-     branch.replaceChildren();branch.append(el('option','','Branches unavailable'));branch.disabled=true;setBranchState(error.message,true);
-    }finally{
-     if(branchLoadRepo===normalized){branchLoadPromise=null;branchLoadRepo=''}
-    }
-    })();
-    return branchLoadPromise;
-   };
-   repo.addEventListener('input',()=>{
-    branchRequest++;branch.dataset.repo='';branchLoadPromise=null;branchLoadRepo='';
-    branch.replaceChildren();branch.append(el('option','','Repository entered'));branch.disabled=true;setBranchState('Branches load when you finish the repository field.');
-    clearTimeout(branchTimer);syncAddState();
-   });
-      syncAddState();
-   repo.addEventListener('paste',()=>{clearTimeout(branchTimer);branchTimer=setTimeout(()=>void loadBranches(),50)});
-   repo.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(branchTimer);void loadBranches()}});
-   repo.addEventListener('change',()=>void loadBranches());
-   repo.addEventListener('blur',()=>{if(document.activeElement!==branch)void loadBranches()});
-
-   add.onclick=async()=>{
-    if(archiveRefreshing)return;
-    const repository=normalizeGitHubRepository(repo.value);
-    if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)){toast('Enter owner/repository or a GitHub repository URL.');syncAddState();return}
-    add.disabled=true;
-    try{
-     if(branch.disabled||!branch.value.trim())await loadBranches();
-     const selectedBranch=branch.value.trim();
-     if(branch.disabled||!selectedBranch){toast(branchStatus.textContent||'Could not load a branch for this repository.');return}
-     const source={repository:normalizeGitHubRepository(repo.value),branch:selectedBranch,folders:[]};
-     archiveSources=archiveSources.filter(s=>sourceKey(s)!==sourceKey(source));archiveSources.push(source);archiveSourceTab='online';dirty=true;
-     await refreshArchive();
-    }finally{
-     if(document.body.contains(add))syncAddState();
-    }
-   };
-  }else{
-   const step4=archiveStepCard(4,'Choose the League Folder','Choose the league folder or its parent folder.');
-   localAssetImporter(step4);panel.append(step4);
-  }
+ let branchRequest=0,branchTimer,branchLoadPromise=null,branchLoadRepo='';
+ const setBranchState=(message,isError=false)=>{branchStatus.textContent=message;branchStatus.classList.toggle('error',isError)};
+ const syncAddState=()=>{add.disabled=!isValidGitHubRepositoryInput(repo.value)};
+ const loadBranches=async()=>{
+  const normalized=normalizeGitHubRepository(repo.value.trim());clearTimeout(branchTimer);
+  if(branch.dataset.repo===normalized&&!branch.disabled)return;if(branchLoadPromise&&branchLoadRepo===normalized)return branchLoadPromise;
+  const request=++branchRequest;branchLoadRepo=normalized;branch.replaceChildren();branch.disabled=true;
+  branchLoadPromise=(async()=>{
+   if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized)){branch.append(el('option','','Enter repository first'));setBranchState('Enter a public repository to load branches.');syncAddState();return}
+   branch.append(el('option','','Loading branches…'));setBranchState('Checking public repository…');
+   try{
+    const result=await fetchPublicGitHubBranches(normalized);if(request!==branchRequest)return;repo.value=result.repository;branch.replaceChildren();
+    if(!result.branches.length){branch.append(el('option','','No branches found'));setBranchState('No branches found in this repository.',true);return}
+    for(const name of result.branches){const option=el('option','',name);option.value=name;branch.append(option)}branch.value=result.defaultBranch&&result.branches.includes(result.defaultBranch)?result.defaultBranch:result.branches[0];branch.dataset.repo=result.repository;branch.disabled=false;syncAddState();setBranchState(result.warning||'',Boolean(result.warning));
+   }catch(error){if(request!==branchRequest)return;branch.replaceChildren();branch.append(el('option','','Branches unavailable'));branch.disabled=true;setBranchState(error.message,true)}
+   finally{if(branchLoadRepo===normalized){branchLoadPromise=null;branchLoadRepo=''}}
+  })();return branchLoadPromise;
  };
- onlineTab.onclick=()=>show('online');localTab.onclick=()=>show('local');show(archiveSourceTab);
+ repo.addEventListener('input',()=>{branchRequest++;branch.dataset.repo='';branchLoadPromise=null;branchLoadRepo='';branch.replaceChildren();branch.append(el('option','','Repository entered'));branch.disabled=true;setBranchState('Branches load when you finish the repository field.');clearTimeout(branchTimer);syncAddState()});
+ syncAddState();repo.addEventListener('paste',()=>{clearTimeout(branchTimer);branchTimer=setTimeout(()=>void loadBranches(),50)});repo.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(branchTimer);void loadBranches()}});repo.addEventListener('change',()=>void loadBranches());repo.addEventListener('blur',()=>{if(document.activeElement!==branch)void loadBranches()});
+ add.onclick=async()=>{
+  if(archiveRefreshing)return;const repository=normalizeGitHubRepository(repo.value);
+  if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)){toast('Enter owner/repository or a GitHub repository URL.');syncAddState();return}
+  add.disabled=true;
+  try{if(branch.disabled||!branch.value.trim())await loadBranches();const selectedBranch=branch.value.trim();if(branch.disabled||!selectedBranch){toast(branchStatus.textContent||'Could not load a branch for this repository.');return}const source={repository:normalizeGitHubRepository(repo.value),branch:selectedBranch,folders:[]};archiveSources=archiveSources.filter(s=>sourceKey(s)!==sourceKey(source));archiveSources.push(source);archiveSourceTab='online';dirty=true;await refreshArchive()}
+  finally{if(document.body.contains(add))syncAddState()}
+ };
 }
 
 let archiveRefreshing=false;
@@ -2794,7 +2826,7 @@ async function refreshArchive(quiet=false,force=false){
 function archiveLeague(asset){return asset.collection||asset.group||leagueAssetPath(asset.path)?.leagueName||'Unnamed league'}
 function renderArchive(){
  renderPageNav();$('#status').hidden=true;$('#title').textContent='Image Archive';$('#breadcrumb').textContent='ASSETS / ARCHIVE';$('#subtitle').textContent='Manage logos, courts, and ads for your leagues.';
- const c=$('#content'),setup=el('details','archive-setup'),setupSummary=el('summary','archive-setup-summary'),setupLabel=el('span','','Image Archive Setup'),setupArrow=el('span','archive-setup-arrow','▼'),setupBody=el('div','archive-setup-body'),filters=el('div','filters'),search=el('input');
+ const c=$('#content'),setup=el('details','archive-setup'),setupSummary=el('summary','archive-setup-summary'),setupLabel=el('span','','Start Here'),setupArrow=el('span','archive-setup-arrow','▼'),setupBody=el('div','archive-setup-body'),filters=el('div','filters'),search=el('input');
  search.placeholder='Search images…';search.setAttribute('aria-label','Search images');
  const kind=el('select'),group=el('select');group.setAttribute('aria-label','League Name');
  for(const s of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',s);option.value=s;group.append(option)}
@@ -2803,7 +2835,7 @@ function renderArchive(){
  const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);
  filters.append(search,group,kind,refresh,download);
  const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
- setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);archiveGettingStarted(c);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
+ setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
  function draw(){
   grid.replaceChildren();
   const matches=assets.filter(a=>(group.value==='All leagues'||archiveLeague(a)===group.value)&&(kind.value==='All types'||a.kind===kind.value)&&(a.name+' '+a.path).toLowerCase().includes(search.value.toLowerCase()));
@@ -2817,7 +2849,7 @@ function renderArchive(){
    body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
    card.append(img,body);grid.append(card);
   }
-  if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'));
+  if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Build an archive here, choose a local folder, or connect GitHub above.'));
  }
  search.oninput=group.onchange=kind.onchange=draw;draw();
 }
