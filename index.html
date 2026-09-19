@@ -1684,14 +1684,15 @@ function exportImageURL(value,assets){
   if(asset?.path&&asset?.sourceId&&typeof archiveSources!=='undefined'){
     const source=archiveSources.find(s=>sourceKey(s)===asset.sourceId);
     if(source?.repository){
-      let version=source.branch||'main';
+      const version=source.branch||'main';
+      const path=asset.path.split('/').map(encodeURIComponent).join('/');
+      let cacheKey='';
       try{
         const localURL=new URL(asset.local);
-        const sha=localURL.searchParams.get('v');
-        if(sha)version=sha;
+        cacheKey=localURL.searchParams.get('v')||'';
       }catch{}
-      const path=asset.path.split('/').map(encodeURIComponent).join('/');
-      return 'https://cdn.jsdelivr.net/gh/'+source.repository+'@'+encodeURIComponent(version)+'/'+path;
+      const base='https://cdn.jsdelivr.net/gh/'+source.repository+'@'+encodeURIComponent(version)+'/'+path;
+      return cacheKey?base+'?v='+encodeURIComponent(cacheKey):base;
     }
   }
   try{
