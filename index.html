@@ -3311,7 +3311,6 @@ function renderColorTargets(parent,path){
  parent.append(row);
 }
 function renderTeamColors(parent,path){
- renderColorTargets(parent,path);
  const fields=el('div','fields team-color-fields');
  for(let i=0;i<3;i++){
   const wrap=el('label','field');wrap.append(el('span','',['Primary','Secondary','Tertiary'][i]));
