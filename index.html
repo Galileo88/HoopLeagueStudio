@@ -1679,33 +1679,24 @@ function exportImageURL(value,assets){
   const normalizedClean=clean(normalized),valueClean=clean(value);
   const asset=(assets||[]).find(a=>{
     const candidates=[a?.url,a?.local].filter(Boolean);
-    return candidates.some(candidate=>candidate===value||candidate===normalized||clean(candidate)===valueClean||clean(candidate)===normalizedClean);
+    return candidates.some(candidate=>
+      candidate===value||
+      candidate===normalized||
+      clean(candidate)===valueClean||
+      clean(candidate)===normalizedClean
+    );
   });
-  if(asset?.path&&asset?.sourceId&&typeof archiveSources!=='undefined'){
-    const source=archiveSources.find(s=>sourceKey(s)===asset.sourceId);
-    if(source?.repository){
-      const version=source.branch||'main';
-      const path=asset.path.split('/').map(encodeURIComponent).join('/');
-      let cacheKey='';
-      try{
-        const localURL=new URL(asset.local);
-        cacheKey=localURL.searchParams.get('v')||'';
-      }catch{}
-      const base='https://cdn.jsdelivr.net/gh/'+source.repository+'@'+encodeURIComponent(version)+'/'+path;
-      return cacheKey?base+'?v='+encodeURIComponent(cacheKey):base;
+  if(asset?.local){
+    try{
+      const u=new URL(asset.local);
+      // Keep the image blob SHA (?v=...) so Hoop Land sees a new URL when
+      // the file changes, but remove temporary archive-reset cache busting.
+      u.searchParams.delete('reset');
+      return u.href;
+    }catch{
+      return asset.local;
     }
   }
-  try{
-    const u=new URL(normalized);
-    if(u.hostname==='raw.githubusercontent.com'){
-      const parts=u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-      if(parts.length>=4){
-        const [owner,repo,ref,...pathParts]=parts;
-        const path=pathParts.map(encodeURIComponent).join('/');
-        return 'https://cdn.jsdelivr.net/gh/'+owner+'/'+repo+'@'+encodeURIComponent(ref)+'/'+path;
-      }
-    }
-  }catch{}
   return normalized;
 }
 async function prepareImages(data,assets,measure=imageDimensions){
