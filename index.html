@@ -1494,9 +1494,31 @@ body.pwa-install-open{
 }
 .preview-background-toggle:hover{background-color:transparent;opacity:1;transform:scale(1.08);box-shadow:none}
 .preview-background-toggle:active{transform:scale(.96);box-shadow:none}
-.preview-background-toggle[aria-pressed="true"]{background-color:transparent;opacity:1;filter:brightness(0) invert(1)}
+.preview-background-toggle[aria-pressed="true"]{background-color:transparent;opacity:1;filter:none}
+.preview-background-toggle::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:30px;
+  height:30px;
+  transform:translate(-50%,-50%);
+  background:#fff;
+  -webkit-mask-image:url("./hide.png");
+  mask-image:url("./hide.png");
+  -webkit-mask-position:center;
+  mask-position:center;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-mask-size:contain;
+  mask-size:contain;
+  opacity:0;
+  pointer-events:none;
+}
+.preview-background-toggle[aria-pressed="true"]::after{opacity:1}
 @media(max-width:760px){
   .preview-background-toggle{top:6px;left:6px;width:36px;min-width:36px;height:36px;min-height:36px;background-size:28px 28px}
+  .preview-background-toggle::after{width:28px;height:28px}
 }
 
 /* Color picker: no decorative preview background, centered image, and one-row color targets. */
