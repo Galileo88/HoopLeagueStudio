@@ -1073,11 +1073,10 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 .archive-builder-dropzone:hover,.archive-builder-dropzone:focus-visible,.archive-builder-dropzone.dragover{border-color:#4cf5ed;background:#0c3968}
 .archive-builder-dropzone strong,.archive-builder-dropzone small{display:block}
 .archive-builder-dropzone small{margin-top:6px;color:#bcd8f2}
-.archive-builder-files{display:grid;gap:6px;margin-top:10px}
-.archive-builder-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 8px;background:#092c55;border:1px solid #267cb9}
-.archive-builder-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
-.archive-builder-file button{min-height:34px;padding:4px 8px;font-size:12px}
-.archive-builder-empty{margin:9px 0 0;font-size:12px;color:#bcd8f2;text-align:center}
+.archive-builder-files{display:none}
+.asset.manage-mode{position:relative}
+.asset-remove{position:absolute;top:8px;right:8px;z-index:2;width:36px;height:36px;min-height:36px;padding:0;display:grid;place-items:center;font-size:24px;line-height:1;background:#b42332;border-color:#ff8994;color:#fff;box-shadow:2px 2px 0 #4a0d16}
+.asset-remove:hover{background:#d02d3e;border-color:#ffb0b7}
 .archive-builder-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .archive-builder-actions button{flex:0 1 auto}
 .archive-builder-status{display:block;margin-top:10px;color:#bcd8f2}
@@ -2520,6 +2519,21 @@ function render(){
 }
 let localAssets=[],archiveSources=[],openSourceEditor=false,archiveSourceTab='online';
 let archiveBuilder={leagueName:'',files:{Logos:[],Courts:[],Ads:[]},confirmed:false,sourceId:''};
+let archiveRemovedAssetKeys=new Set();
+function archiveAssetKey(asset){return String(asset?.sourceId||'')+'|'+String(asset?.path||asset?.url||asset?.name||'')}
+function removeArchiveAsset(asset){
+ const key=archiveAssetKey(asset);
+ if(asset?.isLocal){
+  localAssets=localAssets.filter(item=>archiveAssetKey(item)!==key);
+  if(archiveBuilder.sourceId&&asset.sourceId===archiveBuilder.sourceId&&archiveBuilder.files[asset.kind]){
+   const targetPath=String(asset.path||'');
+   archiveBuilder.files[asset.kind]=archiveBuilder.files[asset.kind].filter(file=>targetPath!==(archiveBuilderName()+'/'+asset.kind+'/'+file.name));
+   archiveBuilder.confirmed=archiveBuilderCount()>0;
+  }
+ }else archiveRemovedAssetKeys.add(key);
+ assets=assets.filter(item=>archiveAssetKey(item)!==key);
+ syncArchiveList();dirty=true;
+}
 function sourceKey(source){return source.repository.toLowerCase()+'@'+source.branch}
 function syncArchiveList(){assets.sort((a,b)=>a.name.localeCompare(b.name));$('#assetCount').textContent=assets.length;const picker=$('#pickArchive');picker.replaceChildren();for(const a of assets){const o=el('option','',a.name+' · '+a.era+' · '+a.kind);o.value=a.local;picker.append(o)}}
 function renderConnectedSources(parent){
@@ -2597,7 +2611,6 @@ function archiveBuilderAdd(kind,fileList){
  archiveBuilder.confirmed=false;
  if(incoming.length!==[...fileList].length)toast('Only PNG, JPG, JPEG, and WebP images are added.');
 }
-function archiveBuilderRemove(kind,index){archiveBuilder.files[kind].splice(index,1);archiveBuilder.confirmed=false}
 function archiveBuilderCount(){return Object.values(archiveBuilder.files).reduce((sum,list)=>sum+list.length,0)}
 function archiveBuilderName(){return String(archiveBuilder.leagueName||'').trim()}
 function validArchiveFolderName(name){return Boolean(name)&&!/[<>:"/\\|?*]/.test(name)&&name!=='.'&&name!=='..'}
@@ -2648,9 +2661,8 @@ function archiveBuilderEditor(parent){
  name.addEventListener('input',()=>{archiveBuilder.leagueName=name.value;archiveBuilder.confirmed=false;updateActions()});nameLabel.append(el('span','','League Name'),name);card.append(nameLabel);
  const grid=el('div','archive-builder-grid'),categoryViews={};card.append(grid);
  const renderCategory=kind=>{
-  const view=categoryViews[kind];view.list.replaceChildren();const files=archiveBuilder.files[kind];view.count.textContent=files.length+' '+(files.length===1?'file':'files');
-  if(!files.length)view.list.append(el('p','archive-builder-empty','No images added yet.'));
-  files.forEach((file,index)=>{const row=el('div','archive-builder-file'),remove=el('button','','Remove');remove.type='button';remove.onclick=()=>{archiveBuilderRemove(kind,index);renderCategory(kind);updateActions()};row.append(el('span','',file.name),remove);view.list.append(row)});
+  const view=categoryViews[kind],files=archiveBuilder.files[kind];
+  view.count.textContent=files.length+' '+(files.length===1?'file':'files');
  };
  for(const kind of ['Logos','Courts','Ads']){
   const box=el('section','archive-builder-category'),drop=el('div','archive-builder-dropzone'),title=el('strong','',kind),count=el('small'),input=el('input'),list=el('div','archive-builder-files');input.type='file';input.multiple=true;input.accept='image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp';input.hidden=true;
@@ -2814,19 +2826,19 @@ function archiveSourceEditor(parent){
 let archiveRefreshing=false;
 async function refreshArchive(quiet=false,force=false){
  if(archiveRefreshing)return;if(!archiveSources.length){if(!quiet)toast('Add a source to start your archive.');return}archiveRefreshing=true;
- const result=[...localAssets],failures=[],warnings=[];
+ const result=[...localAssets].filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a))),failures=[],warnings=[];
  try{
   for(const source of archiveSources){
    try{
     const loaded=await loadArchiveSource(source,force);
-    result.push(...loaded.assets);
+    result.push(...loaded.assets.filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a))));
     if(loaded.warning)warnings.push(loaded.warning);
    }catch(error){
     failures.push(source.repository+': '+error.message);
     result.push(...assets.filter(a=>a.sourceId===sourceKey(source)));
    }
   }
-  assets=result;syncArchiveList();if(view==='images')render();
+  assets=result.filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a)));syncArchiveList();if(view==='images')render();
   if(failures.length)toast(failures[0]);
   else if(warnings.length)toast(warnings[0]);
   else if(!quiet)toast('Online sources updated: '+assets.length+' images.');
@@ -2841,9 +2853,10 @@ function renderArchive(){
  const kind=el('select'),group=el('select');group.setAttribute('aria-label','League Name');
  for(const s of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',s);option.value=s;group.append(option)}
  kind.setAttribute('aria-label','Image type');for(const s of ['All types','Logos','Courts','Ads'])kind.append(el('option','',s));
- const download=el('button','','Download URL List');download.onclick=()=>saveFile('hoopland-image-urls.json',JSON.stringify(assets.map(({local,...a})=>a),null,2));
+ let managing=false;
+ const manage=el('button','','Manage');manage.type='button';
  const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);
- filters.append(search,group,kind,refresh,download);
+ filters.append(search,group,kind,refresh,manage);
  const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
  setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
  function draw(){
@@ -2857,10 +2870,18 @@ function renderArchive(){
    if(Number(a.width)>0&&Number(a.height)>0)showDimensions();else dimensions.textContent='Loading dimensions…';
    img.addEventListener('load',showDimensions,{once:true});img.addEventListener('error',()=>{dimensions.textContent='Dimensions unavailable'},{once:true});
    body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
-   card.append(img,body);grid.append(card);
+   card.append(img,body);
+   if(managing){
+    card.classList.add('manage-mode');
+    const remove=el('button','asset-remove','−');remove.type='button';remove.title='Remove '+a.name;remove.setAttribute('aria-label','Remove '+a.name+' from the image archive');
+    remove.onclick=()=>{if(!confirm('Remove “'+a.name+'” from the image archive?'))return;removeArchiveAsset(a);draw();toast('Image removed from the archive.')};
+    card.append(remove);
+   }
+   grid.append(card);
   }
   if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Build an archive here, choose a local folder, or connect GitHub above.'));
  }
+ manage.onclick=()=>{managing=!managing;manage.textContent=managing?'Done':'Manage';manage.setAttribute('aria-pressed',String(managing));draw()};
  search.oninput=group.onchange=kind.onchange=draw;draw();
 }
 function saveFile(name,text){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -2877,7 +2898,7 @@ function draftStore(mode,record,slot=0){
   request.onsuccess=()=>{const db=request.result;let tx,result;try{tx=db.transaction('drafts',mode==='delete'?'readwrite':mode);const store=tx.objectStore('drafts');const operation=mode==='delete'?store.delete(key):mode==='readwrite'?store.put(record,key):store.get(key);operation.onsuccess=()=>{result=operation.result};tx.oncomplete=()=>{db.close();resolve(result)};tx.onabort=tx.onerror=()=>{db.close();reject(tx.error||Error('Could not access the saved draft.'))}}catch(error){db.close();reject(error)}};
  });
 }
-function draftSnapshot(){return {version:2,archiveSources:structuredClone(archiveSources),localAssets:structuredClone(localAssets),archiveSource:structuredClone(archiveSource),savedAt:new Date().toISOString(),league:structuredClone(league)}}
+function draftSnapshot(){return {version:2,archiveSources:structuredClone(archiveSources),localAssets:structuredClone(localAssets),archiveRemovedAssetKeys:[...archiveRemovedAssetKeys],archiveSource:structuredClone(archiveSource),savedAt:new Date().toISOString(),league:structuredClone(league)}}
 async function openDraftSlots(mode){
  if(mode==='save'&&(!league||!canNavigate()))return;
  const dialog=el('dialog','draft-dialog'),heading=el('h2','',mode==='save'?'Save League':'Load League'),close=el('button','','Close'),list=el('div'),message=el('p','','Loading saved leagues…');heading.id='draft-dialog-title';dialog.setAttribute('aria-labelledby',heading.id);message.setAttribute('role','status');close.type='button';close.onclick=()=>dialog.close();dialog.append(heading,message,list,close);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();let busy=false;dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});
@@ -2889,7 +2910,7 @@ async function openDraftSlots(mode){
  try{if(mode==='save'){
  const owner=league,record=draftSnapshot(),snapshot=JSON.stringify(record.league);await draftStore('readwrite',record,slot);activeDraftSlot=slot;if(league===owner&&JSON.stringify(league)===snapshot){dirty=false;$('#status').textContent='Saved to slot '+(slot+1)}toast('Progress saved to slot '+(slot+1));
  }else{
- const restored=validate(structuredClone(record.league));archiveSources=structuredClone(record.archiveSources||(record.archiveSource?.repository?[record.archiveSource]:[]));localAssets=structuredClone(record.localAssets||[]).map(a=>({...a,url:a.url||a.local}));archiveSource=structuredClone(record.archiveSource||{repository:'',branch:'main',folders:[]});assets=[...localAssets];syncArchiveList();load(restored);activeDraftSlot=slot;$('#status').textContent='Restored slot '+(slot+1);void refreshArchive(true);toast('Saved league restored.');
+ const restored=validate(structuredClone(record.league));archiveSources=structuredClone(record.archiveSources||(record.archiveSource?.repository?[record.archiveSource]:[]));localAssets=structuredClone(record.localAssets||[]).map(a=>({...a,url:a.url||a.local}));archiveRemovedAssetKeys=new Set(record.archiveRemovedAssetKeys||[]);archiveSource=structuredClone(record.archiveSource||{repository:'',branch:'main',folders:[]});assets=[...localAssets].filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a)));syncArchiveList();load(restored);activeDraftSlot=slot;$('#status').textContent='Restored slot '+(slot+1);void refreshArchive(true);toast('Saved league restored.');
  }dialog.close();
  }catch(error){message.textContent='Could not '+mode+' progress: '+error.message;for(const [i,row]of [...list.children].entries()){row.children[0].disabled=mode==='restore'&&!records[i];if(row.children[1])row.children[1].disabled=false}}finally{busy=false;close.disabled=false}
  };
