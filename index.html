@@ -1693,24 +1693,60 @@ function exportImageAssetKey(value){
     return String(normalized??'').split('#')[0].split('?')[0];
   }
 }
-function exportImageURL(value,assets){
-  const normalized=archiveURL(value,assets),wantedKey=exportImageAssetKey(normalized);
-  const asset=(assets||[]).find(a=>
+function findExportAsset(value,assets){
+  const wantedKey=exportImageAssetKey(value);
+  return (assets||[]).find(a=>
     [a?.url,a?.local].filter(Boolean).some(candidate=>exportImageAssetKey(candidate)===wantedKey)
-  );
-
+  )||null;
+}
+function exportLogoURL(value,assets){
+  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
   if(asset?.local){
     try{
       const u=new URL(asset.local);
-      // Keep the file blob SHA (?v=...) so Hoop Land treats updated logos,
-      // courts and table graphics as new images. Never export reset timestamps.
+      // Logos need a stable file-revision cache buster in Hoop Land.
       u.searchParams.delete('reset');
       return u.href;
     }catch{
       return asset.local;
     }
   }
-
+  return normalized;
+}
+function exportCourtURL(value,assets){
+  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
+  if(asset?.url){
+    try{
+      const u=new URL(asset.url);
+      // Hoop Land's custom court loader works reliably with the plain image URL.
+      // Do not append the logo-style ?v= cache buster to court overlays.
+      u.search='';
+      u.hash='';
+      return u.href;
+    }catch{
+      return String(asset.url).split('#')[0].split('?')[0];
+    }
+  }
+  try{
+    const u=new URL(normalized);
+    u.search='';
+    u.hash='';
+    return u.href;
+  }catch{
+    return String(normalized??'').split('#')[0].split('?')[0];
+  }
+}
+function exportOtherImageURL(value,assets){
+  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
+  if(asset?.local){
+    try{
+      const u=new URL(asset.local);
+      u.searchParams.delete('reset');
+      return u.href;
+    }catch{
+      return asset.local;
+    }
+  }
   return normalized;
 }
 async function prepareImages(data,assets,measure=imageDimensions){
@@ -1718,7 +1754,7 @@ async function prepareImages(data,assets,measure=imageDimensions){
   const prepareLogo=(owner,name)=>{
     if(!isCustomImage(owner.logoURL))return;
     jobs.push((async()=>{
-      owner.logoURL=exportImageURL(owner.logoURL,assets);
+      owner.logoURL=exportLogoURL(owner.logoURL,assets);
       try{
         validateImageSize(await measure(owner.logoURL));
         if(!Number.isInteger(owner.logoSize)||owner.logoSize<0||owner.logoSize>4)owner.logoSize=0;
@@ -1728,7 +1764,7 @@ async function prepareImages(data,assets,measure=imageDimensions){
   const prepareCourt=(team,name)=>{
     if(!isCustomImage(team.court?.overlayURL))return;
     jobs.push((async()=>{
-      team.court.overlayURL=exportImageURL(team.court.overlayURL,assets);
+      team.court.overlayURL=exportCourtURL(team.court.overlayURL,assets);
       try{validateImageSize(await measure(team.court.overlayURL),'court')}
       catch(e){throw Error(name+' court: '+e.message)}
     })());
@@ -1744,7 +1780,7 @@ async function prepareImages(data,assets,measure=imageDimensions){
     const office=team.frontOffice;
     if(!isCustomImage(office?.adsURL))continue;
     jobs.push((async()=>{
-      office.adsURL=exportImageURL(office.adsURL,assets);
+      office.adsURL=exportOtherImageURL(office.adsURL,assets);
       try{
         const size=await measure(office.adsURL);
         if(!Number.isInteger(size.width)||size.width<1||!Number.isInteger(size.height)||size.height<1)throw Error('Invalid image dimensions.');
