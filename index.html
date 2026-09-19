@@ -1674,80 +1674,83 @@ function validateImageSize(size,kind='logo'){
   return size;
 }
 function isCustomImage(value){return typeof value==='string'&&/^(?:https?:\/\/|data:image\/|blob:)/i.test(value.trim())}
-function exportImageAssetKey(value){
+function archiveAssetKey(value){
   const normalized=archiveURL(value,assets);
   try{
     const u=new URL(normalized);
     u.hash='';
     u.search='';
-    if(u.hostname.toLowerCase()==='raw.githubusercontent.com'){
+    const host=u.hostname.toLowerCase();
+    if(host==='raw.githubusercontent.com'){
       const parts=u.pathname.split('/').filter(Boolean);
       if(parts.length>=4){
-        const owner=parts[0].toLowerCase(),repo=parts[1].toLowerCase(),ref=parts[2];
+        const owner=parts[0].toLowerCase();
+        const repo=parts[1].toLowerCase();
+        const ref=parts[2];
         const path=parts.slice(3).map(decodeURIComponent).join('/');
         return 'github:'+owner+'/'+repo+'/'+ref+'/'+path;
       }
     }
-    return u.hostname.toLowerCase()+u.pathname;
+    return host+u.pathname;
   }catch{
     return String(normalized??'').split('#')[0].split('?')[0];
   }
 }
-function findExportAsset(value,assets){
-  const wantedKey=exportImageAssetKey(value);
-  return (assets||[]).find(a=>
-    [a?.url,a?.local].filter(Boolean).some(candidate=>exportImageAssetKey(candidate)===wantedKey)
+function findArchiveAsset(value,assets){
+  const wanted=archiveAssetKey(value);
+  return (assets||[]).find(asset=>
+    [asset?.url,asset?.local].filter(Boolean).some(candidate=>archiveAssetKey(candidate)===wanted)
   )||null;
 }
 function exportLogoURL(value,assets){
-  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
-  if(asset?.local){
-    try{
-      const u=new URL(asset.local);
-      // Logos need a stable file-revision cache buster in Hoop Land.
-      u.searchParams.delete('reset');
-      return u.href;
-    }catch{
-      return asset.local;
-    }
+  const normalized=archiveURL(value,assets);
+  const asset=findArchiveAsset(normalized,assets);
+  if(!asset?.local)return normalized;
+  try{
+    const u=new URL(asset.local);
+    u.searchParams.delete('reset');
+    return u.href;
+  }catch{
+    return asset.local;
   }
-  return normalized;
 }
 function exportCourtURL(value,assets){
-  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
-  if(asset?.url){
-    try{
-      const u=new URL(asset.url);
-      // Hoop Land's custom court loader works reliably with the plain image URL.
-      // Do not append the logo-style ?v= cache buster to court overlays.
-      u.search='';
-      u.hash='';
-      return u.href;
-    }catch{
-      return String(asset.url).split('#')[0].split('?')[0];
+  const normalized=archiveURL(value,assets);
+  const asset=findArchiveAsset(normalized,assets);
+
+  // For connected GitHub court images, export an immutable raw URL using
+  // the branch's current commit SHA. This changes the URL path itself when
+  // the repository changes, avoiding Hoop Land's stale court texture cache.
+  if(asset?.path&&asset?.commitSha&&asset?.sourceId&&typeof archiveSources!=='undefined'){
+    const source=archiveSources.find(item=>sourceKey(item)===asset.sourceId);
+    if(source?.repository&&/^[a-f0-9]{40}$/i.test(asset.commitSha)){
+      const path=asset.path.split('/').map(encodeURIComponent).join('/');
+      return 'https://raw.githubusercontent.com/'+source.repository+'/'+asset.commitSha+'/'+path;
     }
   }
+
+  // Non-GitHub / older archive entries keep their canonical URL.
+  const fallback=asset?.url||normalized;
   try{
-    const u=new URL(normalized);
+    const u=new URL(fallback);
     u.search='';
     u.hash='';
     return u.href;
   }catch{
-    return String(normalized??'').split('#')[0].split('?')[0];
+    return String(fallback??'').split('#')[0].split('?')[0];
   }
 }
 function exportOtherImageURL(value,assets){
-  const normalized=archiveURL(value,assets),asset=findExportAsset(normalized,assets);
-  if(asset?.local){
-    try{
-      const u=new URL(asset.local);
-      u.searchParams.delete('reset');
-      return u.href;
-    }catch{
-      return asset.local;
-    }
+  const normalized=archiveURL(value,assets);
+  const asset=findArchiveAsset(normalized,assets);
+  if(!asset?.local)return normalized;
+  try{
+    const u=new URL(asset.local);
+    u.searchParams.delete('reset');
+    return u.href;
+  }catch{
+    return asset.local;
   }
-  return normalized;
 }
 async function prepareImages(data,assets,measure=imageDimensions){
   const result=structuredClone(data),jobs=[];
@@ -2979,22 +2982,53 @@ async function fetchPublicGitHubBranches(repository,force=false){
 function githubTreeCacheKey(source){return GITHUB_TREE_CACHE_PREFIX+sourceKey(source)}
 async function loadArchiveSource(source,force=false){
  const key=githubTreeCacheKey(source),cached=readGitHubCache(key,GITHUB_TREE_CACHE_TTL);
- if(cached&&!force)return {assets:cached.data,fromCache:true};
+
+ // Older cache entries did not contain commitSha. Refresh those automatically.
+ if(cached&&!force&&Array.isArray(cached.data)&&cached.data.length&&cached.data.every(asset=>/^[a-f0-9]{40}$/i.test(asset.commitSha||''))){
+  return {assets:cached.data,fromCache:true};
+ }
 
  try{
-  const data=await fetchGitHubJSON('https://api.github.com/repos/'+source.repository+'/git/trees/'+encodeURIComponent(source.branch)+'?recursive=1',15000);
+  const branchURL='https://api.github.com/repos/'+source.repository+'/branches/'+encodeURIComponent(source.branch);
+  const treeURL='https://api.github.com/repos/'+source.repository+'/git/trees/'+encodeURIComponent(source.branch)+'?recursive=1';
+  const [branch,data]=await Promise.all([
+   fetchGitHubJSON(branchURL,15000),
+   fetchGitHubJSON(treeURL,15000)
+  ]);
+
+  const commitSha=String(branch?.commit?.sha||'').trim();
+  if(!/^[a-f0-9]{40}$/i.test(commitSha))throw Error('Could not resolve the current GitHub commit.');
   if(data.truncated||!Array.isArray(data.tree))throw Error('Incomplete repository response.');
-  const entries=data.tree.filter(e=>e.type==='blob'&&leagueAssetPath(e.path));
+
+  const entries=data.tree.filter(entry=>entry.type==='blob'&&leagueAssetPath(entry.path));
   if(!entries.length)throw Error('No images in League Name/Logos, Courts, or Ads.');
-  const loaded=entries.map(e=>{
-   const meta=leagueAssetPath(e.path),url='https://raw.githubusercontent.com/'+source.repository+'/'+source.branch+'/'+e.path.split('/').map(encodeURIComponent).join('/');
-   return {sourceId:sourceKey(source),collection:meta.leagueName,path:e.path,name:e.path.split('/').pop(),group:meta.leagueName,era:meta.leagueName,kind:meta.kind,url,local:url+'?v='+e.sha+(force?'&reset='+Date.now():''),aliases:[]};
+
+  const loaded=entries.map(entry=>{
+   const meta=leagueAssetPath(entry.path);
+   const encodedPath=entry.path.split('/').map(encodeURIComponent).join('/');
+   const url='https://raw.githubusercontent.com/'+source.repository+'/'+source.branch+'/'+encodedPath;
+   return {
+    sourceId:sourceKey(source),
+    commitSha,
+    collection:meta.leagueName,
+    path:entry.path,
+    name:entry.path.split('/').pop(),
+    group:meta.leagueName,
+    era:meta.leagueName,
+    kind:meta.kind,
+    url,
+    local:url+'?v='+entry.sha+(force?'&reset='+Date.now():''),
+    aliases:[]
+   };
   });
+
   writeGitHubCache(key,loaded);
   return {assets:loaded};
  }catch(error){
   const stale=readGitHubCache(key,GITHUB_TREE_CACHE_TTL,true);
-  if(stale)return {assets:stale.data,fromCache:true,warning:'Using the last saved image list for '+source.repository+'. '+error.message};
+  if(stale&&Array.isArray(stale.data)&&stale.data.length){
+   return {assets:stale.data,fromCache:true,warning:'Using the last saved image list for '+source.repository+'. '+error.message};
+  }
   throw error;
  }
 }
