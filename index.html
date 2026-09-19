@@ -1674,12 +1674,45 @@ function validateImageSize(size,kind='logo'){
   return size;
 }
 function isCustomImage(value){return typeof value==='string'&&/^(?:https?:\/\/|data:image\/|blob:)/i.test(value.trim())}
+function exportImageURL(value,assets){
+  const normalized=archiveURL(value,assets),clean=v=>String(v??'').split('#')[0].split('?')[0];
+  const normalizedClean=clean(normalized),valueClean=clean(value);
+  const asset=(assets||[]).find(a=>{
+    const candidates=[a?.url,a?.local].filter(Boolean);
+    return candidates.some(candidate=>candidate===value||candidate===normalized||clean(candidate)===valueClean||clean(candidate)===normalizedClean);
+  });
+  if(asset?.path&&asset?.sourceId&&typeof archiveSources!=='undefined'){
+    const source=archiveSources.find(s=>sourceKey(s)===asset.sourceId);
+    if(source?.repository){
+      let version=source.branch||'main';
+      try{
+        const localURL=new URL(asset.local);
+        const sha=localURL.searchParams.get('v');
+        if(sha)version=sha;
+      }catch{}
+      const path=asset.path.split('/').map(encodeURIComponent).join('/');
+      return 'https://cdn.jsdelivr.net/gh/'+source.repository+'@'+encodeURIComponent(version)+'/'+path;
+    }
+  }
+  try{
+    const u=new URL(normalized);
+    if(u.hostname==='raw.githubusercontent.com'){
+      const parts=u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+      if(parts.length>=4){
+        const [owner,repo,ref,...pathParts]=parts;
+        const path=pathParts.map(encodeURIComponent).join('/');
+        return 'https://cdn.jsdelivr.net/gh/'+owner+'/'+repo+'@'+encodeURIComponent(ref)+'/'+path;
+      }
+    }
+  }catch{}
+  return normalized;
+}
 async function prepareImages(data,assets,measure=imageDimensions){
   const result=structuredClone(data),jobs=[];
-  const logo=(owner,name)=>{if(!isCustomImage(owner.logoURL))return;jobs.push((async()=>{owner.logoURL=archiveURL(owner.logoURL,assets);try{validateImageSize(await measure(owner.logoURL));if(!Number.isInteger(owner.logoSize)||owner.logoSize<0||owner.logoSize>4)owner.logoSize=0}catch(e){throw Error(name+' logo: '+e.message)}})())};
+  const logo=(owner,name)=>{if(!isCustomImage(owner.logoURL))return;jobs.push((async()=>{owner.logoURL=exportImageURL(owner.logoURL,assets);try{validateImageSize(await measure(owner.logoURL));if(!Number.isInteger(owner.logoSize)||owner.logoSize<0||owner.logoSize>4)owner.logoSize=0}catch(e){throw Error(name+' logo: '+e.message)}})())};
   logo(result,'League');
-  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const name=teamDisplayName(team);logo(team,name);if(isCustomImage(team.court?.overlayURL))jobs.push((async()=>{team.court.overlayURL=archiveURL(team.court.overlayURL,assets);try{validateImageSize(await measure(team.court.overlayURL),'court')}catch(e){throw Error(name+' court: '+e.message)}})())}
-  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const office=team.frontOffice;if(!isCustomImage(office?.adsURL))continue;jobs.push((async()=>{office.adsURL=archiveURL(office.adsURL,assets);try{const size=await measure(office.adsURL);if(!Number.isInteger(size.width)||size.width<1||!Number.isInteger(size.height)||size.height<1)throw Error('Invalid image dimensions.');office.adSize=size.width}catch(e){throw Error(team.name+' announcer table: '+e.message)}})())}
+  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const name=teamDisplayName(team);logo(team,name);if(isCustomImage(team.court?.overlayURL))jobs.push((async()=>{team.court.overlayURL=exportImageURL(team.court.overlayURL,assets);try{validateImageSize(await measure(team.court.overlayURL),'court')}catch(e){throw Error(name+' court: '+e.message)}})())}
+  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const office=team.frontOffice;if(!isCustomImage(office?.adsURL))continue;jobs.push((async()=>{office.adsURL=exportImageURL(office.adsURL,assets);try{const size=await measure(office.adsURL);if(!Number.isInteger(size.width)||size.width<1||!Number.isInteger(size.height)||size.height<1)throw Error('Invalid image dimensions.');office.adSize=size.width}catch(e){throw Error(team.name+' announcer table: '+e.message)}})())}
   await Promise.all(jobs);return result;
 }
 
