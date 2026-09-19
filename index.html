@@ -1048,46 +1048,6 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
   }
 }
 
-/* Image Archive builder */
-.archive-entry-card{padding:0;overflow:hidden}
-.archive-entry-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:62px;padding:12px 16px;list-style:none;cursor:pointer}
-.archive-entry-summary::-webkit-details-marker{display:none}
-.archive-entry-summary-text{min-width:0}
-.archive-entry-card .archive-step-label{margin:0 0 3px!important}
-.archive-entry-summary h2{margin:0;font-size:19px}
-.archive-entry-arrow{flex:0 0 auto;color:#79fff4;font-size:16px;transition:transform .15s ease}
-.archive-entry-card[open]>.archive-entry-summary{border-bottom:2px solid #267cb9;margin-bottom:14px;color:#79fff4}
-.archive-entry-card[open]>.archive-entry-summary .archive-entry-arrow{transform:rotate(180deg)}
-.archive-entry-card>:not(summary){margin-left:16px;margin-right:16px}
-.archive-entry-card>:last-child{margin-bottom:16px}
-.archive-entry-description{margin-top:0!important;margin-left:0!important;margin-right:0!important;padding-left:16px;padding-right:16px}
-@media(max-width:760px){.archive-entry-description{padding-left:12px;padding-right:12px}}
-@media(max-width:760px){.archive-entry-summary{min-height:56px;padding:10px 12px}.archive-entry-card>:not(summary){margin-left:12px;margin-right:12px}.archive-entry-card>:last-child{margin-bottom:12px}}
-.archive-entry-card .archive-step-label{margin-bottom:3px!important}
-.archive-builder-name,.archive-entry-card>.archive-folder-picker{display:block;box-sizing:border-box;width:min(calc((100% - 20px)/2),440px);max-width:none;padding-left:0;padding-right:0}
-.archive-builder-name{margin-bottom:16px}
-.archive-builder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
-.archive-builder-category{min-width:0;padding:12px;background:#0b3263;border:2px solid #237db7}
-.archive-builder-category h3{margin:0 0 8px;color:#79fff4;font-size:16px;text-transform:uppercase;letter-spacing:.5px}
-.archive-builder-dropzone{display:flex;flex-direction:column;min-height:118px;align-items:center;justify-content:center;text-align:center;padding:14px;border:2px dashed #4b9ccc;background:#082b56;cursor:pointer;outline:none}
-.archive-builder-dropzone:hover,.archive-builder-dropzone:focus-visible,.archive-builder-dropzone.dragover{border-color:#4cf5ed;background:#0c3968}
-.archive-builder-dropzone strong,.archive-builder-dropzone small{display:block}
-.archive-builder-dropzone small{margin-top:6px;color:#bcd8f2}
-.archive-builder-files{display:none}
-.asset.manage-mode{position:relative}
-.asset-remove{position:absolute;top:8px;right:8px;z-index:2;width:36px;height:36px;min-height:36px;padding:0;display:grid;place-items:center;font-size:24px;line-height:1;background:#b42332;border-color:#ff8994;color:#fff;box-shadow:2px 2px 0 #4a0d16}
-.asset-remove:hover{background:#d02d3e;border-color:#ffb0b7}
-.archive-builder-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.archive-builder-actions button{flex:0 1 auto}
-.archive-builder-status{display:block;margin-top:10px;color:#bcd8f2}
-.archive-builder-status.ready{color:#79fff4}
-@media(max-width:900px){.archive-builder-name,.archive-entry-card>.archive-folder-picker{width:auto}}
-.archive-local-template{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:14px}
-.archive-local-template .field{min-width:0}
-.archive-local-template button{min-height:44px;white-space:nowrap}
-.archive-local-template-hint{display:block;margin:-4px 0 14px;color:#bcd8f2;font-size:12px}
-@media(max-width:760px){.archive-builder-grid{grid-template-columns:1fr}.archive-builder-actions button{flex:1 1 180px}.archive-local-template{grid-template-columns:minmax(0,1fr)}.archive-local-template button{width:100%}}
-
 /* Workspace */
 
 .getting-started-workspaces{
@@ -1490,20 +1450,6 @@ body.pwa-install-open{
 .archive-image-dimensions{display:block;margin:-1px 0 9px;color:#79fff4;font-size:12px;font-weight:700}
 
 </style>
-
-<style>
-/* Image Library preview background */
-.gallery .asset img{
-  background-color:#071e32;
-  background-image:
-    url("./bg.jpeg"),
-    repeating-conic-gradient(#123b60 0% 25%,#0b2d4b 0% 50%);
-  background-size:cover,20px 20px;
-  background-position:center center,0 0;
-  background-repeat:no-repeat,repeat;
-}
-</style>
-
 </head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
     <div class="pwa-install-copy">
@@ -2532,22 +2478,6 @@ function render(){
  renderObject(card,view==='league'?league:t,view==='league'?[]:[teamList,selected]);
 }
 let localAssets=[],archiveSources=[],openSourceEditor=false,archiveSourceTab='online';
-let archiveBuilder={leagueName:'',files:{Logos:[],Courts:[],Ads:[]},confirmed:false,sourceId:''};
-let archiveRemovedAssetKeys=new Set();
-function archiveAssetKey(asset){return String(asset?.sourceId||'')+'|'+String(asset?.path||asset?.url||asset?.name||'')}
-function removeArchiveAsset(asset){
- const key=archiveAssetKey(asset);
- if(asset?.isLocal){
-  localAssets=localAssets.filter(item=>archiveAssetKey(item)!==key);
-  if(archiveBuilder.sourceId&&asset.sourceId===archiveBuilder.sourceId&&archiveBuilder.files[asset.kind]){
-   const targetPath=String(asset.path||'');
-   archiveBuilder.files[asset.kind]=archiveBuilder.files[asset.kind].filter(file=>targetPath!==(archiveBuilderName()+'/'+asset.kind+'/'+file.name));
-   archiveBuilder.confirmed=archiveBuilderCount()>0;
-  }
- }else archiveRemovedAssetKeys.add(key);
- assets=assets.filter(item=>archiveAssetKey(item)!==key);
- syncArchiveList();dirty=true;
-}
 function sourceKey(source){return source.repository.toLowerCase()+'@'+source.branch}
 function syncArchiveList(){assets.sort((a,b)=>a.name.localeCompare(b.name));$('#assetCount').textContent=assets.length;const picker=$('#pickArchive');picker.replaceChildren();for(const a of assets){const o=el('option','',a.name+' · '+a.era+' · '+a.kind);o.value=a.local;picker.append(o)}}
 function renderConnectedSources(parent){
@@ -2609,88 +2539,35 @@ function localAssetImporter(parent){
 let archiveSource={repository:'',branch:'main',folders:[]};
 
 function archiveStepCard(number,title,body){
- const card=el('details','card archive-step-card archive-entry-card'),summary=el('summary','archive-entry-summary'),heading=el('div','archive-entry-summary-text'),arrow=el('span','archive-entry-arrow','▼');
- heading.append(el('p','eyebrow archive-step-label','OPTION '+number),el('h2','',title));
- summary.append(heading,arrow);card.append(summary);
- if(body)card.append(el('p','archive-entry-description',body));
+ const card=el('section','card archive-step-card');
+ card.append(el('p','eyebrow archive-step-label','STEP '+number),el('h2','',title));
+ if(body)card.append(el('p','',body));
  return card;
 }
-function archiveBuilderAccepted(file){return Boolean(file&&(/^image\/(png|jpeg|webp)$/i.test(file.type)||/\.(png|jpg|jpeg|webp)$/i.test(file.name)))}
-function archiveBuilderAdd(kind,fileList){
- const incoming=[...fileList].filter(archiveBuilderAccepted),existing=archiveBuilder.files[kind];
- for(const file of incoming){
-  const key=file.name+'|'+file.size+'|'+file.lastModified;
-  if(!existing.some(current=>current.name+'|'+current.size+'|'+current.lastModified===key))existing.push(file);
+function archiveGettingStarted(parent){
+ const intro=el('section','card archive-getting-started');
+ intro.append(el('h2','','Get Started'),el('p','','Set up your image folders, then connect either a local folder or a public GitHub repository.'));
+ parent.append(intro);
+}
+function archiveSetupSteps(parent){
+ const step1=archiveStepCard(1,'Download Folder Template','Enter your league name and download the required folder template.');
+ const templateRow=el('div','archive-template-row'),name=el('input'),download=el('button','primary','Download Folder Template');
+ name.placeholder='League name';name.setAttribute('aria-label','League name for folder template');
+ download.type='button';download.onclick=()=>downloadLeagueFolders(name.value);
+ templateRow.append(name,download);step1.append(templateRow);parent.append(step1);
+
+ const step2=archiveStepCard(2,'Extract','Extract the downloaded ZIP before adding images.');
+ const directions=el('div','archive-extract-directions');
+ directions.append(el('span','','Windows: Right-click the ZIP → Extract All.'),el('span','','macOS: Double-click the ZIP.'));
+ step2.append(directions);parent.append(step2);
+
+ const step3=archiveStepCard(3,'Place Your League Assets','Put each image in the matching folder. Keep the folder names unchanged.');
+ const folders=el('div','archive-folder-grid');
+ for(const [name,desc]of [['Logos','Team and league logos'],['Courts','Court and floor images'],['Ads','Arena advertisement images']]){
+  const item=el('div','archive-folder-item');item.append(el('strong','',name),el('small','',desc));folders.append(item);
  }
- archiveBuilder.confirmed=false;
- if(incoming.length!==[...fileList].length)toast('Only PNG, JPG, JPEG, and WebP images are added.');
+ step3.append(folders);parent.append(step3);
 }
-function archiveBuilderCount(){return Object.values(archiveBuilder.files).reduce((sum,list)=>sum+list.length,0)}
-function archiveBuilderName(){return String(archiveBuilder.leagueName||'').trim()}
-function validArchiveFolderName(name){return Boolean(name)&&!/[<>:"/\\|?*]/.test(name)&&name!=='.'&&name!=='..'}
-function zipCrc32(data){let crc=0xffffffff;for(const byte of data){crc^=byte;for(let i=0;i<8;i++)crc=(crc>>>1)^((crc&1)?0xedb88320:0)}return (crc^0xffffffff)>>>0}
-function downloadStoredZip(filename,entries){
- const enc=new TextEncoder(),chunks=[],central=[];let offset=0,total=0;
- const header=size=>{const bytes=new Uint8Array(size);return {bytes,v:new DataView(bytes.buffer)}};
- for(const entry of entries){
-  const fileName=enc.encode(entry.path),data=entry.data instanceof Uint8Array?entry.data:new Uint8Array(entry.data||0),crc=zipCrc32(data),local=header(30);
-  local.v.setUint32(0,0x04034b50,true);local.v.setUint16(4,20,true);local.v.setUint16(6,0x800,true);local.v.setUint16(8,0,true);local.v.setUint32(14,crc,true);local.v.setUint32(18,data.length,true);local.v.setUint32(22,data.length,true);local.v.setUint16(26,fileName.length,true);
-  chunks.push(local.bytes,fileName,data);
-  const c=header(46);c.v.setUint32(0,0x02014b50,true);c.v.setUint16(4,20,true);c.v.setUint16(6,20,true);c.v.setUint16(8,0x800,true);c.v.setUint16(10,0,true);c.v.setUint32(16,crc,true);c.v.setUint32(20,data.length,true);c.v.setUint32(24,data.length,true);c.v.setUint16(28,fileName.length,true);c.v.setUint32(38,entry.directory?0x10:0,true);c.v.setUint32(42,offset,true);
-  central.push(c.bytes,fileName);total+=46+fileName.length;offset+=30+fileName.length+data.length;
- }
- const end=header(22);end.v.setUint32(0,0x06054b50,true);end.v.setUint16(8,entries.length,true);end.v.setUint16(10,entries.length,true);end.v.setUint32(12,total,true);end.v.setUint32(16,offset,true);
- const url=URL.createObjectURL(new Blob([...chunks,...central,end.bytes],{type:'application/zip'})),a=el('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-async function downloadArchiveBuilderZip(){
- const leagueName=archiveBuilderName();
- if(!validArchiveFolderName(leagueName)){toast('Enter a valid league name before downloading.');return}
- if(!archiveBuilder.confirmed){toast('Confirm completion before downloading the ZIP.');return}
- const entries=[];
- for(const kind of ['Logos','Courts','Ads']){
-  entries.push({path:leagueName+'/'+kind+'/',data:new Uint8Array(0),directory:true});
-  for(const file of archiveBuilder.files[kind])entries.push({path:leagueName+'/'+kind+'/'+file.name,data:new Uint8Array(await file.arrayBuffer())});
- }
- downloadStoredZip(leagueName+' Assets.zip',entries);
-}
-async function confirmArchiveBuilder(){
- const leagueName=archiveBuilderName(),total=archiveBuilderCount();
- if(!validArchiveFolderName(leagueName)){toast('Enter a valid league name.');return false}
- if(!total){toast('Add at least one image before confirming.');return false}
- const sourceId=archiveBuilder.sourceId||('builder:'+Date.now()),added=[];
- try{
-  for(const kind of ['Logos','Courts','Ads'])for(const file of archiveBuilder.files[kind]){
-   const local=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)}),size=await imageDimensions(local),path=leagueName+'/'+kind+'/'+file.name;
-   added.push({sourceId,sourceName:leagueName+' · Built here',path,name:file.name,collection:leagueName,group:leagueName,era:leagueName,kind,url:local,local,width:size.width,height:size.height,aliases:[],isLocal:true});
-  }
-  archiveBuilder.sourceId=sourceId;archiveBuilder.confirmed=true;archiveBuilder.leagueName=leagueName;
-  localAssets=localAssets.filter(a=>a.sourceId!==sourceId);assets=assets.filter(a=>a.sourceId!==sourceId);localAssets.push(...added);assets.push(...added);syncArchiveList();dirty=true;render();
-  const setup=document.querySelector('.archive-setup');if(setup)setup.open=true;
-  toast(total+' '+(total===1?'image':'images')+' added to the archive. ZIP download is ready.');return true;
- }catch(error){toast('Could not build the archive: '+error.message);return false}
-}
-function archiveBuilderEditor(parent){
- const card=archiveStepCard(1,'Build Archive Here','Drag images into the categories below. Confirm completion to fill the Image Library, then download a ZIP for future use.');
- const nameLabel=el('label','field archive-builder-name'),name=el('input');name.placeholder='League name';name.value=archiveBuilder.leagueName;name.setAttribute('aria-label','League name for archive builder');
- name.addEventListener('input',()=>{archiveBuilder.leagueName=name.value;archiveBuilder.confirmed=false;updateActions()});nameLabel.append(el('span','','League Name'),name);card.append(nameLabel);
- const grid=el('div','archive-builder-grid'),categoryViews={};card.append(grid);
- const renderCategory=kind=>{
-  const view=categoryViews[kind],files=archiveBuilder.files[kind];
-  view.count.textContent=files.length+' '+(files.length===1?'file':'files');
- };
- for(const kind of ['Logos','Courts','Ads']){
-  const box=el('section','archive-builder-category'),drop=el('div','archive-builder-dropzone'),title=el('strong','',kind),count=el('small'),input=el('input'),list=el('div','archive-builder-files');input.type='file';input.multiple=true;input.accept='image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp';input.hidden=true;
-  drop.tabIndex=0;drop.setAttribute('role','button');drop.setAttribute('aria-label','Add '+kind+' images');drop.append(title,count,input);
-  const choose=()=>input.click();drop.addEventListener('click',event=>{if(event.target!==input)choose()});drop.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();choose()}});
-  drop.addEventListener('dragover',event=>{event.preventDefault();drop.classList.add('dragover')});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',event=>{event.preventDefault();drop.classList.remove('dragover');archiveBuilderAdd(kind,event.dataTransfer.files);renderCategory(kind);updateActions()});
-  input.addEventListener('change',()=>{archiveBuilderAdd(kind,input.files);input.value='';renderCategory(kind);updateActions()});
-  box.append(el('h3','',kind),drop,list);grid.append(box);categoryViews[kind]={list,count};renderCategory(kind);
- }
- const actions=el('div','archive-builder-actions'),confirm=el('button','primary','Done'),download=el('button','','Download ZIP'),status=el('small','archive-builder-status');confirm.type=download.type='button';
- const updateActions=()=>{const total=archiveBuilderCount();confirm.disabled=!total||!validArchiveFolderName(archiveBuilderName());download.disabled=!archiveBuilder.confirmed;status.classList.toggle('ready',archiveBuilder.confirmed);status.textContent=archiveBuilder.confirmed?'Archive confirmed · '+total+' '+(total===1?'image':'images')+' · ZIP ready':'Add images, then confirm completion.'};
- confirm.onclick=()=>void confirmArchiveBuilder();download.onclick=()=>void downloadArchiveBuilderZip();actions.append(confirm,download);card.append(actions,status);updateActions();parent.append(card);
-}
-function archiveSetupSteps(parent){archiveBuilderEditor(parent)}
 
 function normalizeGitHubRepository(value){
  return String(value||'').trim()
@@ -2794,65 +2671,120 @@ async function loadArchiveSource(source,force=false){
 }
 
 function archiveSourceEditor(parent){
- const localCard=archiveStepCard(2,'Use Local Folder','Choose an existing local league folder.');
- const templateRow=el('div','archive-local-template'),templateLabel=el('label','field'),templateName=el('input'),downloadTemplate=el('button','','Download Template');
- templateName.placeholder='League name';templateName.autocomplete='off';downloadTemplate.type='button';
- templateLabel.append(el('span','','League Name'),templateName);templateRow.append(templateLabel,downloadTemplate);
- downloadTemplate.onclick=()=>downloadLeagueFolders(templateName.value);
- templateName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();downloadLeagueFolders(templateName.value)}});
- localCard.append(templateRow,el('small','archive-local-template-hint','Download the folder structure, add your images locally, then choose the league folder below.'));
- localAssetImporter(localCard);parent.append(localCard);
+ const tabsCard=el('section','card archive-source-card'),tabs=el('div','archive-source-tabs'),onlineTab=el('button','','GitHub / Online'),localTab=el('button','','Local Sources'),panel=el('div','archive-source-panel');
+ onlineTab.type=localTab.type='button';onlineTab.setAttribute('role','tab');localTab.setAttribute('role','tab');tabs.setAttribute('role','tablist');tabs.append(onlineTab,localTab);tabsCard.append(tabs);parent.append(tabsCard,panel);
 
- const githubCard=archiveStepCard(3,'Use GitHub','Connect to a public GitHub repository and read the archive from it.');
- const fields=el('div','fields archive-source-fields'),repo=el('input'),branch=el('select'),branchStatus=el('small','archive-branch-status','Enter a public repository to load branches.'),add=el('button','primary','Add Repository');
- repo.placeholder='owner/repository or GitHub URL';branch.disabled=true;add.type='button';add.disabled=true;branch.append(el('option','','Enter repository first'));
- const repoLabel=el('label','field'),branchLabel=el('label','field'),branchRow=el('div','archive-branch-row');repoLabel.append(el('span','','Repository'),repo);branchRow.append(branch,add);branchLabel.append(el('span','','Branch'),branchRow,branchStatus);fields.append(repoLabel,branchLabel);githubCard.append(fields);parent.append(githubCard);
+ const show=mode=>{
+  archiveSourceTab=mode;onlineTab.setAttribute('aria-selected',String(mode==='online'));localTab.setAttribute('aria-selected',String(mode==='local'));panel.replaceChildren();
 
- let branchRequest=0,branchTimer,branchLoadPromise=null,branchLoadRepo='';
- const setBranchState=(message,isError=false)=>{branchStatus.textContent=message;branchStatus.classList.toggle('error',isError)};
- const syncAddState=()=>{add.disabled=!isValidGitHubRepositoryInput(repo.value)};
- const loadBranches=async()=>{
-  const normalized=normalizeGitHubRepository(repo.value.trim());clearTimeout(branchTimer);
-  if(branch.dataset.repo===normalized&&!branch.disabled)return;if(branchLoadPromise&&branchLoadRepo===normalized)return branchLoadPromise;
-  const request=++branchRequest;branchLoadRepo=normalized;branch.replaceChildren();branch.disabled=true;
-  branchLoadPromise=(async()=>{
-   if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized)){branch.append(el('option','','Enter repository first'));setBranchState('Enter a public repository to load branches.');syncAddState();return}
-   branch.append(el('option','','Loading branches…'));setBranchState('Checking public repository…');
-   try{
-    const result=await fetchPublicGitHubBranches(normalized);if(request!==branchRequest)return;repo.value=result.repository;branch.replaceChildren();
-    if(!result.branches.length){branch.append(el('option','','No branches found'));setBranchState('No branches found in this repository.',true);return}
-    for(const name of result.branches){const option=el('option','',name);option.value=name;branch.append(option)}branch.value=result.defaultBranch&&result.branches.includes(result.defaultBranch)?result.defaultBranch:result.branches[0];branch.dataset.repo=result.repository;branch.disabled=false;syncAddState();setBranchState(result.warning||'',Boolean(result.warning));
-   }catch(error){if(request!==branchRequest)return;branch.replaceChildren();branch.append(el('option','','Branches unavailable'));branch.disabled=true;setBranchState(error.message,true)}
-   finally{if(branchLoadRepo===normalized){branchLoadPromise=null;branchLoadRepo=''}}
-  })();return branchLoadPromise;
+  if(mode==='online'){
+   const step4=archiveStepCard(4,'Push the League Folder to GitHub','Upload the extracted league folder to a public GitHub repository. Private repositories cannot be connected.');
+   panel.append(step4);
+
+   const step5=archiveStepCard(5,'Paste Your Repository','Paste owner/repository or a GitHub URL. Available branches will load automatically.');
+   const fields=el('div','fields archive-source-fields'),repo=el('input'),branch=el('select'),branchStatus=el('small','archive-branch-status','Enter a public repository to load branches.'),add=el('button','primary','Add Repository');
+   repo.placeholder='owner/repository or GitHub URL';
+   branch.disabled=true;add.type='button';add.disabled=true;
+   branch.append(el('option','','Enter repository first'));
+   const repoLabel=el('label','field'),branchLabel=el('label','field'),branchRow=el('div','archive-branch-row');
+   repoLabel.append(el('span','','Repository'),repo);
+   branchRow.append(branch,add);branchLabel.append(el('span','','Branch'),branchRow,branchStatus);
+   fields.append(repoLabel,branchLabel);step5.append(fields);panel.append(step5);
+
+   let branchRequest=0,branchTimer,branchLoadPromise=null,branchLoadRepo='';
+   const setBranchState=(message,isError=false)=>{
+    branchStatus.textContent=message;
+    branchStatus.classList.toggle('error',isError);
+   };
+   const syncAddState=()=>{add.disabled=!isValidGitHubRepositoryInput(repo.value)};
+   const loadBranches=async()=>{
+    const value=repo.value.trim(),normalized=normalizeGitHubRepository(value);
+    clearTimeout(branchTimer);
+    if(branch.dataset.repo===normalized&&!branch.disabled)return;
+    if(branchLoadPromise&&branchLoadRepo===normalized)return branchLoadPromise;
+    const request=++branchRequest;
+    branchLoadRepo=normalized;
+    branch.replaceChildren();branch.disabled=true;
+    branchLoadPromise=(async()=>{
+    if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized)){
+     branch.append(el('option','','Enter repository first'));
+     setBranchState('Enter a public repository to load branches.');
+     syncAddState();
+     return;
+    }
+    branch.append(el('option','','Loading branches…'));setBranchState('Checking public repository…');
+    try{
+     const result=await fetchPublicGitHubBranches(normalized);
+     if(request!==branchRequest)return;
+     repo.value=result.repository;
+     branch.replaceChildren();
+     if(!result.branches.length){
+      branch.append(el('option','','No branches found'));setBranchState('No branches found in this repository.',true);return;
+     }
+     for(const name of result.branches){const option=el('option','',name);option.value=name;branch.append(option)}
+     branch.value=result.defaultBranch&&result.branches.includes(result.defaultBranch)?result.defaultBranch:result.branches[0];
+     branch.dataset.repo=result.repository;branch.disabled=false;syncAddState();
+     setBranchState(result.warning||'',Boolean(result.warning));
+    }catch(error){
+     if(request!==branchRequest)return;
+     branch.replaceChildren();branch.append(el('option','','Branches unavailable'));branch.disabled=true;setBranchState(error.message,true);
+    }finally{
+     if(branchLoadRepo===normalized){branchLoadPromise=null;branchLoadRepo=''}
+    }
+    })();
+    return branchLoadPromise;
+   };
+   repo.addEventListener('input',()=>{
+    branchRequest++;branch.dataset.repo='';branchLoadPromise=null;branchLoadRepo='';
+    branch.replaceChildren();branch.append(el('option','','Repository entered'));branch.disabled=true;setBranchState('Branches load when you finish the repository field.');
+    clearTimeout(branchTimer);syncAddState();
+   });
+      syncAddState();
+   repo.addEventListener('paste',()=>{clearTimeout(branchTimer);branchTimer=setTimeout(()=>void loadBranches(),50)});
+   repo.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(branchTimer);void loadBranches()}});
+   repo.addEventListener('change',()=>void loadBranches());
+   repo.addEventListener('blur',()=>{if(document.activeElement!==branch)void loadBranches()});
+
+   add.onclick=async()=>{
+    if(archiveRefreshing)return;
+    const repository=normalizeGitHubRepository(repo.value);
+    if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)){toast('Enter owner/repository or a GitHub repository URL.');syncAddState();return}
+    add.disabled=true;
+    try{
+     if(branch.disabled||!branch.value.trim())await loadBranches();
+     const selectedBranch=branch.value.trim();
+     if(branch.disabled||!selectedBranch){toast(branchStatus.textContent||'Could not load a branch for this repository.');return}
+     const source={repository:normalizeGitHubRepository(repo.value),branch:selectedBranch,folders:[]};
+     archiveSources=archiveSources.filter(s=>sourceKey(s)!==sourceKey(source));archiveSources.push(source);archiveSourceTab='online';dirty=true;
+     await refreshArchive();
+    }finally{
+     if(document.body.contains(add))syncAddState();
+    }
+   };
+  }else{
+   const step4=archiveStepCard(4,'Choose the League Folder','Choose the league folder or its parent folder.');
+   localAssetImporter(step4);panel.append(step4);
+  }
  };
- repo.addEventListener('input',()=>{branchRequest++;branch.dataset.repo='';branchLoadPromise=null;branchLoadRepo='';branch.replaceChildren();branch.append(el('option','','Repository entered'));branch.disabled=true;setBranchState('Branches load when you finish the repository field.');clearTimeout(branchTimer);syncAddState()});
- syncAddState();repo.addEventListener('paste',()=>{clearTimeout(branchTimer);branchTimer=setTimeout(()=>void loadBranches(),50)});repo.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(branchTimer);void loadBranches()}});repo.addEventListener('change',()=>void loadBranches());repo.addEventListener('blur',()=>{if(document.activeElement!==branch)void loadBranches()});
- add.onclick=async()=>{
-  if(archiveRefreshing)return;const repository=normalizeGitHubRepository(repo.value);
-  if(!isValidGitHubRepositoryInput(repo.value)||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)){toast('Enter owner/repository or a GitHub repository URL.');syncAddState();return}
-  add.disabled=true;
-  try{if(branch.disabled||!branch.value.trim())await loadBranches();const selectedBranch=branch.value.trim();if(branch.disabled||!selectedBranch){toast(branchStatus.textContent||'Could not load a branch for this repository.');return}const source={repository:normalizeGitHubRepository(repo.value),branch:selectedBranch,folders:[]};archiveSources=archiveSources.filter(s=>sourceKey(s)!==sourceKey(source));archiveSources.push(source);archiveSourceTab='online';dirty=true;await refreshArchive()}
-  finally{if(document.body.contains(add))syncAddState()}
- };
+ onlineTab.onclick=()=>show('online');localTab.onclick=()=>show('local');show(archiveSourceTab);
 }
 
 let archiveRefreshing=false;
 async function refreshArchive(quiet=false,force=false){
  if(archiveRefreshing)return;if(!archiveSources.length){if(!quiet)toast('Add a source to start your archive.');return}archiveRefreshing=true;
- const result=[...localAssets].filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a))),failures=[],warnings=[];
+ const result=[...localAssets],failures=[],warnings=[];
  try{
   for(const source of archiveSources){
    try{
     const loaded=await loadArchiveSource(source,force);
-    result.push(...loaded.assets.filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a))));
+    result.push(...loaded.assets);
     if(loaded.warning)warnings.push(loaded.warning);
    }catch(error){
     failures.push(source.repository+': '+error.message);
     result.push(...assets.filter(a=>a.sourceId===sourceKey(source)));
    }
   }
-  assets=result.filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a)));syncArchiveList();if(view==='images')render();
+  assets=result;syncArchiveList();if(view==='images')render();
   if(failures.length)toast(failures[0]);
   else if(warnings.length)toast(warnings[0]);
   else if(!quiet)toast('Online sources updated: '+assets.length+' images.');
@@ -2867,10 +2799,9 @@ function renderArchive(){
  const kind=el('select'),group=el('select');group.setAttribute('aria-label','League Name');
  for(const s of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',s);option.value=s;group.append(option)}
  kind.setAttribute('aria-label','Image type');for(const s of ['All types','Logos','Courts','Ads'])kind.append(el('option','',s));
- let managing=false;
- const manage=el('button','','Manage');manage.type='button';
- const refresh=el('button','','Reset Library');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>{archiveRemovedAssetKeys.clear();refreshArchive(false,true)};
- filters.append(search,group,kind,refresh,manage);
+ const download=el('button','','Download URL List');download.onclick=()=>saveFile('hoopland-image-urls.json',JSON.stringify(assets.map(({local,...a})=>a),null,2));
+ const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);
+ filters.append(search,group,kind,refresh,download);
  const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
  setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
  function draw(){
@@ -2884,18 +2815,10 @@ function renderArchive(){
    if(Number(a.width)>0&&Number(a.height)>0)showDimensions();else dimensions.textContent='Loading dimensions…';
    img.addEventListener('load',showDimensions,{once:true});img.addEventListener('error',()=>{dimensions.textContent='Dimensions unavailable'},{once:true});
    body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
-   card.append(img,body);
-   if(managing){
-    card.classList.add('manage-mode');
-    const remove=el('button','asset-remove','−');remove.type='button';remove.title='Remove '+a.name;remove.setAttribute('aria-label','Remove '+a.name+' from the image archive');
-    remove.onclick=()=>{if(!confirm('Remove “'+a.name+'” from the image archive?'))return;removeArchiveAsset(a);draw();toast('Image removed from the archive.')};
-    card.append(remove);
-   }
-   grid.append(card);
+   card.append(img,body);grid.append(card);
   }
-  if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Build an archive here, choose a local folder, or connect GitHub above.'));
+  if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'));
  }
- manage.onclick=()=>{managing=!managing;manage.textContent=managing?'Done':'Manage';manage.setAttribute('aria-pressed',String(managing));draw()};
  search.oninput=group.onchange=kind.onchange=draw;draw();
 }
 function saveFile(name,text){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -2912,7 +2835,7 @@ function draftStore(mode,record,slot=0){
   request.onsuccess=()=>{const db=request.result;let tx,result;try{tx=db.transaction('drafts',mode==='delete'?'readwrite':mode);const store=tx.objectStore('drafts');const operation=mode==='delete'?store.delete(key):mode==='readwrite'?store.put(record,key):store.get(key);operation.onsuccess=()=>{result=operation.result};tx.oncomplete=()=>{db.close();resolve(result)};tx.onabort=tx.onerror=()=>{db.close();reject(tx.error||Error('Could not access the saved draft.'))}}catch(error){db.close();reject(error)}};
  });
 }
-function draftSnapshot(){return {version:2,archiveSources:structuredClone(archiveSources),localAssets:structuredClone(localAssets),archiveRemovedAssetKeys:[...archiveRemovedAssetKeys],archiveSource:structuredClone(archiveSource),savedAt:new Date().toISOString(),league:structuredClone(league)}}
+function draftSnapshot(){return {version:2,archiveSources:structuredClone(archiveSources),localAssets:structuredClone(localAssets),archiveSource:structuredClone(archiveSource),savedAt:new Date().toISOString(),league:structuredClone(league)}}
 async function openDraftSlots(mode){
  if(mode==='save'&&(!league||!canNavigate()))return;
  const dialog=el('dialog','draft-dialog'),heading=el('h2','',mode==='save'?'Save League':'Load League'),close=el('button','','Close'),list=el('div'),message=el('p','','Loading saved leagues…');heading.id='draft-dialog-title';dialog.setAttribute('aria-labelledby',heading.id);message.setAttribute('role','status');close.type='button';close.onclick=()=>dialog.close();dialog.append(heading,message,list,close);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();let busy=false;dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});
@@ -2924,7 +2847,7 @@ async function openDraftSlots(mode){
  try{if(mode==='save'){
  const owner=league,record=draftSnapshot(),snapshot=JSON.stringify(record.league);await draftStore('readwrite',record,slot);activeDraftSlot=slot;if(league===owner&&JSON.stringify(league)===snapshot){dirty=false;$('#status').textContent='Saved to slot '+(slot+1)}toast('Progress saved to slot '+(slot+1));
  }else{
- const restored=validate(structuredClone(record.league));archiveSources=structuredClone(record.archiveSources||(record.archiveSource?.repository?[record.archiveSource]:[]));localAssets=structuredClone(record.localAssets||[]).map(a=>({...a,url:a.url||a.local}));archiveRemovedAssetKeys=new Set(record.archiveRemovedAssetKeys||[]);archiveSource=structuredClone(record.archiveSource||{repository:'',branch:'main',folders:[]});assets=[...localAssets].filter(a=>!archiveRemovedAssetKeys.has(archiveAssetKey(a)));syncArchiveList();load(restored);activeDraftSlot=slot;$('#status').textContent='Restored slot '+(slot+1);void refreshArchive(true);toast('Saved league restored.');
+ const restored=validate(structuredClone(record.league));archiveSources=structuredClone(record.archiveSources||(record.archiveSource?.repository?[record.archiveSource]:[]));localAssets=structuredClone(record.localAssets||[]).map(a=>({...a,url:a.url||a.local}));archiveSource=structuredClone(record.archiveSource||{repository:'',branch:'main',folders:[]});assets=[...localAssets];syncArchiveList();load(restored);activeDraftSlot=slot;$('#status').textContent='Restored slot '+(slot+1);void refreshArchive(true);toast('Saved league restored.');
  }dialog.close();
  }catch(error){message.textContent='Could not '+mode+' progress: '+error.message;for(const [i,row]of [...list.children].entries()){row.children[0].disabled=mode==='restore'&&!records[i];if(row.children[1])row.children[1].disabled=false}}finally{busy=false;close.disabled=false}
  };
