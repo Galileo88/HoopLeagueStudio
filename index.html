@@ -3098,49 +3098,42 @@ function pickerCleanURL(value){
 function pickerTeamForPath(path){
  return path?.[0]==='teams'||path?.[0]==='starTeams'?league?.[path[0]]?.[path[1]]:null;
 }
-function pickerLogoCandidates(team){
+function pickerLogoSource(team){
  const raw=String(team?.logoURL??'').trim();
- if(!raw)return [];
- const normalized=archiveURL(raw,assets);
- const rawClean=pickerCleanURL(raw),normalizedClean=pickerCleanURL(normalized);
- const asset=assets.find(a=>{
-  const urlClean=pickerCleanURL(a?.url),localClean=pickerCleanURL(a?.local);
-  return a?.url===raw||a?.url===normalized||a?.local===raw||a?.local===normalized||
-         (rawClean&&(urlClean===rawClean||localClean===rawClean))||
-         (normalizedClean&&(urlClean===normalizedClean||localClean===normalizedClean));
+ return raw?archiveURL(raw,assets):'';
+}
+function pickerLoadElement(source,useCORS=true){
+ return new Promise((resolve,reject)=>{
+  const img=new Image(),timer=setTimeout(()=>{
+   img.onload=img.onerror=null;
+   reject(Error('Team logo request timed out.'));
+  },15000);
+  if(useCORS&&/^https?:/i.test(source)){
+   img.crossOrigin='anonymous';
+   img.referrerPolicy='no-referrer';
+  }
+  img.onload=()=>{clearTimeout(timer);resolve(img)};
+  img.onerror=()=>{clearTimeout(timer);reject(Error('Team logo could not be loaded.'))};
+  img.src=source;
  });
- const out=[];
- const add=value=>{if(typeof value==='string'&&value.trim()&&!out.includes(value))out.push(value)};
- if(asset){add(asset.url);add(asset.local)}
- add(normalized);add(raw);
- return out;
 }
 function pickerBlobToDataURL(blob){
  return new Promise((resolve,reject)=>{
   const reader=new FileReader();
   reader.onload=()=>resolve(String(reader.result||''));
-  reader.onerror=()=>reject(reader.error||Error('Could not read image data.'));
+  reader.onerror=()=>reject(reader.error||Error('Could not read team logo data.'));
   reader.readAsDataURL(blob);
  });
 }
 async function pickerFetchAsDataURL(source){
- if(/^data:image\//i.test(source))return source;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{
-  const response=await fetch(source,{mode:'cors',cache:'no-store',signal:controller.signal,headers:{Accept:'image/*'}});
+  const response=await fetch(source,{mode:'cors',cache:'reload',signal:controller.signal});
   if(!response.ok)throw Error('Image request returned '+response.status);
   const blob=await response.blob();
   if(!blob.size)throw Error('Image response was empty.');
   return await pickerBlobToDataURL(blob);
  }finally{clearTimeout(timer)}
-}
-function pickerDecodeImage(source){
- return new Promise((resolve,reject)=>{
-  const img=new Image(),timer=setTimeout(()=>{img.onload=img.onerror=null;reject(Error('Image decode timed out.'))},15000);
-  img.onload=()=>{clearTimeout(timer);resolve(img)};
-  img.onerror=()=>{clearTimeout(timer);reject(Error('Image could not be decoded.'))};
-  img.src=source;
- });
 }
 function pickerCanvasWrap(){return $('#canvas').parentElement}
 function clearPickerImage(message=''){
@@ -3163,7 +3156,8 @@ function pickerBuildPalette(ctx,width,height){
    const i=(y*width+x)*4;
    if(pixels[i+3]<200)continue;
    const r=Math.round(pixels[i]/8)*8,g=Math.round(pixels[i+1]/8)*8,b=Math.round(pixels[i+2]/8)*8;
-   const hex=[Math.min(r,255),Math.min(g,255),Math.min(b,255)].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+   const hex=[Math.min(r,255),Math.min(g,255),Math.min(b,255)]
+    .map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
    bins.set(hex,(bins.get(hex)||0)+1);
   }
  }
@@ -3173,48 +3167,60 @@ function pickerBuildPalette(ctx,width,height){
   button.setAttribute('aria-label','Select '+hex);button.onclick=()=>sampled(hex);palette.append(button);
  }
 }
+function pickerDrawImage(img){
+ if(!img?.naturalWidth||!img?.naturalHeight)throw Error('Team logo has invalid dimensions.');
+ const canvas=$('#canvas');
+ canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.imageSmoothingEnabled=true;
+ ctx.drawImage(img,0,0);
+ // This intentionally verifies that the canvas is readable for color sampling.
+ ctx.getImageData(0,0,1,1);
+ pickerBuildPalette(ctx,canvas.width,canvas.height);
+}
 async function loadPickerTeamLogo(){
- const token=++pickerLoadToken,team=pickerTeam,candidates=pickerLogoCandidates(team),wrap=pickerCanvasWrap(),zoom=$('#zoom');
+ const token=++pickerLoadToken,team=pickerTeam,source=pickerLogoSource(team),wrap=pickerCanvasWrap(),zoom=$('#zoom');
  imageReady=false;wrap.hidden=true;zoom.hidden=true;$('#palette').replaceChildren();
- const raw=String(team?.logoURL??'').trim();
- if(!raw){
+
+ if(!String(team?.logoURL??'').trim()){
   clearPickerImage('This team does not have a Logo URL.');
   return;
  }
- if(!candidates.length){
-  clearPickerImage('Could not load the team logo.');
+ if(!/^(https?:|data:image\/|blob:)/i.test(source)){
+  clearPickerImage('This team does not have a readable Logo URL.');
   return;
  }
+
  $('#pickHelp').textContent='Loading team logo…';
- let lastError=null;
- for(const candidate of candidates){
+
+ // First use the exact team logo URL, the same source shown by the normal preview.
+ try{
+  const direct=await pickerLoadElement(source,true);
   if(token!==pickerLoadToken)return;
-  if(!/^(https?:|data:image\/|blob:)/i.test(candidate))continue;
+  pickerDrawImage(direct);
+  imageReady=true;wrap.hidden=false;zoom.hidden=true;
+  $('#pickHelp').textContent='Tap or click a color in the team logo.';
+  return;
+ }catch(directError){
+  // Safari can display a remote image but still refuse pixel reads. Fetching it
+  // into a local data URL gives the canvas a same-origin source.
   try{
-   let localSource;
-   if(/^data:image\//i.test(candidate))localSource=candidate;
-   else localSource=await pickerFetchAsDataURL(candidate);
+   if(!/^https?:/i.test(source))throw directError;
+   const localSource=await pickerFetchAsDataURL(source);
    if(token!==pickerLoadToken)return;
-   const img=await pickerDecodeImage(localSource);
+   const local=await pickerLoadElement(localSource,false);
    if(token!==pickerLoadToken)return;
-   if(!img.naturalWidth||!img.naturalHeight)throw Error('Image has no dimensions.');
-   const canvas=$('#canvas');
-   canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
-   const ctx=canvas.getContext('2d',{willReadFrequently:true});
-   ctx.clearRect(0,0,canvas.width,canvas.height);
-   ctx.imageSmoothingEnabled=true;
-   ctx.drawImage(img,0,0);
-   // Prove that pixel reads work before exposing the picker.
-   ctx.getImageData(0,0,1,1);
-   pickerBuildPalette(ctx,canvas.width,canvas.height);
+   pickerDrawImage(local);
    imageReady=true;wrap.hidden=false;zoom.hidden=true;
    $('#pickHelp').textContent='Tap or click a color in the team logo.';
    return;
-  }catch(error){lastError=error}
+  }catch(fallbackError){
+   if(token!==pickerLoadToken)return;
+   clearPickerImage('Could not load the team logo for color sampling.');
+   console.warn('Team logo color picker:',directError,fallbackError);
+  }
  }
- if(token!==pickerLoadToken)return;
- clearPickerImage('Could not load the team logo for color sampling.');
- if(lastError)console.warn('Team logo color picker:',lastError);
 }
 function pickerSelectedHex(){
  const value=String(get(pickPath)??'').toUpperCase();
