@@ -1449,6 +1449,46 @@ body.pwa-install-open{
 /* Image Archive metadata */
 .archive-image-dimensions{display:block;margin:-1px 0 9px;color:#79fff4;font-size:12px;font-weight:700}
 
+
+/* Preview backgrounds: use the repository bg.jpeg behind image assets. */
+.asset img,
+.image-url-preview img,
+.url-archive-hover img,
+.canvas-wrap,
+#zoom {
+  background-color:#071e32;
+  background-image:url("./bg.jpeg");
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+}
+
+/* Image Library manage mode. */
+.asset{position:relative}
+.asset-manage-remove{
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  min-width:40px;
+  height:40px;
+  min-height:40px;
+  padding:0;
+  border:2px solid #ff8b96;
+  background:#b42332;
+  color:#fff;
+  font-size:28px;
+  line-height:1;
+  box-shadow:3px 3px 0 #4a0b13;
+}
+.asset-manage-remove:hover{background:#d02d3e;border-color:#ffc0c6}
+.asset-manage-remove[hidden]{display:none}
+.archive-manage-button[aria-pressed="true"]{border-color:#4cf5ed;box-shadow:0 0 0 1px #4cf5ed,3px 3px 0 #05264c}
+
 </style>
 </head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
@@ -2659,7 +2699,7 @@ async function loadArchiveSource(source,force=false){
   if(!entries.length)throw Error('No images in League Name/Logos, Courts, or Ads.');
   const loaded=entries.map(e=>{
    const meta=leagueAssetPath(e.path),url='https://raw.githubusercontent.com/'+source.repository+'/'+source.branch+'/'+e.path.split('/').map(encodeURIComponent).join('/');
-   return {sourceId:sourceKey(source),collection:meta.leagueName,path:e.path,name:e.path.split('/').pop(),group:meta.leagueName,era:meta.leagueName,kind:meta.kind,url,local:url+'?v='+e.sha,aliases:[]};
+   return {sourceId:sourceKey(source),collection:meta.leagueName,path:e.path,name:e.path.split('/').pop(),group:meta.leagueName,era:meta.leagueName,kind:meta.kind,url,local:url+'?v='+e.sha+(force?'&reset='+Date.now():''),aliases:[]};
   });
   writeGitHubCache(key,loaded);
   return {assets:loaded};
@@ -2771,7 +2811,14 @@ function archiveSourceEditor(parent){
 
 let archiveRefreshing=false;
 async function refreshArchive(quiet=false,force=false){
- if(archiveRefreshing)return;if(!archiveSources.length){if(!quiet)toast('Add a source to start your archive.');return}archiveRefreshing=true;
+ if(archiveRefreshing)return;
+ if(!archiveSources.length){
+  if(!localAssets.length){if(!quiet)toast('Add a source to start your archive.');return}
+  assets=[...localAssets];syncArchiveList();if(view==='images')render();
+  if(!quiet)toast(force?'Library reset: '+assets.length+' images restored.':'Local library restored: '+assets.length+' images.');
+  return;
+ }
+ archiveRefreshing=true;
  const result=[...localAssets],failures=[],warnings=[];
  try{
   for(const source of archiveSources){
@@ -2787,7 +2834,7 @@ async function refreshArchive(quiet=false,force=false){
   assets=result;syncArchiveList();if(view==='images')render();
   if(failures.length)toast(failures[0]);
   else if(warnings.length)toast(warnings[0]);
-  else if(!quiet)toast('Online sources updated: '+assets.length+' images.');
+  else if(!quiet)toast(force?'Library reset: '+assets.length+' images restored.':'Online sources updated: '+assets.length+' images.');
  }finally{archiveRefreshing=false}
 }
 
@@ -2799,23 +2846,30 @@ function renderArchive(){
  const kind=el('select'),group=el('select');group.setAttribute('aria-label','League Name');
  for(const s of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',s);option.value=s;group.append(option)}
  kind.setAttribute('aria-label','Image type');for(const s of ['All types','Logos','Courts','Ads'])kind.append(el('option','',s));
- const download=el('button','','Download URL List');download.onclick=()=>saveFile('hoopland-image-urls.json',JSON.stringify(assets.map(({local,...a})=>a),null,2));
- const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);
- filters.append(search,group,kind,refresh,download);
+ let managing=false;
+ const manage=el('button','archive-manage-button','Manage');manage.type='button';manage.setAttribute('aria-pressed','false');
+ manage.onclick=()=>{managing=!managing;manage.textContent=managing?'Done':'Manage';manage.setAttribute('aria-pressed',String(managing));draw()};
+ const refresh=el('button','','Reset Library');refresh.type='button';refresh.disabled=!archiveSources.length&&!localAssets.length;refresh.onclick=()=>refreshArchive(false,true);
+ filters.append(search,group,kind,refresh,manage);
  const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
  setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
  function draw(){
   grid.replaceChildren();
   const matches=assets.filter(a=>(group.value==='All leagues'||archiveLeague(a)===group.value)&&(kind.value==='All types'||a.kind===kind.value)&&(a.name+' '+a.path).toLowerCase().includes(search.value.toLowerCase()));
-  count.textContent=matches.length+' '+(matches.length===1?'image':'images')+' shown · '+assets.length+' total';
+  count.textContent=matches.length+' '+(matches.length===1?'image':'images')+' shown · '+assets.length+' total'+(managing?' · Manage mode':'');
   for(const a of matches){
    const card=el('article','asset'),img=el('img');img.src=a.local;img.alt=a.name;img.loading='lazy';
+   const remove=el('button','asset-manage-remove','−');remove.type='button';remove.hidden=!managing;remove.setAttribute('aria-label','Remove '+a.name+' from library');remove.title='Remove from library';
+   remove.onclick=()=>{
+    const index=assets.indexOf(a);if(index<0)return;
+    assets.splice(index,1);syncArchiveList();dirty=true;draw();toast(a.name+' removed. Use Reset Library to restore it.');
+   };
    const body=el('div','asset-body'),dimensions=el('small','archive-image-dimensions');
    const showDimensions=()=>{const width=Number(a.width)||img.naturalWidth,height=Number(a.height)||img.naturalHeight;if(width>0&&height>0){a.width=width;a.height=height;dimensions.textContent=width+' × '+height+' px'}else dimensions.textContent='Dimensions unavailable'};
    if(Number(a.width)>0&&Number(a.height)>0)showDimensions();else dimensions.textContent='Loading dimensions…';
    img.addEventListener('load',showDimensions,{once:true});img.addEventListener('error',()=>{dimensions.textContent='Dimensions unavailable'},{once:true});
    body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
-   card.append(img,body);grid.append(card);
+   card.append(img,remove,body);grid.append(card);
   }
   if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'));
  }
