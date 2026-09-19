@@ -1450,19 +1450,23 @@ body.pwa-install-open{
 .archive-image-dimensions{display:block;margin:-1px 0 9px;color:#79fff4;font-size:12px;font-weight:700}
 
 
-/* Preview backgrounds: use the repository bg.jpeg behind library image assets. */
+/* Preview backgrounds: use bg.jpeg behind the full preview surface. */
 .asset > img,
-.image-url-preview > img,
-.url-archive-hover > img {
+.url-archive-hover > img,
+.image-url-preview {
   background-color:#071e32;
   background-image:url("./bg.jpeg");
   background-position:center;
   background-repeat:no-repeat;
   background-size:cover;
 }
+.image-url-preview > img{
+  background:transparent !important;
+  background-image:none !important;
+}
 .asset > img.preview-background-hidden,
-.image-url-preview > img.preview-background-hidden,
-.url-archive-hover > img.preview-background-hidden {
+.url-archive-hover > img.preview-background-hidden,
+.image-url-preview.preview-background-hidden {
   background-color:transparent !important;
   background-image:repeating-conic-gradient(rgba(255,255,255,.10) 0% 25%,rgba(0,0,0,.06) 0% 50%) !important;
   background-position:0 0 !important;
@@ -2107,7 +2111,7 @@ function attachImagePreview(parent,input,key){
   const image=el('img'),caption=el('small','','Loading preview…');image.alt=key==='overlayURL'?'Court image preview':key==='adsURL'?'Announcer table image preview':'Logo image preview';image.hidden=true;image.decoding='async';image.referrerPolicy='no-referrer';
   image.onload=()=>{if(current!==revision)return;image.hidden=false;caption.textContent=`${image.naturalWidth} × ${image.naturalHeight} pixels`};
   image.onerror=()=>{if(current!==revision)return;image.hidden=true;caption.textContent='Preview unavailable. Check the image URL and sharing permissions.'};
-  box.append(image);previewBackgroundToggle(image,box);box.append(caption);const known=assets.find(a=>a.url===url);image.src=known?.local||url;
+  box.append(image);previewBackgroundToggle(box,box);box.append(caption);const known=assets.find(a=>a.url===url);image.src=known?.local||url;
  };
  input.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(update,300)});input.addEventListener('change',()=>{clearTimeout(timer);update()});update();
 }
