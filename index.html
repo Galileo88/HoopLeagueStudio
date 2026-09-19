@@ -2188,7 +2188,7 @@ function renderCountries(parent,path){
   for(const [i,country]of countries.entries()){
    const row=el('div','country-entry');host.append(row);renderObject(row,country,[...path,i]);
    const remove=el('button','','Remove');remove.type='button';remove.disabled=countries.length<=1;remove.setAttribute('aria-label','Remove '+(country.country||'country '+(i+1)));if(remove.disabled)remove.title='Keep at least one country.';
-   remove.onclick=()=>{if(!canNavigate())return;try{const next=get(path).filter((_,index)=>index!==i);set(path,next);draw();toast('Country removed. Assign its percentage to the remaining countries.')}catch(error){toast(error.message)}};remove.classList.add('remove-country');const countryField=row.querySelector('select')?.closest('.field');if(countryField){const selector=countryField.querySelector('select'),controls=el('div','country-selector-actions');controls.append(selector,remove);countryField.append(controls)}else row.append(remove);
+   remove.onclick=()=>{if(!canNavigate())return;try{const next=get(path).filter((_,index)=>index!==i);host.replaceChildren();set(path,next);draw();toast('Country removed. Assign its percentage to the remaining countries.')}catch(error){draw();toast(error.message)}};remove.classList.add('remove-country');const countryField=row.querySelector('select')?.closest('.field');if(countryField){const selector=countryField.querySelector('select'),controls=el('div','country-selector-actions');controls.append(selector,remove);countryField.append(controls)}else row.append(remove);
   }
   if(!countries.length)host.append(el('p','','No countries in this league.'));
  }
