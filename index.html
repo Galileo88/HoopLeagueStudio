@@ -1083,7 +1083,11 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 .archive-builder-status{display:block;margin-top:10px;color:#bcd8f2}
 .archive-builder-status.ready{color:#79fff4}
 @media(max-width:900px){.archive-builder-name,.archive-entry-card>.archive-folder-picker{width:auto}}
-@media(max-width:760px){.archive-builder-grid{grid-template-columns:1fr}.archive-builder-actions button{flex:1 1 180px}}
+.archive-local-template{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:14px}
+.archive-local-template .field{min-width:0}
+.archive-local-template button{min-height:44px;white-space:nowrap}
+.archive-local-template-hint{display:block;margin:-4px 0 14px;color:#bcd8f2;font-size:12px}
+@media(max-width:760px){.archive-builder-grid{grid-template-columns:1fr}.archive-builder-actions button{flex:1 1 180px}.archive-local-template{grid-template-columns:minmax(0,1fr)}.archive-local-template button{width:100%}}
 
 /* Workspace */
 
@@ -2765,6 +2769,12 @@ async function loadArchiveSource(source,force=false){
 
 function archiveSourceEditor(parent){
  const localCard=archiveStepCard(2,'Use Local Folder','Choose an existing local league folder.');
+ const templateRow=el('div','archive-local-template'),templateLabel=el('label','field'),templateName=el('input'),downloadTemplate=el('button','','Download Template');
+ templateName.placeholder='League name';templateName.autocomplete='off';downloadTemplate.type='button';
+ templateLabel.append(el('span','','League Name'),templateName);templateRow.append(templateLabel,downloadTemplate);
+ downloadTemplate.onclick=()=>downloadLeagueFolders(templateName.value);
+ templateName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();downloadLeagueFolders(templateName.value)}});
+ localCard.append(templateRow,el('small','archive-local-template-hint','Download the folder structure, add your images locally, then choose the league folder below.'));
  localAssetImporter(localCard);parent.append(localCard);
 
  const githubCard=archiveStepCard(3,'Use GitHub','Connect to a public GitHub repository and read the archive from it.');
