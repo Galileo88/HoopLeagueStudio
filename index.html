@@ -2855,7 +2855,7 @@ function renderArchive(){
  kind.setAttribute('aria-label','Image type');for(const s of ['All types','Logos','Courts','Ads'])kind.append(el('option','',s));
  let managing=false;
  const manage=el('button','','Manage');manage.type='button';
- const refresh=el('button','','Refresh Online');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>refreshArchive(false,true);
+ const refresh=el('button','','Reset Library');refresh.type='button';refresh.disabled=!archiveSources.length;refresh.onclick=()=>{archiveRemovedAssetKeys.clear();refreshArchive(false,true)};
  filters.append(search,group,kind,refresh,manage);
  const grid=el('div','gallery'),count=el('p','note');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
  setupSummary.append(setupLabel,setupArrow);setup.append(setupSummary,setupBody);c.append(setup);archiveSetupSteps(setupBody);archiveSourceEditor(setupBody);renderConnectedSources(c);c.append(el('h2','archive-library-heading','Image Library'),filters,count,grid);
