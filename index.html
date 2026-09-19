@@ -1450,17 +1450,60 @@ body.pwa-install-open{
 .archive-image-dimensions{display:block;margin:-1px 0 9px;color:#79fff4;font-size:12px;font-weight:700}
 
 
-/* Preview backgrounds: use the repository bg.jpeg behind image assets. */
-.asset img,
-.image-url-preview img,
-.url-archive-hover img,
-.canvas-wrap,
-#zoom {
+/* Preview backgrounds: use the repository bg.jpeg behind library image assets. */
+.asset > img,
+.image-url-preview > img,
+.url-archive-hover > img {
   background-color:#071e32;
   background-image:url("./bg.jpeg");
   background-position:center;
   background-repeat:no-repeat;
   background-size:cover;
+}
+.asset > img.preview-background-hidden,
+.image-url-preview > img.preview-background-hidden,
+.url-archive-hover > img.preview-background-hidden {
+  background-color:transparent !important;
+  background-image:none !important;
+}
+.asset,
+.image-url-preview,
+.url-archive-hover{position:relative}
+.preview-background-toggle{
+  position:absolute;
+  top:8px;
+  left:8px;
+  z-index:4;
+  width:30px;
+  min-width:30px;
+  height:30px;
+  min-height:30px;
+  padding:0;
+  border:2px solid #39dcf2;
+  border-radius:2px;
+  background-color:#0b3263e6;
+  background-image:url("./hide.png");
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:18px 18px;
+  box-shadow:2px 2px 0 #031e39;
+}
+.preview-background-toggle:hover{background-color:#1553a0;border-color:#79fff4}
+.preview-background-toggle[aria-pressed="true"]{background-color:#071722cc;border-color:#fff;opacity:.72}
+@media(max-width:760px){
+  .preview-background-toggle{top:6px;left:6px;width:28px;min-width:28px;height:28px;min-height:28px;background-size:17px 17px}
+}
+
+/* Color picker: no decorative preview background, centered image, and one-row color targets. */
+#picker .canvas-wrap{background:none}
+#picker #canvas{display:block;margin-left:auto;margin-right:auto;background:transparent}
+#picker #zoom{background:transparent}
+#picker .color-targets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;flex-wrap:nowrap}
+#picker .color-target{width:100%;min-width:0;justify-content:center;gap:7px;padding:9px 7px;white-space:nowrap}
+#picker .color-target:before{width:22px;height:22px;flex:0 0 22px}
+@media(max-width:760px){
+  #picker .color-target{font-size:clamp(12px,3.5vw,16px);gap:5px;padding:8px 4px}
+  #picker .color-target:before{width:20px;height:20px;flex-basis:20px}
 }
 
 /* Image Library manage mode. */
@@ -1643,13 +1686,22 @@ function createBlankLeagueTeam(number){
  const source=standaloneSample.currentGame?.homeTeam||standaloneSample.teams?.[0]||league.teams?.[0];
  if(!source)throw Error('No team template is available.');
  const team=structuredClone(source),id=nextTeamId();
- team.id=id;team.isPlayer=false;team.city='';team.name='New Team '+number;team.shortName='T'+String(number).padStart(2,'0');team.arenaName='';team.logoURL='';team.tag='';team.logoSize=0;team.location={x:0,y:0};team.division=leastPopulatedDivision();
+ team.id=id;team.isPlayer=false;team.city='';team.name='New Team '+number;team.shortName='T'+String(number).padStart(2,'0');team.arenaName='';team.logoURL='';team.tag=team.name;team.logoSize=0;team.location={x:0,y:0};team.division=leastPopulatedDivision();
  team.teamColors=['1455A5','4CF5ED','FFFFFF'];
  if(standaloneSample.teams?.[0]?.uniforms?.length)team.uniforms=structuredClone(standaloneSample.teams[0].uniforms);
  if(standaloneSample.teams?.[0]?.court){team.court=structuredClone(standaloneSample.teams[0].court);team.court.overlayURL='';team.court.baseline1=team.court.baseline2=team.name.toUpperCase();team.court.sideline1=team.court.sideline2='';}
  team.roster=[];team.startingLineup=[];team.currentLineup=0;team.lineupPreset=0;team.draftPicks=[];team.season=[];team.retiredNumbers=[];team.headToHeads=[];team.scoringOptions=[];team.inbox=[];team.coinFlip=0;team.status=0;team.rnk=number;team.following=false;
  if(team.frontOffice){team.frontOffice.staff=[];team.frontOffice.announcers=[];team.frontOffice.coins=0;team.frontOffice.condition=100;team.frontOffice.morale=100;team.frontOffice.fans=0;team.frontOffice.adsURL='';team.frontOffice.adSize=0;if(standaloneSample.teams?.[0]?.frontOffice?.facilities?.length)team.frontOffice.facilities=structuredClone(standaloneSample.teams[0].frontOffice.facilities);}
  return team;
+}
+function normalizeTeamHoopGramTags(data){
+ for(const collection of ['teams','starTeams']){
+  for(const team of data?.[collection]||[]){
+   const name=String(team?.name??'').trim(),city=String(team?.city??'').trim(),tag=String(team?.tag??'').trim();
+   if(name&&(!tag||(city&&tag.toLowerCase()===city.toLowerCase())))team.tag=name;
+  }
+ }
+ return data;
 }
 function protectedTeamIds(data=league){
  const ids=new Set();
@@ -1886,6 +1938,22 @@ function field(parent,key,value,path){if(renderContract(parent,key,value,path))r
  else if((key==='logoLayer'||key==='overlayLayer')&&path.includes('court')){input=el('select','court-option-select');for(const [v,title]of [[0,'1'],[1,'2']]){const option=el('option','',title);option.value=String(v);input.append(option)}if(![0,1].includes(value)){const option=el('option','','Unknown ('+value+')');option.value=String(value);option.disabled=true;input.append(option)}input.value=String(value);input.onchange=()=>set(path,Number(input.value));wrap.append(input)}
  else if(typeof value==='number'){input=el('input');input.type='number';input.step=Number.isInteger(value)?'1':'any';input.value=value;input.required=true;input.oninput=()=>{if(input.value!==''&&Number.isFinite(input.valueAsNumber)&&input.checkValidity()){set(path,input.valueAsNumber);wrap.classList.remove('invalid')}else wrap.classList.add('invalid')};wrap.append(input);if(/Type|Layer|Style|difficulty|gameLength|totalPeriods|shotClock|referee|gameBall|threePointLine|logoSize/i.test(key))wrap.append(el('small','','Stored game value; labels are not yet verified.'))}
  else {input=el('input');input.value=preservedBuiltinLogo?'':value??'';input.oninput=()=>set(path,input.value);if(isColor(key,value,path)){const row=el('div','color-line'),swatch=el('input');swatch.type='color';swatch.value=resolvedColor(value,path);swatch.setAttribute('aria-label',label(key)+' color');swatch.oninput=()=>{input.value=swatch.value.slice(1).toUpperCase();set(path,input.value)};const pick=el('button','','Pick from image');pick.type='button';pick.onclick=()=>openPicker(path);const refs=el('select');refs.setAttribute('aria-label','Team color reference');for(const [v,t] of [['','Custom'],['PRI','Primary'],['SEC','Secondary'],['TER','Tertiary']]){const opt=el('option','',t);opt.value=v;refs.append(opt)}refs.value=['PRI','SEC','TER'].includes(value)?value:'';swatch.dataset.colorPath=JSON.stringify(path);swatch.syncColor=()=>{const stored=get(path);swatch.value=resolvedColor(stored,path);refs.value=['PRI','SEC','TER'].includes(stored)?stored:'';input.value=stored};refs.onchange=()=>{const v=refs.value||resolvedColor(get(path),path).slice(1).toUpperCase();set(path,v)};input.oninput=()=>{set(path,input.value.toUpperCase())};row.append(swatch,input,refs,pick);wrap.append(row)}else{wrap.append(input);if(/URL$/i.test(key)){input.placeholder='https://…';wrap.classList.add('wide')}if(preservedBuiltinLogo){input.placeholder='Paste a custom logo URL to replace the built-in logo';builtinLogoBox=el('div','builtin-logo-state');const clear=el('button','','Clear built-in logo');clear.type='button';clear.onclick=e=>{e.preventDefault();preservedBuiltinLogo='';set(path,'');builtinLogoBox?.remove();builtinLogoBox=null;input.value='';input.dispatchEvent(new Event('change',{bubbles:true}));input.focus();toast('Built-in logo cleared.')};builtinLogoBox.append(clear);wrap.append(builtinLogoBox)}}}
+ if(key==='name'&&path.length===3&&['teams','starTeams'].includes(path[0])){
+  const team=league[path[0]]?.[path[1]],tagPath=[path[0],path[1],'tag'],baseOnInput=input.oninput;
+  input.oninput=()=>{
+   const previousName=String(get(path)??''),currentTag=String(get(tagPath)??''),city=String(team?.city??'');
+   baseOnInput?.();
+   if(!currentTag||currentTag===previousName||(city&&currentTag.toLowerCase()===city.toLowerCase())){
+    set(tagPath,input.value);
+    const tagSelector=JSON.stringify(tagPath);
+    for(const node of document.querySelectorAll('[data-path]'))if(node.dataset.path===tagSelector)node.value=input.value;
+   }
+  };
+ }
+ if(key==='tag'&&path.length===3&&['teams','starTeams'].includes(path[0])){
+  const team=league[path[0]]?.[path[1]],city=String(team?.city??'').trim(),tag=String(get(path)??'').trim(),teamName=String(team?.name??'').trim();
+  if(teamName&&(!tag||(city&&tag.toLowerCase()===city.toLowerCase()))){set(path,teamName);input.value=teamName;}
+ }
  if(key==='adSize'){input.readOnly=true;wrap.querySelectorAll?.('small').forEach(n=>n.remove());wrap.append(el('small','','Detected automatically from the image width in pixels.'))}
  if(key==='logoSize'&&!path.includes('court')){input.readOnly=true;wrap.querySelectorAll?.('small').forEach(n=>n.remove());wrap.append(el('small','','Hoop Land logo scale value. Preserved from the league data; image pixel dimensions do not overwrite it.'))}
  if(key==='logoURL'||key==='adsURL'){const hint=el('small','','Checking image dimensions…');wrap.append(hint);let timer;const check=async()=>{const owner=league,typed=input.value.trim(),entered=typed||(preservedBuiltinLogo&&String(get(path)??'').trim()===preservedBuiltinLogo?preservedBuiltinLogo:''),url=archiveURL(entered,assets);const sizePath=key==='adsURL'?[...path.slice(0,-1),'adSize']:null;try{if(!isCustomImage(url)){hint.hidden=true;hint.textContent='';return}hint.hidden=false;let size;if(!url){size={width:0,height:0}}else{hint.textContent='Checking image dimensions…';const known=assets.find(a=>a.url===url);size=known?.width?{width:known.width,height:known.height}:await imageDimensions(url);if(key==='logoURL')validateImageSize(size)}if(league!==owner||String(get(path)??'').trim()!==entered)return;if(get(path)!==url){input.value=url;preservedBuiltinLogo='';builtinLogoBox?.remove();builtinLogoBox=null;set(path,url)}if(sizePath){if(get(sizePath)!==size.width)set(sizePath,size.width);for(const n of document.querySelectorAll('[data-path]'))if(n.dataset.path===JSON.stringify(sizePath))n.value=size.width}hint.textContent=size.width?`${size.width} × ${size.height} pixels${key==='adsURL'?' · size updated':' · logo scale preserved'}`:'No external image.'}catch(e){if(league===owner&&String(get(path)??'').trim()===entered){hint.hidden=false;hint.textContent=e.message}}};input.oninput=()=>{if(preservedBuiltinLogo){if(input.value.trim()){preservedBuiltinLogo='';builtinLogoBox?.remove();builtinLogoBox=null;set(path,input.value)}}else set(path,input.value);clearTimeout(timer);timer=setTimeout(check,300)};input.onchange=()=>{clearTimeout(timer);check()};Promise.resolve().then(check)}
@@ -1894,6 +1962,11 @@ function field(parent,key,value,path){if(renderContract(parent,key,value,path))r
  if(path.length===2&&path[0]==='season'&&key==='optimization')wrap.append(el('small','','Low: custom logos, courts, table graphics, and box scores on. High: all four off.'));
  if(path.length===2&&((path[0]==='meta'&&key==='gender')||(path[0]==='season'&&key==='optimization')))wrap.classList.add('wide');
  input.setAttribute('aria-label',key==='tag'&&path.length===3&&['teams','starTeams'].includes(path[0])?'Hoop Gram Username':path.map(label).join(' / '));input.dataset.path=JSON.stringify(path);parent.append(wrap);
+}
+function previewBackgroundToggle(target,container){
+ const button=el('button','preview-background-toggle');button.type='button';button.setAttribute('aria-pressed','false');button.setAttribute('aria-label','Background off');button.title='Background off';
+ button.onclick=event=>{event.preventDefault();event.stopPropagation();const hidden=!target.classList.contains('preview-background-hidden');target.classList.toggle('preview-background-hidden',hidden);button.setAttribute('aria-pressed',String(hidden));button.setAttribute('aria-label',hidden?'Background on':'Background off');button.title=hidden?'Background on':'Background off'};
+ container.append(button);return button;
 }
 function attachArchiveDropdown(parent,input,key){
  const dropdown=el('details','url-archive'),summary=el('summary','','Choose from image archive');dropdown.append(summary);parent.append(dropdown);
@@ -1906,7 +1979,7 @@ function attachArchiveDropdown(parent,input,key){
   filter.setAttribute('aria-label','Archive image type');for(const name of ['All images','Logos','Courts','Ads']){const o=el('option','',name);o.value=name;filter.append(o)}filter.value=key==='adsURL'?'Ads':key==='overlayURL'?'Courts':key==='logoURL'?'Logos':'All images';
   league.setAttribute('aria-label','League Name');for(const name of ['All leagues',...new Set(assets.map(archiveLeague).filter(Boolean))]){const option=el('option','',name);option.value=name;league.append(option)}league.value='All leagues';count.setAttribute('role','status');count.setAttribute('aria-live','polite');
   dropdown.append(search,league,filter,count,layout);layout.append(list,previewPane);previewPane.append(preview,apply);
-  function show(asset){preview.replaceChildren();const img=el('img');img.src=asset.local;img.alt=asset.name;preview.append(img,el('strong','',asset.name),el('small','',[(asset.width&&asset.height)?asset.width+' × '+asset.height:'',archiveLeague(asset),asset.kind].filter(Boolean).join(' · ')))}
+  function show(asset){preview.replaceChildren();const img=el('img');img.src=asset.local;img.alt=asset.name;preview.append(img);previewBackgroundToggle(img,preview);preview.append(el('strong','',asset.name),el('small','',[(asset.width&&asset.height)?asset.width+' × '+asset.height:'',archiveLeague(asset),asset.kind].filter(Boolean).join(' · ')))}
   function select(asset,option){if(!asset.url){toast('Image URL unavailable. Reimport this image.');return}selectedAsset=asset;for(const button of list.querySelectorAll('.url-archive-option')){button.classList.toggle('selected',button===option);button.setAttribute('aria-pressed',String(button===option))}show(asset);apply.hidden=false}
   function draw(){list.replaceChildren();preview.replaceChildren();const q=search.value.trim().toLowerCase();const matches=assets.filter(a=>(league.value==='All leagues'||archiveLeague(a)===league.value)&&(filter.value==='All images'||a.kind===filter.value)&&(a.name+' '+a.path+' '+archiveLeague(a)).toLowerCase().includes(q));
    if(selectedAsset&&!matches.includes(selectedAsset)){selectedAsset=null;apply.hidden=true}
@@ -1929,7 +2002,7 @@ function attachImagePreview(parent,input,key){
   const image=el('img'),caption=el('small','','Loading preview…');image.alt=key==='overlayURL'?'Court image preview':key==='adsURL'?'Announcer table image preview':'Logo image preview';image.hidden=true;image.decoding='async';image.referrerPolicy='no-referrer';
   image.onload=()=>{if(current!==revision)return;image.hidden=false;caption.textContent=`${image.naturalWidth} × ${image.naturalHeight} pixels`};
   image.onerror=()=>{if(current!==revision)return;image.hidden=true;caption.textContent='Preview unavailable. Check the image URL and sharing permissions.'};
-  box.append(image,caption);const known=assets.find(a=>a.url===url);image.src=known?.local||url;
+  box.append(image);previewBackgroundToggle(image,box);box.append(caption);const known=assets.find(a=>a.url===url);image.src=known?.local||url;
  };
  input.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(update,300)});input.addEventListener('change',()=>{clearTimeout(timer);update()});update();
 }
@@ -2869,7 +2942,7 @@ function renderArchive(){
    if(Number(a.width)>0&&Number(a.height)>0)showDimensions();else dimensions.textContent='Loading dimensions…';
    img.addEventListener('load',showDimensions,{once:true});img.addEventListener('error',()=>{dimensions.textContent='Dimensions unavailable'},{once:true});
    body.append(el('h3','',label(a.name)),dimensions,el('p','',`${archiveLeague(a)} / ${a.kind}`));
-   card.append(img,remove,body);grid.append(card);
+   card.append(img);previewBackgroundToggle(img,card);card.append(remove,body);grid.append(card);
   }
   if(!matches.length)grid.append(el('p','',assets.length?'No images match these filters.':'No images yet. Add an online or local source above.'));
  }
@@ -2877,7 +2950,7 @@ function renderArchive(){
 }
 function saveFile(name,text){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function validate(data){if(!data||typeof data!=='object'||Array.isArray(data)||typeof data.leagueName!=='string'||!Array.isArray(data.teams)||!data.teams.length||!Array.isArray(data.conferences)||!Array.isArray(data.divisions))throw Error('Choose a Hoopland league file with a league name, teams, conferences and divisions.');if(data.teams.some(t=>!t||typeof t!=='object'||Array.isArray(t)))throw Error('The file contains an invalid team.');if(data.teams.length>64)throw Error('This editor supports a maximum of 64 league teams.');return data}
-function load(data){league=validate(data);leagueRetiredNumbers(league);syncTeamCountMeta(league);activeDraftSlot=null;locationSelections.clear();selected=0;teamList='teams';view='league';dirty=false;$('#status').textContent='Ready to edit';render()}
+function load(data){league=validate(data);normalizeTeamHoopGramTags(league);leagueRetiredNumbers(league);syncTeamCountMeta(league);activeDraftSlot=null;locationSelections.clear();selected=0;teamList='teams';view='league';dirty=false;$('#status').textContent='Ready to edit';render()}
 let activeDraftSlot=null;
 function draftStore(mode,record,slot=0){
  if(!Number.isInteger(slot)||slot<0||slot>2)return Promise.reject(Error('Invalid save slot'));const key=slot===0?'current':'slot-'+slot;
