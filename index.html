@@ -1674,38 +1674,86 @@ function validateImageSize(size,kind='logo'){
   return size;
 }
 function isCustomImage(value){return typeof value==='string'&&/^(?:https?:\/\/|data:image\/|blob:)/i.test(value.trim())}
+function exportImageAssetKey(value){
+  const normalized=archiveURL(value,assets);
+  try{
+    const u=new URL(normalized);
+    u.hash='';
+    u.search='';
+    if(u.hostname.toLowerCase()==='raw.githubusercontent.com'){
+      const parts=u.pathname.split('/').filter(Boolean);
+      if(parts.length>=4){
+        const owner=parts[0].toLowerCase(),repo=parts[1].toLowerCase(),ref=parts[2];
+        const path=parts.slice(3).map(decodeURIComponent).join('/');
+        return 'github:'+owner+'/'+repo+'/'+ref+'/'+path;
+      }
+    }
+    return u.hostname.toLowerCase()+u.pathname;
+  }catch{
+    return String(normalized??'').split('#')[0].split('?')[0];
+  }
+}
 function exportImageURL(value,assets){
-  const normalized=archiveURL(value,assets),clean=v=>String(v??'').split('#')[0].split('?')[0];
-  const normalizedClean=clean(normalized),valueClean=clean(value);
-  const asset=(assets||[]).find(a=>{
-    const candidates=[a?.url,a?.local].filter(Boolean);
-    return candidates.some(candidate=>
-      candidate===value||
-      candidate===normalized||
-      clean(candidate)===valueClean||
-      clean(candidate)===normalizedClean
-    );
-  });
+  const normalized=archiveURL(value,assets),wantedKey=exportImageAssetKey(normalized);
+  const asset=(assets||[]).find(a=>
+    [a?.url,a?.local].filter(Boolean).some(candidate=>exportImageAssetKey(candidate)===wantedKey)
+  );
+
   if(asset?.local){
     try{
       const u=new URL(asset.local);
-      // Keep the image blob SHA (?v=...) so Hoop Land sees a new URL when
-      // the file changes, but remove temporary archive-reset cache busting.
+      // Keep the file blob SHA (?v=...) so Hoop Land treats updated logos,
+      // courts and table graphics as new images. Never export reset timestamps.
       u.searchParams.delete('reset');
       return u.href;
     }catch{
       return asset.local;
     }
   }
+
   return normalized;
 }
 async function prepareImages(data,assets,measure=imageDimensions){
   const result=structuredClone(data),jobs=[];
-  const logo=(owner,name)=>{if(!isCustomImage(owner.logoURL))return;jobs.push((async()=>{owner.logoURL=exportImageURL(owner.logoURL,assets);try{validateImageSize(await measure(owner.logoURL));if(!Number.isInteger(owner.logoSize)||owner.logoSize<0||owner.logoSize>4)owner.logoSize=0}catch(e){throw Error(name+' logo: '+e.message)}})())};
-  logo(result,'League');
-  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const name=teamDisplayName(team);logo(team,name);if(isCustomImage(team.court?.overlayURL))jobs.push((async()=>{team.court.overlayURL=exportImageURL(team.court.overlayURL,assets);try{validateImageSize(await measure(team.court.overlayURL),'court')}catch(e){throw Error(name+' court: '+e.message)}})())}
-  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){const office=team.frontOffice;if(!isCustomImage(office?.adsURL))continue;jobs.push((async()=>{office.adsURL=exportImageURL(office.adsURL,assets);try{const size=await measure(office.adsURL);if(!Number.isInteger(size.width)||size.width<1||!Number.isInteger(size.height)||size.height<1)throw Error('Invalid image dimensions.');office.adSize=size.width}catch(e){throw Error(team.name+' announcer table: '+e.message)}})())}
-  await Promise.all(jobs);return result;
+  const prepareLogo=(owner,name)=>{
+    if(!isCustomImage(owner.logoURL))return;
+    jobs.push((async()=>{
+      owner.logoURL=exportImageURL(owner.logoURL,assets);
+      try{
+        validateImageSize(await measure(owner.logoURL));
+        if(!Number.isInteger(owner.logoSize)||owner.logoSize<0||owner.logoSize>4)owner.logoSize=0;
+      }catch(e){throw Error(name+' logo: '+e.message)}
+    })());
+  };
+  const prepareCourt=(team,name)=>{
+    if(!isCustomImage(team.court?.overlayURL))return;
+    jobs.push((async()=>{
+      team.court.overlayURL=exportImageURL(team.court.overlayURL,assets);
+      try{validateImageSize(await measure(team.court.overlayURL),'court')}
+      catch(e){throw Error(name+' court: '+e.message)}
+    })());
+  };
+
+  prepareLogo(result,'League');
+  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){
+    const name=teamDisplayName(team);
+    prepareLogo(team,name);
+    prepareCourt(team,name);
+  }
+  for(const team of [...(result.teams||[]),...(result.starTeams||[])]){
+    const office=team.frontOffice;
+    if(!isCustomImage(office?.adsURL))continue;
+    jobs.push((async()=>{
+      office.adsURL=exportImageURL(office.adsURL,assets);
+      try{
+        const size=await measure(office.adsURL);
+        if(!Number.isInteger(size.width)||size.width<1||!Number.isInteger(size.height)||size.height<1)throw Error('Invalid image dimensions.');
+        office.adSize=size.width;
+      }catch(e){throw Error(team.name+' announcer table: '+e.message)}
+    })());
+  }
+  await Promise.all(jobs);
+  return result;
 }
 
 const $=s=>document.querySelector(s), el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
