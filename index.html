@@ -1900,6 +1900,24 @@ function rosterPlayerFingerprints(data=league){
  for(const collection of ['teams','starTeams'])for(const team of data?.[collection]||[])for(const player of Array.isArray(team?.roster)?team.roster:[])used.add(expansionPlayerFingerprint(player));
  return used;
 }
+function expansionPersonnelFingerprint(person){
+ const stable=[person?.fn||'',person?.ln||'',person?.ctry||'',Number(person?.age)||0,Number(person?.ht)||0,Number(person?.wt)||0,Number(person?.gender)||0,Number(person?.pos),Number(person?.pri),Number(person?.sec),Number(person?.pot),person?.appearance||null,person?.suits||null,person?.attributes||null,person?.tendencies||null];
+ return JSON.stringify(stable);
+}
+function expansionTeamFingerprint(team){
+ return [team?.city||'',team?.name||'',team?.shortName||''].map(value=>String(value).trim().toLocaleLowerCase()).join('|');
+}
+function teamIdentityFingerprints(data=league){
+ const used=new Set();for(const team of data?.teams||[]){const fingerprint=expansionTeamFingerprint(team);if(fingerprint!=='||')used.add(fingerprint)}return used;
+}
+function teamPersonnelFingerprints(data=league){
+ const used=new Set();
+ for(const team of data?.teams||[]){
+  const office=team?.frontOffice||{};
+  for(const person of [...(Array.isArray(office.staff)?office.staff:[]),...(Array.isArray(office.announcers)?office.announcers:[])])used.add(expansionPersonnelFingerprint(person));
+ }
+ return used;
+}
 async function fetchExpansionTemplate(type,name){
  const folder=EXPANSION_TEMPLATE_FOLDERS[type];if(!folder)throw Error('Expansion player pools support Pro and College leagues only.');
  const urls=['./templates/'+folder+'/'+name,EXPANSION_RAW_ROOT+'/'+folder+'/'+name];let lastError=null;
@@ -1912,23 +1930,54 @@ async function fetchExpansionTemplate(type,name){
 async function expansionPlayerPool(type){
  if(expansionPoolCache.has(type))return expansionPoolCache.get(type);
  const promise=(async()=>{
-  const names=EXPANSION_TEMPLATE_FILES[type]||[],templates=await Promise.all(names.map(name=>fetchExpansionTemplate(type,name))),entries=[],blueprints=[];
+  const names=EXPANSION_TEMPLATE_FILES[type]||[],templates=await Promise.all(names.map(name=>fetchExpansionTemplate(type,name))),entries=[],blueprints=[],staffEntries=[],staffBlueprints=[],announcerEntries=[],announcerBlueprints=[],teamEntries=[];
   templates.forEach((data,index)=>{
    const templateName=names[index];
    for(const team of data?.teams||[]){
+    const teamFingerprint=expansionTeamFingerprint(team);if(teamFingerprint!=='||')teamEntries.push({sourceKey:'team:'+templateName+':'+team.id,fingerprint:teamFingerprint,team});
     const roster=Array.isArray(team?.roster)?team.roster:[];
     if(roster.length>=10)blueprints.push(roster.slice(0,10).map(player=>Number(player?.pos)));
-    for(const player of roster){const pos=Number(player?.pos);if(!Number.isInteger(pos))continue;entries.push({sourceKey:templateName+':'+player.id,fingerprint:expansionPlayerFingerprint(player),pos,player})}
+    for(const player of roster){const pos=Number(player?.pos);if(!Number.isInteger(pos))continue;entries.push({sourceKey:'player:'+templateName+':'+player.id,fingerprint:expansionPlayerFingerprint(player),pos,player})}
+    const office=team?.frontOffice||{},staff=Array.isArray(office.staff)?office.staff:[],announcers=Array.isArray(office.announcers)?office.announcers:[];
+    if(staff.length)staffBlueprints.push(staff.map(person=>Number(person?.pos)).filter(Number.isInteger));
+    if(announcers.length)announcerBlueprints.push(announcers.length);
+    for(const person of staff){const pos=Number(person?.pos);if(!Number.isInteger(pos))continue;staffEntries.push({sourceKey:'staff:'+templateName+':'+person.id,fingerprint:expansionPersonnelFingerprint(person),pos,person})}
+    for(const person of announcers)announcerEntries.push({sourceKey:'announcer:'+templateName+':'+person.id,fingerprint:expansionPersonnelFingerprint(person),pos:Number(person?.pos),person});
    }
   });
   if(entries.length<10||!blueprints.length)throw Error('Expansion templates did not contain enough roster players.');
+  if(staffEntries.length<4||!staffBlueprints.length||announcerEntries.length<2)throw Error('Expansion templates did not contain enough staff and personnel.');
+  if(new Set(teamEntries.map(entry=>entry.fingerprint)).size<64)throw Error('Expansion templates did not contain enough unique team identities.');
   const byPos=new Map();for(const entry of entries){if(!byPos.has(entry.pos))byPos.set(entry.pos,[]);byPos.get(entry.pos).push(entry)}
-  return {entries,byPos,blueprints};
+  const staffByPos=new Map();for(const entry of staffEntries){if(!staffByPos.has(entry.pos))staffByPos.set(entry.pos,[]);staffByPos.get(entry.pos).push(entry)}
+  return {entries,byPos,blueprints,staffEntries,staffByPos,staffBlueprints,announcerEntries,announcerBlueprints,teamEntries};
  })();
  expansionPoolCache.set(type,promise);
  try{return await promise}catch(error){expansionPoolCache.delete(type);throw error}
 }
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
+function copyExpansionTeamIdentity(target,source){
+ const identityKeys=['city','name','shortName','arenaName','logoURL','tag','logoSize','location','teamColors','uniforms','court'];
+ for(const key of identityKeys)if(source?.[key]!==undefined)target[key]=structuredClone(source[key]);
+ target.tag=String(target.tag||target.name||'').trim();
+ target.frontOffice||={};if(source?.frontOffice){for(const key of ['adsURL','adSize'])if(source.frontOffice[key]!==undefined)target.frontOffice[key]=structuredClone(source.frontOffice[key]);}
+ return target;
+}
+function expansionTeamIdentityEntry(pool,data=league,usedOverride=null){
+ const used=usedOverride||teamIdentityFingerprints(data),candidates=pool.teamEntries.filter(entry=>!used.has(entry.fingerprint));
+ if(!candidates.length)throw Error('The team identity pool is exhausted.');
+ const entry=randomItem(candidates);used.add(entry.fingerprint);return entry;
+}
+function randomizeInitialTeamIdentities(data,pool){
+ const used=new Set(),selectedKeys=new Set();let count=0;
+ for(const team of data?.teams||[]){
+  let candidates=pool.teamEntries.filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
+  if(!candidates.length)candidates=pool.teamEntries.filter(entry=>!used.has(entry.fingerprint));
+  if(!candidates.length)throw Error('The team identity pool is exhausted.');
+  const entry=randomItem(candidates);used.add(entry.fingerprint);selectedKeys.add(entry.sourceKey);copyExpansionTeamIdentity(team,entry.team);count++;
+ }
+ return count;
+}
 function expansionRosterBlueprint(pool,data=league){
  const local=[];for(const team of data?.teams||[]){const roster=Array.isArray(team?.roster)?team.roster:[];if(roster.length===10&&roster.every(player=>Number.isInteger(Number(player?.pos))))local.push(roster.map(player=>Number(player.pos)))}
  return structuredClone(randomItem(local.length?local:pool.blueprints));
@@ -1967,6 +2016,42 @@ function populateExpansionRoster(team,pool,data,allocateId,blueprint=null){
  });
  return team;
 }
+function expansionPersonnelEntries(entries,data,count,byPos=null,blueprint=null){
+ const used=teamPersonnelFingerprints(data),selected=[],selectedKeys=new Set(),shape=Array.isArray(blueprint)?blueprint:[];
+ const take=pos=>{
+  const preferred=byPos&&Number.isInteger(Number(pos))?(byPos.get(Number(pos))||[]):entries;
+  let candidates=preferred.filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
+  if(!candidates.length)candidates=entries.filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
+  if(!candidates.length)throw Error('The staff and personnel pool is exhausted.');
+  const entry=randomItem(candidates);selected.push(entry);selectedKeys.add(entry.sourceKey);used.add(entry.fingerprint);
+ };
+ for(const pos of shape.slice(0,count))take(pos);
+ while(selected.length<count)take(null);
+ return selected;
+}
+function personnelStaffBlueprint(team,pool){
+ const staff=Array.isArray(team?.frontOffice?.staff)?team.frontOffice.staff:[],shape=staff.map(person=>Number(person?.pos));
+ if(shape.length&&shape.every(Number.isInteger))return shape;
+ return structuredClone(randomItem(pool.staffBlueprints));
+}
+function personnelAnnouncerCount(team,pool){
+ const announcers=Array.isArray(team?.frontOffice?.announcers)?team.frontOffice.announcers:[];
+ if(announcers.length)return announcers.length;
+ return Number(randomItem(pool.announcerBlueprints))||2;
+}
+function cloneExpansionPerson(entry,team,data,allocateId){
+ const person=structuredClone(entry.person);person.id=allocateId();person.tid=team.id;person.league=data.leagueType;
+ if(person.contract){person.contract.pid=0;person.contract.tid=0}
+ return person;
+}
+function populateExpansionPersonnel(team,pool,data,allocateId,staffBlueprint=null,announcerCount=null){
+ team.frontOffice||={};
+ const staffShape=Array.isArray(staffBlueprint)&&staffBlueprint.length?staffBlueprint:personnelStaffBlueprint(team,pool),staffEntries=expansionPersonnelEntries(pool.staffEntries,data,staffShape.length,pool.staffByPos,staffShape);
+ const count=Number.isInteger(Number(announcerCount))&&Number(announcerCount)>=0?Number(announcerCount):personnelAnnouncerCount(team,pool),announcerEntries=expansionPersonnelEntries(pool.announcerEntries,data,count);
+ team.frontOffice.staff=staffEntries.map(entry=>cloneExpansionPerson(entry,team,data,allocateId));
+ team.frontOffice.announcers=announcerEntries.map(entry=>cloneExpansionPerson(entry,team,data,allocateId));
+ return {staff:team.frontOffice.staff.length,announcers:team.frontOffice.announcers.length};
+}
 function remapPlayerReferences(value,idMap){
  if(Array.isArray(value)){for(const item of value)remapPlayerReferences(item,idMap);return value}
  if(!value||typeof value!=='object')return value;
@@ -1977,9 +2062,9 @@ function remapPlayerReferences(value,idMap){
  return value;
 }
 async function randomizeInitialTemplateRosters(data){
- const pool=await expansionPlayerPool(data.leagueType),allocateId=expansionPersonIdAllocator(data),idMap=new Map();let generated=0;
+ const pool=await expansionPlayerPool(data.leagueType),allocateId=expansionPersonIdAllocator(data),idMap=new Map(),teams=randomizeInitialTeamIdentities(data,pool);let players=0,staff=0,announcers=0;
  for(const team of data.teams||[]){
-  const originalRoster=Array.isArray(team?.roster)?team.roster.map(player=>structuredClone(player)):[],originalLineup=Array.isArray(team?.startingLineup)?structuredClone(team.startingLineup):[];
+  const originalRoster=Array.isArray(team?.roster)?team.roster.map(player=>structuredClone(player)):[],originalLineup=Array.isArray(team?.startingLineup)?structuredClone(team.startingLineup):[],originalStaff=Array.isArray(team?.frontOffice?.staff)?team.frontOffice.staff.map(person=>structuredClone(person)):[],originalAnnouncers=Array.isArray(team?.frontOffice?.announcers)?team.frontOffice.announcers.map(person=>structuredClone(person)):[];
   const blueprint=teamRosterBlueprint(team,pool,data);populateExpansionRoster(team,pool,data,allocateId,blueprint);
   team.roster.forEach((player,index)=>{
    const previous=originalRoster[index];if(!previous)return;
@@ -1989,10 +2074,11 @@ async function randomizeInitialTemplateRosters(data){
   });
   const teamMap=new Map(originalRoster.map((player,index)=>[Number(player?.id),team.roster[index]?.id]).filter(([oldId,newId])=>Number.isInteger(oldId)&&oldId>0&&Number.isInteger(newId)&&newId>0));
   team.startingLineup=originalLineup.map(slot=>{const next=structuredClone(slot),mapped=teamMap.get(Number(next?.pid));if(mapped)next.pid=mapped;return next});
-  remapPlayerReferences(team.inbox,teamMap);generated+=team.roster.length;
+  remapPlayerReferences(team.inbox,teamMap);players+=team.roster.length;
+  const staffBlueprint=originalStaff.map(person=>Number(person?.pos)).filter(Number.isInteger),personnel=populateExpansionPersonnel(team,pool,data,allocateId,staffBlueprint,originalAnnouncers.length);staff+=personnel.staff;announcers+=personnel.announcers;
  }
  remapPlayerReferences(data.records,idMap);if(data.season&&idMap.has(Number(data.season.playerId)))data.season.playerId=idMap.get(Number(data.season.playerId));
- validateActiveRosterIds(data);return generated;
+ validateActiveRosterIds(data);return {teams,players,staff,announcers};
 }
 function chooseTemplateLeagueType(){
  return new Promise(resolve=>{
@@ -2014,12 +2100,17 @@ function chooseTemplateLeagueType(){
  });
 }
 function validateActiveRosterIds(data=league){
- const seen=new Map();
- for(const team of data?.teams||[])for(const player of Array.isArray(team?.roster)?team.roster:[]){
-  const id=Number(player?.id);if(!Number.isInteger(id)||id<=0)throw Error((teamDisplayName(team)||'Team '+team.id)+' has a roster player with an invalid player ID.');
-  if(seen.has(id))throw Error('Duplicate player ID '+id+' appears on '+seen.get(id)+' and '+(teamDisplayName(team)||'Team '+team.id)+'.');
-  seen.set(id,teamDisplayName(team)||'Team '+team.id);
-  if(Number(player?.tid)!==Number(team?.id))throw Error('Player ID '+id+' has team ID '+player?.tid+' but is rostered on team '+team.id+'.');
+ const seen=new Map(),claim=(person,team,label,required)=>{
+  const id=Number(person?.id),teamName=teamDisplayName(team)||'Team '+team.id;if((!Number.isInteger(id)||id<=0)&&required)throw Error(teamName+' has a '+label+' with an invalid person ID.');
+  if(!Number.isInteger(id)||id<=0)return;
+  if(seen.has(id))throw Error('Duplicate person ID '+id+' appears on '+seen.get(id)+' and '+teamName+' '+label+'.');
+  seen.set(id,teamName+' '+label);
+  if(Number(person?.tid)!==Number(team?.id))throw Error(label+' ID '+id+' has team ID '+person?.tid+' but belongs to team '+team.id+'.');
+ };
+ for(const team of data?.teams||[]){
+  for(const player of Array.isArray(team?.roster)?team.roster:[])claim(player,team,'player',true);
+  for(const person of Array.isArray(team?.frontOffice?.staff)?team.frontOffice.staff:[])claim(person,team,'staff member',false);
+  for(const person of Array.isArray(team?.frontOffice?.announcers)?team.frontOffice.announcers:[])claim(person,team,'announcer',false);
  }
  return true;
 }
@@ -2074,12 +2165,12 @@ async function setLeagueTeamCount(requested){
  if(!Number.isFinite(target)||target===current)return false;
  let next=league.teams.slice(),generated=0;
  if(target>current){
-  teamCountBusy=true;syncTeamCountDisplays();$('#status').textContent='Loading expansion players…';
-  const originalTeams=league.teams,originalUPID=league.meta?.uPID;
+  teamCountBusy=true;syncTeamCountDisplays();$('#status').textContent='Loading expansion team identity, players, and personnel…';
+  const originalTeams=league.teams,originalUPID=league.meta?.uPID;let generatedPersonnel=0;
   try{
    const pool=await expansionPlayerPool(league.leagueType),allocateId=expansionPersonIdAllocator(league);
    for(let number=current+1;number<=target;number++){
-    league.teams=next;const team=createBlankLeagueTeam(number);populateExpansionRoster(team,pool,league,allocateId);next=[...next,team];generated+=team.roster.length;
+    league.teams=next;const team=createBlankLeagueTeam(number),identity=expansionTeamIdentityEntry(pool,league);copyExpansionTeamIdentity(team,identity.team);populateExpansionRoster(team,pool,league,allocateId);const personnel=populateExpansionPersonnel(team,pool,league,allocateId);next=[...next,team];generated+=team.roster.length;generatedPersonnel+=personnel.staff+personnel.announcers;
    }
   }catch(error){league.teams=originalTeams;if(league.meta)league.meta.uPID=originalUPID;$('#status').textContent='Expansion needs attention';toast(error.message);alert(error.message);return false}
   finally{teamCountBusy=false}
@@ -2092,7 +2183,7 @@ async function setLeagueTeamCount(requested){
  }
  league.teams=next;syncTeamCountMeta();locationSelections.clear();selected=Math.min(selected,Math.max(0,league.teams.length-1));teamList='teams';
  if(league.season){league.season.lotteryTeams=Math.min(Number(league.season.lotteryTeams)||0,league.teams.length);const conferenceCount=league.leagueType===1?Math.max(1,league.divisions?.length||1):Math.max(1,league.conferences?.length||2);let playoff=Math.min(Number(league.season.playoffTeams)||0,league.teams.length);if(playoff&&playoff%conferenceCount)playoff-=playoff%conferenceCount;league.season.playoffTeams=Math.max(conferenceCount,playoff||conferenceCount);}
- dirty=true;$('#status').textContent='Unsaved changes';syncTeamCountDisplays();toast(generated?'Total teams updated to '+league.teams.length+'. Generated '+generated+' expansion players.':'Total teams updated to '+league.teams.length+'.');return true;
+ dirty=true;$('#status').textContent='Unsaved changes';syncTeamCountDisplays();toast(generated?'Total teams updated to '+league.teams.length+'. Generated '+generated+' expansion players'+(generatedPersonnel?' and '+generatedPersonnel+' staff/personnel.':'.'):'Total teams updated to '+league.teams.length+'.');return true;
 }
 function syncTeamCountDisplays(){
  syncTeamCountMeta();
@@ -2108,7 +2199,7 @@ function renderTeamCountControl(parent){
  wrap.append(el('span','','Total Teams'));input.type='number';input.min='4';input.max='64';input.step='1';input.value=league.teams.length;input.dataset.teamCount='true';input.setAttribute('aria-label','Total Teams');minus.type=plus.type='button';minus.setAttribute('aria-label','Remove one team');plus.setAttribute('aria-label','Add one team');
  const sync=()=>{input.value=String(league.teams.length);input.disabled=teamCountBusy;minus.disabled=teamCountBusy||league.teams.length<=4;plus.disabled=teamCountBusy||league.teams.length>=64};
  minus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length-1)))sync()};plus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length+1)))sync()};input.onchange=async()=>{if(!canNavigate()){sync();return}if(!(await setLeagueTeamCount(input.value)))sync()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur()}};
- row.append(minus,input,plus);wrap.append(row,el('small','','Adding teams automatically builds 10-player rosters from the matching Pro or College template pool with new collision-safe player IDs.'));parent.append(wrap);sync();return wrap;
+ row.append(minus,input,plus);wrap.append(row,el('small','','Adding teams automatically assigns a unique matching Pro or College team identity, then builds a 10-player roster and personnel group with collision-safe IDs.'));parent.append(wrap);sync();return wrap;
 }
 function renderTeamDistributionSummary(parent){
  const summary=el('div','team-distribution-summary');summary.append(el('h3','','Total Teams: '+league.teams.length));
@@ -3379,7 +3470,7 @@ async function openDraftSlots(mode){
 $('#saveProgress').onclick=()=>openDraftSlots('save');
 $('#restoreProgress').onclick=()=>openDraftSlots('restore');
 
-$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=async()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;const leagueType=await chooseTemplateLeagueType();if(leagueType===null)return;const button=$('#new');button.disabled=true;$('#status').textContent='Randomizing '+(leagueType===1?'College':'Pro')+' template rosters…';try{const next=structuredClone(template);next.leagueType=leagueType;applySettingPreset(next,['leagueType'],leagueType);const generated=await randomizeInitialTemplateRosters(next);load(next);set(['leagueName'],'My League');set(['shortName'],'ML');render();toast((leagueType===1?'College':'Pro')+' league created with '+generated+' randomized players.')}catch(e){$('#status').textContent=league?'Ready to edit':'Template needs attention';toast(e.message);alert(e.message)}finally{button.disabled=false}};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=async()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;const leagueType=await chooseTemplateLeagueType();if(leagueType===null)return;const button=$('#new');button.disabled=true;$('#status').textContent='Randomizing '+(leagueType===1?'College':'Pro')+' template teams, players, and personnel…';try{const next=structuredClone(template);next.leagueType=leagueType;applySettingPreset(next,['leagueType'],leagueType);const generated=await randomizeInitialTemplateRosters(next);load(next);set(['leagueName'],'My League');set(['shortName'],'ML');render();toast((leagueType===1?'College':'Pro')+' league created with '+generated.teams+' teams, '+generated.players+' players, '+generated.staff+' staff, and '+generated.announcers+' announcers randomized.')}catch(e){$('#status').textContent=league?'Ready to edit':'Template needs attention';toast(e.message);alert(e.message)}finally{button.disabled=false}};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 function pickerCleanURL(value){
  return String(value??'').trim().split('#')[0].split('?')[0];
 }
