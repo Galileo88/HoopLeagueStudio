@@ -1994,6 +1994,25 @@ async function randomizeInitialTemplateRosters(data){
  remapPlayerReferences(data.records,idMap);if(data.season&&idMap.has(Number(data.season.playerId)))data.season.playerId=idMap.get(Number(data.season.playerId));
  validateActiveRosterIds(data);return generated;
 }
+function chooseTemplateLeagueType(){
+ return new Promise(resolve=>{
+  let dialog=document.querySelector('#templateLeagueTypeDialog');
+  if(!dialog){
+   dialog=el('dialog','template-type-dialog');dialog.id='templateLeagueTypeDialog';
+   const head=el('div','dialog-head'),titleWrap=el('div');titleWrap.append(el('p','eyebrow','NEW TEMPLATE'),el('h2','','Choose League Type'));
+   const close=el('button','','✕');close.type='button';close.setAttribute('aria-label','Cancel template creation');head.append(titleWrap,close);
+   const help=el('p','','This sets the League Type in the configurator and applies the matching rules automatically.');
+   const actions=el('div','starter-actions template-type-actions'),pro=el('button','primary','Pro'),college=el('button','primary','College');
+   pro.type=college.type='button';pro.dataset.leagueType='0';college.dataset.leagueType='1';actions.append(pro,college);dialog.append(head,help,actions);document.body.append(dialog);
+  }
+  let done=false;
+  const finish=value=>{if(done)return;done=true;dialog.close();dialog.querySelectorAll('[data-league-type]').forEach(button=>button.onclick=null);dialog.querySelector('.dialog-head button').onclick=null;dialog.oncancel=null;resolve(value)};
+  dialog.querySelectorAll('[data-league-type]').forEach(button=>button.onclick=()=>finish(Number(button.dataset.leagueType)));
+  dialog.querySelector('.dialog-head button').onclick=()=>finish(null);
+  dialog.oncancel=event=>{event.preventDefault();finish(null)};
+  dialog.showModal();
+ });
+}
 function validateActiveRosterIds(data=league){
  const seen=new Map();
  for(const team of data?.teams||[])for(const player of Array.isArray(team?.roster)?team.roster:[]){
@@ -3360,7 +3379,7 @@ async function openDraftSlots(mode){
 $('#saveProgress').onclick=()=>openDraftSlots('save');
 $('#restoreProgress').onclick=()=>openDraftSlots('restore');
 
-$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=async()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;const button=$('#new');button.disabled=true;$('#status').textContent='Randomizing template rosters…';try{const next=structuredClone(template),generated=await randomizeInitialTemplateRosters(next);load(next);set(['leagueName'],'My League');set(['shortName'],'ML');render();toast('New league created with '+generated+' randomized players.')}catch(e){$('#status').textContent=league?'Ready to edit':'Template needs attention';toast(e.message);alert(e.message)}finally{button.disabled=false}};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=async()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;const leagueType=await chooseTemplateLeagueType();if(leagueType===null)return;const button=$('#new');button.disabled=true;$('#status').textContent='Randomizing '+(leagueType===1?'College':'Pro')+' template rosters…';try{const next=structuredClone(template);next.leagueType=leagueType;applySettingPreset(next,['leagueType'],leagueType);const generated=await randomizeInitialTemplateRosters(next);load(next);set(['leagueName'],'My League');set(['shortName'],'ML');render();toast((leagueType===1?'College':'Pro')+' league created with '+generated+' randomized players.')}catch(e){$('#status').textContent=league?'Ready to edit':'Template needs attention';toast(e.message);alert(e.message)}finally{button.disabled=false}};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 function pickerCleanURL(value){
  return String(value??'').trim().split('#')[0].split('?')[0];
 }
