@@ -1797,6 +1797,9 @@ async function prepareImages(data,assets,measure=imageDimensions){
 
 const $=s=>document.querySelector(s), el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 let league,template,assets=[],view='home',selected=0,teamList='teams',dirty=false,pickPath=null,recent=[],imageReady=false,toastTimer,teamColorSlot=0,teamPicker=false,pickerOriginalColors=null,pickerOriginalValue=null,pickerTeam=null,pickerLoadToken=0;
+const EXPANSION_TEMPLATE_FILES={0:['ProTemplate1.txt','ProTemplate2.txt','ProTemplate3.txt','ProTemplate4.txt','ProTemplate5.txt'],1:['CollegeTemplate1.txt','CollegeTemplate2.txt','CollegeTemplate3.txt','CollegeTemplate4.txt','CollegeTemplate5.txt']};
+const EXPANSION_TEMPLATE_FOLDERS={0:'pro',1:'college'},EXPANSION_RAW_ROOT='https://raw.githubusercontent.com/Galileo88/HoopLeagueStudio/main/templates';
+const expansionPoolCache=new Map();let teamCountBusy=false;
 const locationSelections=new Map(),LOCATION_API='https://countriesnow.space/api/v0.1/countries',LOCATION_GEOCODER='https://geocoding-api.open-meteo.com/v1/search',LOCATION_CACHE_PREFIX='hls-location-v1:',LOCATION_CACHE_TTL=30*24*60*60*1000;
 const protectedKeys=new Set(['roster','staff','announcers','coaches','commissioner','referees','media','draftClass','freeAgents','threePointContestants','retirees','hallOfFame','contractOffers','records','career','currentGame','history','headToHeads','inbox','startingLineup','currentLineup','lineupPreset','draftPicks','scoringOptions','quickPlays','championships','workshop']);
 const hiddenState=new Set(['news','draftWorkouts','schedule','tradeOffers','playoffs','posts','playerHistory']);
@@ -1888,6 +1891,119 @@ function applyScheduleDefaults(data,totalGames=29){
  Object.assign(data.season,scheduleDefaults(data.season.totalGames));
 }
 
+function expansionPlayerFingerprint(player){
+ const stable=[player?.fn||'',player?.ln||'',player?.ctry||'',Number(player?.age)||0,Number(player?.ht)||0,Number(player?.wt)||0,Number(player?.pos),Number(player?.pri),Number(player?.sec),Number(player?.pot),player?.appearance||null,player?.attributes||null,player?.skills||null,player?.tendencies||null];
+ return JSON.stringify(stable);
+}
+function rosterPlayerFingerprints(data=league){
+ const used=new Set();
+ for(const collection of ['teams','starTeams'])for(const team of data?.[collection]||[])for(const player of Array.isArray(team?.roster)?team.roster:[])used.add(expansionPlayerFingerprint(player));
+ return used;
+}
+async function fetchExpansionTemplate(type,name){
+ const folder=EXPANSION_TEMPLATE_FOLDERS[type];if(!folder)throw Error('Expansion player pools support Pro and College leagues only.');
+ const urls=['./templates/'+folder+'/'+name,EXPANSION_RAW_ROOT+'/'+folder+'/'+name];let lastError=null;
+ for(const url of urls){
+  try{const response=await fetch(url,{cache:'force-cache'});if(!response.ok)throw Error('HTTP '+response.status);return JSON.parse((await response.text()).replace(/^\uFEFF/,''))}
+  catch(error){lastError=error}
+ }
+ throw Error('Could not load '+name+' for expansion rosters'+(lastError?.message?': '+lastError.message:'.'));
+}
+async function expansionPlayerPool(type){
+ if(expansionPoolCache.has(type))return expansionPoolCache.get(type);
+ const promise=(async()=>{
+  const names=EXPANSION_TEMPLATE_FILES[type]||[],templates=await Promise.all(names.map(name=>fetchExpansionTemplate(type,name))),entries=[],blueprints=[];
+  templates.forEach((data,index)=>{
+   const templateName=names[index];
+   for(const team of data?.teams||[]){
+    const roster=Array.isArray(team?.roster)?team.roster:[];
+    if(roster.length>=10)blueprints.push(roster.slice(0,10).map(player=>Number(player?.pos)));
+    for(const player of roster){const pos=Number(player?.pos);if(!Number.isInteger(pos))continue;entries.push({sourceKey:templateName+':'+player.id,fingerprint:expansionPlayerFingerprint(player),pos,player})}
+   }
+  });
+  if(entries.length<10||!blueprints.length)throw Error('Expansion templates did not contain enough roster players.');
+  const byPos=new Map();for(const entry of entries){if(!byPos.has(entry.pos))byPos.set(entry.pos,[]);byPos.get(entry.pos).push(entry)}
+  return {entries,byPos,blueprints};
+ })();
+ expansionPoolCache.set(type,promise);
+ try{return await promise}catch(error){expansionPoolCache.delete(type);throw error}
+}
+function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
+function expansionRosterBlueprint(pool,data=league){
+ const local=[];for(const team of data?.teams||[]){const roster=Array.isArray(team?.roster)?team.roster:[];if(roster.length===10&&roster.every(player=>Number.isInteger(Number(player?.pos))))local.push(roster.map(player=>Number(player.pos)))}
+ return structuredClone(randomItem(local.length?local:pool.blueprints));
+}
+function expansionPersonIds(data=league){
+ const ids=new Set(),add=person=>{const id=Number(person?.id);if(Number.isInteger(id)&&id>0)ids.add(id)},addGroup=group=>{if(Array.isArray(group))for(const person of group)add(person);else if(group&&typeof group==='object')add(group)};
+ for(const collection of ['teams','starTeams'])for(const team of data?.[collection]||[]){addGroup(team?.roster);addGroup(team?.frontOffice?.staff);addGroup(team?.frontOffice?.announcers)}
+ for(const key of ['staff','announcers','coaches','commissioner','referees','media','draftClass','freeAgents','retirees','hallOfFame'])addGroup(data?.[key]);
+ return ids;
+}
+function expansionPersonIdAllocator(data=league){
+ const used=expansionPersonIds(data);let cursor=Math.max(Number(data?.meta?.uPID)||0,...used,0);data.meta||={};
+ return ()=>{do{cursor++}while(used.has(cursor));used.add(cursor);data.meta.uPID=cursor;return cursor};
+}
+function teamRosterBlueprint(team,pool,data=league){
+ const roster=Array.isArray(team?.roster)?team.roster:[],positions=roster.slice(0,10).map(player=>Number(player?.pos));
+ return roster.length>=10&&positions.length===10&&positions.every(Number.isInteger)?positions:expansionRosterBlueprint(pool,data);
+}
+function expansionRosterEntries(pool,data=league,blueprint=null){
+ const used=rosterPlayerFingerprints(data),selected=[],shape=Array.isArray(blueprint)&&blueprint.length?blueprint:expansionRosterBlueprint(pool,data),selectedKeys=new Set();
+ const take=pos=>{
+  const preferred=(pool.byPos.get(pos)||[]).filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
+  const fallback=pool.entries.filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
+  const candidates=preferred.length?preferred:fallback;if(!candidates.length)throw Error('The expansion player pool is exhausted.');
+  const entry=randomItem(candidates);selected.push(entry);selectedKeys.add(entry.sourceKey);used.add(entry.fingerprint);
+ };
+ for(const pos of shape.slice(0,10))take(pos);
+ while(selected.length<10)take(null);
+ return selected;
+}
+function populateExpansionRoster(team,pool,data,allocateId,blueprint=null){
+ const entries=expansionRosterEntries(pool,data,blueprint);team.roster=entries.map(entry=>{
+  const player=structuredClone(entry.player);player.id=allocateId();player.tid=team.id;player.league=data.leagueType;
+  if(player.contract){player.contract.pid=0;player.contract.tid=0}
+  return player;
+ });
+ return team;
+}
+function remapPlayerReferences(value,idMap){
+ if(Array.isArray(value)){for(const item of value)remapPlayerReferences(item,idMap);return value}
+ if(!value||typeof value!=='object')return value;
+ for(const [key,current] of Object.entries(value)){
+  if((key==='pid'||key==='playerId')&&idMap.has(Number(current)))value[key]=idMap.get(Number(current));
+  else if(current&&typeof current==='object')remapPlayerReferences(current,idMap);
+ }
+ return value;
+}
+async function randomizeInitialTemplateRosters(data){
+ const pool=await expansionPlayerPool(data.leagueType),allocateId=expansionPersonIdAllocator(data),idMap=new Map();let generated=0;
+ for(const team of data.teams||[]){
+  const originalRoster=Array.isArray(team?.roster)?team.roster.map(player=>structuredClone(player)):[],originalLineup=Array.isArray(team?.startingLineup)?structuredClone(team.startingLineup):[];
+  const blueprint=teamRosterBlueprint(team,pool,data);populateExpansionRoster(team,pool,data,allocateId,blueprint);
+  team.roster.forEach((player,index)=>{
+   const previous=originalRoster[index];if(!previous)return;
+   const oldId=Number(previous.id);if(Number.isInteger(oldId)&&oldId>0)idMap.set(oldId,player.id);
+   for(const key of ['teamPos','posRnk','linePos','usage'])if(previous[key]!==undefined)player[key]=structuredClone(previous[key]);
+   if(Array.isArray(previous.minutes))player.minutes=structuredClone(previous.minutes);
+  });
+  const teamMap=new Map(originalRoster.map((player,index)=>[Number(player?.id),team.roster[index]?.id]).filter(([oldId,newId])=>Number.isInteger(oldId)&&oldId>0&&Number.isInteger(newId)&&newId>0));
+  team.startingLineup=originalLineup.map(slot=>{const next=structuredClone(slot),mapped=teamMap.get(Number(next?.pid));if(mapped)next.pid=mapped;return next});
+  remapPlayerReferences(team.inbox,teamMap);generated+=team.roster.length;
+ }
+ remapPlayerReferences(data.records,idMap);if(data.season&&idMap.has(Number(data.season.playerId)))data.season.playerId=idMap.get(Number(data.season.playerId));
+ validateActiveRosterIds(data);return generated;
+}
+function validateActiveRosterIds(data=league){
+ const seen=new Map();
+ for(const team of data?.teams||[])for(const player of Array.isArray(team?.roster)?team.roster:[]){
+  const id=Number(player?.id);if(!Number.isInteger(id)||id<=0)throw Error((teamDisplayName(team)||'Team '+team.id)+' has a roster player with an invalid player ID.');
+  if(seen.has(id))throw Error('Duplicate player ID '+id+' appears on '+seen.get(id)+' and '+(teamDisplayName(team)||'Team '+team.id)+'.');
+  seen.set(id,teamDisplayName(team)||'Team '+team.id);
+  if(Number(player?.tid)!==Number(team?.id))throw Error('Player ID '+id+' has team ID '+player?.tid+' but is rostered on team '+team.id+'.');
+ }
+ return true;
+}
 function syncTeamCountMeta(data=league){
  if(!data||!Array.isArray(data.teams))return;
  data.meta||={};data.meta.teams=data.teams.length;
@@ -1933,12 +2049,21 @@ function removalCandidates(amount){
  for(let i=league.teams.length-1;i>=0&&result.length<amount;i--){const team=league.teams[i];if(!protectedIds.has(Number(team.id)))result.push({team,index:i});}
  return result;
 }
-function setLeagueTeamCount(requested){
+async function setLeagueTeamCount(requested){
+ if(teamCountBusy)return false;
  const current=league.teams.length,target=Math.max(4,Math.min(64,Math.round(Number(requested))));
  if(!Number.isFinite(target)||target===current)return false;
- let next=league.teams.slice();
+ let next=league.teams.slice(),generated=0;
  if(target>current){
-  for(let number=current+1;number<=target;number++){league.teams=next;next=[...next,createBlankLeagueTeam(number)];}
+  teamCountBusy=true;syncTeamCountDisplays();$('#status').textContent='Loading expansion players…';
+  const originalTeams=league.teams,originalUPID=league.meta?.uPID;
+  try{
+   const pool=await expansionPlayerPool(league.leagueType),allocateId=expansionPersonIdAllocator(league);
+   for(let number=current+1;number<=target;number++){
+    league.teams=next;const team=createBlankLeagueTeam(number);populateExpansionRoster(team,pool,league,allocateId);next=[...next,team];generated+=team.roster.length;
+   }
+  }catch(error){league.teams=originalTeams;if(league.meta)league.meta.uPID=originalUPID;$('#status').textContent='Expansion needs attention';toast(error.message);alert(error.message);return false}
+  finally{teamCountBusy=false}
  }else{
   const amount=current-target,candidates=removalCandidates(amount);
   if(candidates.length<amount){toast('Not enough removable teams. The controlled team is protected.');return false;}
@@ -1948,11 +2073,11 @@ function setLeagueTeamCount(requested){
  }
  league.teams=next;syncTeamCountMeta();locationSelections.clear();selected=Math.min(selected,Math.max(0,league.teams.length-1));teamList='teams';
  if(league.season){league.season.lotteryTeams=Math.min(Number(league.season.lotteryTeams)||0,league.teams.length);const conferenceCount=league.leagueType===1?Math.max(1,league.divisions?.length||1):Math.max(1,league.conferences?.length||2);let playoff=Math.min(Number(league.season.playoffTeams)||0,league.teams.length);if(playoff&&playoff%conferenceCount)playoff-=playoff%conferenceCount;league.season.playoffTeams=Math.max(conferenceCount,playoff||conferenceCount);}
- dirty=true;$('#status').textContent='Unsaved changes';syncTeamCountDisplays();toast('Total teams updated to '+league.teams.length+'.');return true;
+ dirty=true;$('#status').textContent='Unsaved changes';syncTeamCountDisplays();toast(generated?'Total teams updated to '+league.teams.length+'. Generated '+generated+' expansion players.':'Total teams updated to '+league.teams.length+'.');return true;
 }
 function syncTeamCountDisplays(){
  syncTeamCountMeta();
- for(const input of document.querySelectorAll('[data-team-count]')){input.value=String(league.teams.length);const row=input.closest('.number-control');if(row){const buttons=row.querySelectorAll('button');if(buttons[0])buttons[0].disabled=league.teams.length<=4;if(buttons[1])buttons[1].disabled=league.teams.length>=64;}}
+ for(const input of document.querySelectorAll('[data-team-count]')){input.value=String(league.teams.length);input.disabled=teamCountBusy;const row=input.closest('.number-control');if(row){const buttons=row.querySelectorAll('button');if(buttons[0])buttons[0].disabled=teamCountBusy||league.teams.length<=4;if(buttons[1])buttons[1].disabled=teamCountBusy||league.teams.length>=64;}}
  for(const status of document.querySelectorAll('[data-team-count-status]'))status.textContent=league.teams.length+' teams · '+(league.awards||[]).filter(a=>a.enabled).length+' enabled awards';
  const subtitle=$('#subtitle');if(subtitle&&view==='league')subtitle.textContent=league.leagueType===1?`${league.teams.length} teams · ${league.divisions.length} conferences`:`${league.teams.length} teams · ${league.conferences.length} conferences · ${league.divisions.length} divisions`;
  listTeams();
@@ -1962,9 +2087,9 @@ function syncTeamCountDisplays(){
 function renderTeamCountControl(parent){
  const wrap=el('div','field team-count-field'),row=el('div','number-control'),input=el('input'),minus=el('button','','−'),plus=el('button','','+');
  wrap.append(el('span','','Total Teams'));input.type='number';input.min='4';input.max='64';input.step='1';input.value=league.teams.length;input.dataset.teamCount='true';input.setAttribute('aria-label','Total Teams');minus.type=plus.type='button';minus.setAttribute('aria-label','Remove one team');plus.setAttribute('aria-label','Add one team');
- const sync=()=>{input.value=String(league.teams.length);minus.disabled=league.teams.length<=4;plus.disabled=league.teams.length>=64};
- minus.onclick=()=>{if(!canNavigate())return;if(!setLeagueTeamCount(league.teams.length-1))sync()};plus.onclick=()=>{if(!canNavigate())return;if(!setLeagueTeamCount(league.teams.length+1))sync()};input.onchange=()=>{if(!canNavigate()){sync();return}if(!setLeagueTeamCount(input.value))sync()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur()}};
- row.append(minus,input,plus);wrap.append(row);parent.append(wrap);sync();return wrap;
+ const sync=()=>{input.value=String(league.teams.length);input.disabled=teamCountBusy;minus.disabled=teamCountBusy||league.teams.length<=4;plus.disabled=teamCountBusy||league.teams.length>=64};
+ minus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length-1)))sync()};plus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length+1)))sync()};input.onchange=async()=>{if(!canNavigate()){sync();return}if(!(await setLeagueTeamCount(input.value)))sync()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur()}};
+ row.append(minus,input,plus);wrap.append(row,el('small','','Adding teams automatically builds 10-player rosters from the matching Pro or College template pool with new collision-safe player IDs.'));parent.append(wrap);sync();return wrap;
 }
 function renderTeamDistributionSummary(parent){
  const summary=el('div','team-distribution-summary');summary.append(el('h3','','Total Teams: '+league.teams.length));
@@ -3235,7 +3360,7 @@ async function openDraftSlots(mode){
 $('#saveProgress').onclick=()=>openDraftSlots('save');
 $('#restoreProgress').onclick=()=>openDraftSlots('restore');
 
-$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;load(structuredClone(template));set(['leagueName'],'My League');set(['shortName'],'ML');render();toast('New league created from the sample; rosters retained.')};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+$('#gettingStartedNav').onclick=()=>{if(canNavigate()){view='home';render()}};$('#leagueNav').onclick=()=>{if(canNavigate()){view='league';render()}};$('#sidebarTemplate').onclick=()=>$('#new').click();$('#sidebarImport').onclick=()=>$('#import').click();$('#sidebarRestore').onclick=()=>$('#restoreProgress').click();$('#imagesNav').onclick=()=>{if(canNavigate()){view='images';render()}};$('#teamSearch').oninput=()=>league&&listTeams();$('#import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=validate(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));inferImportedSliderPresets(data);if(dirty&&!confirm('Replace your current edits with this league?'))return;load(data);toast('League imported')}catch(e){toast(e.message)}finally{e.target.value=''}};$('#new').onclick=async()=>{if(dirty&&!confirm('Discard current edits and start from the sample template?'))return;const button=$('#new');button.disabled=true;$('#status').textContent='Randomizing template rosters…';try{const next=structuredClone(template),generated=await randomizeInitialTemplateRosters(next);load(next);set(['leagueName'],'My League');set(['shortName'],'ML');render();toast('New league created with '+generated+' randomized players.')}catch(e){$('#status').textContent=league?'Ready to edit':'Template needs attention';toast(e.message);alert(e.message)}finally{button.disabled=false}};$('#export').onclick=()=>{if(!league||!canNavigate())return;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(league));dirty=false;$('#status').textContent='Exported';toast('League exported')};window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 function pickerCleanURL(value){
  return String(value??'').trim().split('#')[0].split('?')[0];
 }
@@ -3526,7 +3651,7 @@ $('#applyColor').onclick=()=>{
  if(!/^[a-f0-9]{6}$/i.test(hex)){toast('Enter a six-digit hex color.');return}
  sampled(hex);$('#picker').close();pickerLoadToken++;toast('Color applied');
 };
-$('#export').onclick=async()=>{if(!league||!canNavigate())return;if(league.teams.length<4){toast('A league needs at least 4 teams before export.');return}syncTeamCountMeta();const original=JSON.stringify(league);$('#export').disabled=true;$('#status').textContent='Checking images…';try{const ready=await prepareImages(league,assets);if(JSON.stringify(league)!==original)throw Error('The league changed during image checks. Export again to include your latest edits.');enforcePlayInRounds(ready);league=ready;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(ready));dirty=false;$('#status').textContent='Exported';render();toast('Exported with verified image links and logo dimensions.')}catch(e){$('#status').textContent='Export needs attention';toast(e.message);alert(e.message)}finally{$('#export').disabled=false}};
+$('#export').onclick=async()=>{if(!league||!canNavigate())return;if(league.teams.length<4){toast('A league needs at least 4 teams before export.');return}syncTeamCountMeta();const original=JSON.stringify(league);$('#export').disabled=true;$('#status').textContent='Checking images…';try{validateActiveRosterIds(league);const ready=await prepareImages(league,assets);validateActiveRosterIds(ready);if(JSON.stringify(league)!==original)throw Error('The league changed during image checks. Export again to include your latest edits.');enforcePlayInRounds(ready);league=ready;saveFile((league.leagueName||'League').replace(/[<>:"/\\|?*]/g,'_')+'.txt',JSON.stringify(ready));dirty=false;$('#status').textContent='Exported';render();toast('Exported with verified image links and logo dimensions.')}catch(e){$('#status').textContent='Export needs attention';toast(e.message);alert(e.message)}finally{$('#export').disabled=false}};
 try{const [s,a]=await Promise.resolve([standaloneSample,[]]);template=structuredClone(s);applyScheduleDefaults(template,29);applySettingPreset(template,['settings','gameStyle'],template.settings.gameStyle);applySettingPreset(template,['season','simulationPreset'],template.season.simulationPreset);assets=a.sort((a,b)=>a.name.localeCompare(b.name)||a.path.localeCompare(b.path));$('#assetCount').textContent=assets.length;renderWelcome();void refreshArchive(true);}catch(e){$('#content').textContent=e.message;$('#status').textContent='Load error'}
 if(document.modelContext?.registerTool){try{Promise.resolve(document.modelContext.registerTool({name:'list_league_teams',description:'Read the names and identifiers of the currently loaded league teams.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:input=>{if(!input||Object.keys(input).length)throw Error('Expected an empty object');return {league:league?.leagueName||null,teams:(league?.teams||[]).map(t=>({id:t.id,name:t.name,city:t.city}))}}})).catch(()=>{})}catch{}}
 
