@@ -1,0 +1,28 @@
+name: Build player and personnel pools
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-pools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Build pools
+        run: python tools/build_player_personnel_pools.py
+      - name: Package pools
+        run: zip -r HoopLeague_player_personnel_pools.zip generated_pools
+      - name: Upload pools
+        uses: actions/upload-artifact@v4
+        with:
+          name: HoopLeague-player-personnel-pools
+          path: HoopLeague_player_personnel_pools.zip
+          if-no-files-found: error
