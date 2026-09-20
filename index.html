@@ -1638,6 +1638,35 @@ body.pwa-install-open{
   user-select:none;
   -webkit-touch-callout:none;
 }
+
+/* Lightweight roster / depth chart */
+.roster-depth-card{max-width:920px}
+.roster-depth-header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px}
+.roster-depth-header h2{margin-bottom:4px}
+.roster-depth-header p{margin:0;font-size:13px}
+.depth-position-group{margin-top:18px;border-top:2px solid #23587d;padding-top:14px}
+.depth-position-group:first-of-type{margin-top:0;border-top:0;padding-top:0}
+.depth-position-title{margin:0 0 8px;color:#79fff4;font-size:14px;letter-spacing:.5px}
+.depth-player-row{display:grid;grid-template-columns:42px minmax(170px,1.5fr) 62px 62px minmax(220px,1fr);gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #287bb7}
+.depth-player-row:last-child{border-bottom:0}
+.depth-rank{font-family:Consolas,'Courier New',monospace;color:#79fff4;font-weight:700;text-align:center}
+.depth-player-name{min-width:0;font-weight:700;overflow-wrap:anywhere}
+.depth-player-meta{color:#bcd8f2;text-align:center;font-size:13px}
+.depth-player-move{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;min-width:0}
+.depth-player-move select{width:100%;min-width:0}
+.depth-player-move button{min-width:68px;padding-left:10px;padding-right:10px}
+.depth-player-release{background:#b42332;border-color:#e65a66;color:#fff}
+.depth-player-release:hover{background:#d02d3e;border-color:#ffc0c6}
+.depth-starter-badge{display:inline-block;margin-left:7px;padding:2px 5px;border:1px solid #4cf5ed;color:#79fff4;font-size:10px;line-height:1.1;vertical-align:middle}
+.depth-readonly-note{margin:12px 0 0;padding:10px 12px;background:#092c55;border-left:3px solid #4cf5ed;font-size:13px;color:#bcd8f2}
+@media(max-width:760px){
+ .roster-depth-header{align-items:flex-start;flex-direction:column}
+ .depth-player-row{grid-template-columns:34px minmax(0,1fr) 48px 48px;gap:7px;padding:10px 0}
+ .depth-player-move{grid-column:2/-1;grid-template-columns:minmax(0,1fr) auto auto}
+ .depth-player-name{font-size:14px}
+ .depth-player-meta{font-size:12px}
+}
+
 </style>
 </head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
@@ -1798,6 +1827,7 @@ const $=s=>document.querySelector(s), el=(tag,cls,text)=>{const n=document.creat
 let league,template,assets=[],view='home',selected=0,teamList='teams',dirty=false,pickPath=null,recent=[],imageReady=false,toastTimer,teamColorSlot=0,teamPicker=false,pickerOriginalColors=null,pickerOriginalValue=null,pickerTeam=null,pickerLoadToken=0;
 const EXPANSION_TEMPLATE_FILES={0:['ProTemplate1.txt','ProTemplate2.txt','ProTemplate3.txt','ProTemplate4.txt','ProTemplate5.txt'],1:['CollegeTemplate1.txt','CollegeTemplate2.txt','CollegeTemplate3.txt','CollegeTemplate4.txt','CollegeTemplate5.txt']};
 const EXPANSION_TEMPLATE_FOLDERS={0:'pro',1:'college'},EXPANSION_RAW_ROOT='https://raw.githubusercontent.com/Galileo88/HoopLeagueStudio/main/templates';
+const EXPANSION_ROSTER_MIN=13,EXPANSION_ROSTER_MAX=15;
 const expansionPoolCache=new Map();let teamCountBusy=false;
 const locationSelections=new Map(),LOCATION_API='https://countriesnow.space/api/v0.1/countries',LOCATION_GEOCODER='https://geocoding-api.open-meteo.com/v1/search',LOCATION_CACHE_PREFIX='hls-location-v1:',LOCATION_CACHE_TTL=30*24*60*60*1000;
 const protectedKeys=new Set(['roster','staff','announcers','coaches','commissioner','referees','media','draftClass','freeAgents','threePointContestants','retirees','hallOfFame','contractOffers','records','career','currentGame','history','headToHeads','inbox','startingLineup','currentLineup','lineupPreset','draftPicks','scoringOptions','quickPlays','championships','workshop']);
@@ -1955,6 +1985,7 @@ async function expansionPlayerPool(type){
  try{return await promise}catch(error){expansionPoolCache.delete(type);throw error}
 }
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
+function expansionRosterTargetSize(){return EXPANSION_ROSTER_MIN+Math.floor(Math.random()*(EXPANSION_ROSTER_MAX-EXPANSION_ROSTER_MIN+1))}
 function copyExpansionTeamIdentity(target,source){
  const identityKeys=['city','name','shortName','arenaName','logoURL','tag','logoSize','location','teamColors','uniforms','court'];
  for(const key of identityKeys)if(source?.[key]!==undefined)target[key]=structuredClone(source[key]);
@@ -1995,8 +2026,8 @@ function teamRosterBlueprint(team,pool,data=league){
  const roster=Array.isArray(team?.roster)?team.roster:[],positions=roster.slice(0,10).map(player=>Number(player?.pos));
  return roster.length>=10&&positions.length===10&&positions.every(Number.isInteger)?positions:expansionRosterBlueprint(pool,data);
 }
-function expansionRosterEntries(pool,data=league,blueprint=null){
- const used=rosterPlayerFingerprints(data),selected=[],shape=Array.isArray(blueprint)&&blueprint.length?blueprint:expansionRosterBlueprint(pool,data),selectedKeys=new Set();
+function expansionRosterEntries(pool,data=league,blueprint=null,targetSize=null){
+ const used=rosterPlayerFingerprints(data),selected=[],shape=Array.isArray(blueprint)&&blueprint.length?blueprint:expansionRosterBlueprint(pool,data),selectedKeys=new Set(),count=Math.max(EXPANSION_ROSTER_MIN,Math.min(EXPANSION_ROSTER_MAX,Number.isInteger(Number(targetSize))?Number(targetSize):expansionRosterTargetSize()));
  const take=pos=>{
   const preferred=(pool.byPos.get(pos)||[]).filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
   const fallback=pool.entries.filter(entry=>!used.has(entry.fingerprint)&&!selectedKeys.has(entry.sourceKey));
@@ -2004,11 +2035,11 @@ function expansionRosterEntries(pool,data=league,blueprint=null){
   const entry=randomItem(candidates);selected.push(entry);selectedKeys.add(entry.sourceKey);used.add(entry.fingerprint);
  };
  for(const pos of shape.slice(0,10))take(pos);
- while(selected.length<10)take(null);
+ while(selected.length<count)take(shape.length?randomItem(shape):null);
  return selected;
 }
-function populateExpansionRoster(team,pool,data,allocateId,blueprint=null){
- const entries=expansionRosterEntries(pool,data,blueprint);team.roster=entries.map(entry=>{
+function populateExpansionRoster(team,pool,data,allocateId,blueprint=null,targetSize=null){
+ const entries=expansionRosterEntries(pool,data,blueprint,targetSize);team.roster=entries.map(entry=>{
   const player=structuredClone(entry.player);player.id=allocateId();player.tid=team.id;player.league=data.leagueType;
   if(player.contract){player.contract.pid=0;player.contract.tid=0}
   return player;
@@ -2198,7 +2229,7 @@ function renderTeamCountControl(parent){
  wrap.append(el('span','','Total Teams'));input.type='number';input.min='4';input.max='64';input.step='1';input.value=league.teams.length;input.dataset.teamCount='true';input.setAttribute('aria-label','Total Teams');minus.type=plus.type='button';minus.setAttribute('aria-label','Remove one team');plus.setAttribute('aria-label','Add one team');
  const sync=()=>{input.value=String(league.teams.length);input.disabled=teamCountBusy;minus.disabled=teamCountBusy||league.teams.length<=4;plus.disabled=teamCountBusy||league.teams.length>=64};
  minus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length-1)))sync()};plus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length+1)))sync()};input.onchange=async()=>{if(!canNavigate()){sync();return}if(!(await setLeagueTeamCount(input.value)))sync()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur()}};
- row.append(minus,input,plus);wrap.append(row,el('small','','Adding teams automatically assigns a unique matching Pro or College team identity, then builds a 10-player roster and personnel group with collision-safe IDs.'));parent.append(wrap);sync();return wrap;
+ row.append(minus,input,plus);wrap.append(row,el('small','','Adding teams automatically assigns a unique matching Pro or College team identity, then builds a 13–15 player roster and personnel group with collision-safe IDs.'));parent.append(wrap);sync();return wrap;
 }
 function renderTeamDistributionSummary(parent){
  const summary=el('div','team-distribution-summary');summary.append(el('h3','','Total Teams: '+league.teams.length));
@@ -2918,7 +2949,7 @@ function listTeams(){
  function matches(t){return [inferredTeamLocation(t),t.name,t.shortName].filter(Boolean).join(' ').toLowerCase().includes(q)}
  function button(t,i,type){
   const full=teamDisplayName(t);
-  const b=el('button','team'+(view==='team'&&selected===i&&teamList===type?' active':''));
+  const b=el('button','team'+((view==='team'||view==='roster')&&selected===i&&teamList===type?' active':''));
   const icon=el('span','team-icon',t.shortName||'HL'),txt=el('span','',full||'Unnamed team');
   icon.style.backgroundColor=teamPrimaryColor(t);icon.style.borderColor=teamSecondaryColor(t);icon.style.color='#FFFFFF';
   b.append(icon,txt);b.onclick=()=>{if(!canNavigate())return;selected=i;teamList=type;view='team';render()};box.append(b);
@@ -2968,6 +2999,9 @@ function renderPageNav(){
   add('← League Configuration','league');
  }else if(view==='team'&&league){
   add('← Team Selection','teamSelect');
+  add('Roster / Depth Chart','roster');
+ }else if(view==='roster'&&league){
+  add('← Team Configuration','team');
  }
 
  if(nav.children.length){
@@ -2980,7 +3014,7 @@ function renderWelcome(){
  $('#status').hidden=false;document.body.classList.toggle('workspace-home',view==='home');
  $('#teams').replaceChildren();$('#teamCount').textContent='0';$('#teamSearch').disabled=true;$('#saveProgress').disabled=!league;$('#export').disabled=!league;
  const teamPanel=$('#leagueTeamPanel');if(teamPanel)teamPanel.hidden=true;
- $('#gettingStartedNav').classList.toggle('active',view==='home');$('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team');$('#imagesNav').classList.toggle('active',view==='images');
+ $('#gettingStartedNav').classList.toggle('active',view==='home');$('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team'||view==='roster');$('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){document.body.classList.remove('workspace-home');renderArchive();return}
  $('#title').textContent='Getting Started';$('#breadcrumb').textContent='HOOP LEAGUE STUDIO';$('#subtitle').textContent='Create Hoop Land leagues and manage league images.';$('#status').textContent=league?'League ready':'Choose how to begin';
@@ -3016,6 +3050,106 @@ function renderLeagueStudioEmpty(){
  create.onclick=()=>$('#new').click();upload.onclick=()=>$('#import').click();loadLeague.onclick=()=>$('#restoreProgress').click();
  actions.append(create,upload,loadLeague);card.append(actions);content.append(card);
 }
+function rosterStartingPlayerIds(team){
+ const ids=new Set();
+ for(const slot of Array.isArray(team?.startingLineup)?team.startingLineup:[]){
+  const id=Number(slot&&typeof slot==='object'?slot.pid:slot);
+  if(Number.isInteger(id)&&id>0)ids.add(id);
+ }
+ return ids;
+}
+function clearPlayerFromTeamLineup(team,playerId){
+ const id=Number(playerId);
+ if(!Number.isInteger(id)||id<=0)return;
+ const map=new Map([[id,0]]);
+ remapPlayerReferences(team?.startingLineup,map);
+ remapPlayerReferences(team?.scoringOptions,map);
+ remapPlayerReferences(team?.quickPlays,map);
+}
+function makeRosterPlayerFreeAgent(player){
+ player.tid=0;
+ player.league=league.leagueType;
+ if(player.contract&&typeof player.contract==='object'){
+  player.contract.tid=0;player.contract.pid=0;player.contract.yrs=0;player.contract.sal=0;player.contract.opt=0;player.contract.noTrd=0;
+  if(player.contract.ext&&typeof player.contract.ext==='object'){player.contract.ext.yrs=0;player.contract.ext.sal=0;player.contract.ext.opt=0;player.contract.ext.noTrd=0}
+ }
+ if(Object.hasOwn(player,'tradeRequested'))player.tradeRequested=false;
+ return player;
+}
+function releaseRosterPlayer(sourceTeam,playerId){
+ if(teamList!=='teams'){toast('All-Star rosters are read-only here.');return false}
+ const roster=Array.isArray(sourceTeam?.roster)?sourceTeam.roster:[],index=roster.findIndex(player=>Number(player?.id)===Number(playerId));
+ if(index<0){toast('Player is no longer on this roster.');return false}
+ const [player]=roster.splice(index,1);
+ clearPlayerFromTeamLineup(sourceTeam,playerId);
+ league.freeAgents||=[];
+ makeRosterPlayerFreeAgent(player);
+ league.freeAgents.push(player);
+ if(Number(league?.season?.playerId)===Number(player.id))league.season.playerId=0;
+ dirty=true;
+ try{validateActiveRosterIds(league)}catch(error){league.freeAgents.pop();sourceTeam.roster.splice(index,0,player);player.tid=sourceTeam.id;if(player.contract&&typeof player.contract==='object')player.contract.tid=sourceTeam.id;toast(error.message);return false}
+ toast(([player.fn,player.ln].filter(Boolean).join(' ')||'Player')+' released to free agency.');
+ return true;
+}
+function moveRosterPlayer(sourceTeam,playerId,destinationId){
+ if(teamList!=='teams'){toast('All-Star rosters are read-only here.');return false}
+ const destination=(league.teams||[]).find(team=>Number(team?.id)===Number(destinationId));
+ if(!destination||Number(destination.id)===Number(sourceTeam?.id))return false;
+ const roster=Array.isArray(sourceTeam?.roster)?sourceTeam.roster:[],index=roster.findIndex(player=>Number(player?.id)===Number(playerId));
+ if(index<0){toast('Player is no longer on this roster.');return false}
+ const [player]=roster.splice(index,1);clearPlayerFromTeamLineup(sourceTeam,playerId);
+ player.tid=destination.id;
+ if(player.contract&&typeof player.contract==='object'){
+  if(Number(player.contract.pid)===Number(player.id)||Number(player.contract.tid)===Number(sourceTeam.id))player.contract.tid=destination.id;
+ }
+ if(!Array.isArray(destination.roster))destination.roster=[];
+ destination.roster.push(player);
+ dirty=true;
+ try{validateActiveRosterIds(league)}catch(error){destination.roster.pop();sourceTeam.roster.splice(index,0,player);player.tid=sourceTeam.id;if(player.contract&&typeof player.contract==='object')player.contract.tid=sourceTeam.id;toast(error.message);return false}
+ toast((player.fn||'')+' '+(player.ln||'')+' moved to '+teamDisplayName(destination)+'.');
+ return true;
+}
+function renderRosterDepthChart(parent,team){
+ const card=el('section','card roster-depth-card'),header=el('div','roster-depth-header'),titles=el('div');
+ titles.append(el('h2','','Roster / Depth Chart'),el('p','',`${Array.isArray(team?.roster)?team.roster.length:0} players · ${teamDisplayName(team)}`));
+ header.append(titles);card.append(header);
+ const roster=Array.isArray(team?.roster)?team.roster:[];
+ if(!roster.length){card.append(el('p','team-selection-empty','No players are currently on this roster.'));parent.append(card);return}
+ const starters=rosterStartingPlayerIds(team),indexed=roster.map((player,index)=>({player,index}));
+ indexed.sort((a,b)=>{
+  const aStarter=starters.has(Number(a.player?.id))?0:1,bStarter=starters.has(Number(b.player?.id))?0:1;
+  return Number(a.player?.pos??99)-Number(b.player?.pos??99)||aStarter-bStarter||Number(a.player?.posRnk??99)-Number(b.player?.posRnk??99)||a.index-b.index;
+ });
+ const regularTeam=teamList==='teams';
+ for(let pos=0;pos<PLAYER_POSITION_LABELS.length;pos++){
+  const group=indexed.filter(item=>Number(item.player?.pos)===pos);if(!group.length)continue;
+  const section=el('section','depth-position-group');section.append(el('h3','depth-position-title',PLAYER_POSITION_LABELS[pos]));
+  group.forEach(({player},depthIndex)=>{
+   const row=el('div','depth-player-row'),rank=el('div','depth-rank',String(depthIndex+1)),name=el('div','depth-player-name'),num=el('div','depth-player-meta','#'+(player?.num??'—')),age=el('div','depth-player-meta',String(player?.age??'—'));
+   name.append(document.createTextNode([player?.fn,player?.ln].filter(Boolean).join(' ')||'Unnamed player'));
+   if(starters.has(Number(player?.id)))name.append(el('span','depth-starter-badge','STARTER'));
+   row.append(rank,name,num,age);
+   if(regularTeam){
+    const move=el('div','depth-player-move'),select=el('select'),button=el('button','','Move'),release=el('button','depth-player-release','Release');button.type=release.type='button';
+    const placeholder=el('option','','Move to team…');placeholder.value='';select.append(placeholder);
+    for(const destination of league.teams||[]){if(Number(destination?.id)===Number(team?.id))continue;const option=el('option','',teamDisplayName(destination));option.value=String(destination.id);select.append(option)}
+    button.disabled=!select.value;select.onchange=()=>button.disabled=!select.value;
+    button.onclick=()=>{if(!select.value)return;if(!confirm('Move '+([player?.fn,player?.ln].filter(Boolean).join(' ')||'this player')+' to '+select.options[select.selectedIndex].text+'?'))return;if(moveRosterPlayer(team,player.id,Number(select.value)))render()};
+    release.onclick=()=>{const playerName=[player?.fn,player?.ln].filter(Boolean).join(' ')||'this player';if(!confirm('Release '+playerName+' from '+teamDisplayName(team)+' to free agency?'))return;if(releaseRosterPlayer(team,player.id))render()};
+    move.append(select,button,release);row.append(move);
+   }
+   section.append(row);
+  });
+  card.append(section);
+ }
+ const unknown=indexed.filter(item=>!Number.isInteger(Number(item.player?.pos))||Number(item.player.pos)<0||Number(item.player.pos)>=PLAYER_POSITION_LABELS.length);
+ if(unknown.length){
+  const section=el('section','depth-position-group');section.append(el('h3','depth-position-title','Other'));
+  unknown.forEach(({player},depthIndex)=>{const row=el('div','depth-player-row');row.append(el('div','depth-rank',String(depthIndex+1)),el('div','depth-player-name',[player?.fn,player?.ln].filter(Boolean).join(' ')||'Unnamed player'),el('div','depth-player-meta','#'+(player?.num??'—')),el('div','depth-player-meta',String(player?.age??'—')));section.append(row)});card.append(section);
+ }
+ if(!regularTeam)card.append(el('p','depth-readonly-note','All-Star rosters are shown for reference only. Moves and releases are available on regular league teams.'));
+ parent.append(card);
+}
 function render(){
  if(view!=='images')$('#status').hidden=false;
  if(view==='home'){renderWelcome();return}
@@ -3025,7 +3159,7 @@ function render(){
  $('#teamSearch').disabled=!league;$('#saveProgress').disabled=!league;$('#export').disabled=!league;
  if(league&&view!=='images')listTeams();
  $('#gettingStartedNav').classList.toggle('active',view==='home');
- $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team');
+ $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team'||view==='roster');
  $('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){renderArchive();return}
@@ -3039,7 +3173,14 @@ function render(){
   return;
  }
  const t=league[teamList]?.[selected];
- if(!t&&view==='team'){view='teamSelect';render();return}
+ if(!t&&(view==='team'||view==='roster')){view='teamSelect';render();return}
+ if(view==='roster'){
+  $('#title').textContent=teamDisplayName(t);
+  $('#breadcrumb').textContent='TEAMS / '+(t.shortName||'ROSTER')+' / ROSTER';
+  $('#subtitle').textContent='View the roster and move players between teams.';
+  renderRosterDepthChart(content,t);
+  return;
+ }
  $('#title').textContent=view==='league'?league.leagueName:teamDisplayName(t);
  $('#breadcrumb').textContent=view==='league'?'LEAGUE / SETTINGS':'TEAMS / '+(t.shortName||'DETAILS');
  $('#subtitle').textContent=view==='league'?(league.leagueType===1?`${league.teams.length} teams · ${league.divisions.length} conferences`:`${league.teams.length} teams · ${league.conferences.length} conferences · ${league.divisions.length} divisions`):'Identity, uniforms, court and team settings';
