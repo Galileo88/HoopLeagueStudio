@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hoop League Studio</title><meta name="description" content="Create and customize Hoopland leagues, teams, courts and colors."><meta name="theme-color" content="#071a2b"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Hoop League Studio"><meta name="application-name" content="Hoop League Studio"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/png" href="./favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png"><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Hoop League Studio</title><meta name="description" content="Create and customize Hoopland leagues, teams, courts and colors."><meta name="theme-color" content="#071a2b"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Hoop League Studio"><meta name="application-name" content="Hoop League Studio"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/png" href="./favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png"><style>
 /* Core layout and components */
 
 :root{font-family:Inter,Segoe UI,sans-serif;color:#e7ece8;background:#101612;font-size:16px;color-scheme:dark;--muted:#a5b2a9;--line:#303c33;--lime:#c6f36b}*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button,.button,select{border:1px solid var(--line);background:#222c25;color:inherit;padding:10px 14px;border-radius:8px;cursor:pointer}button:hover,.button:hover{border-color:#95b16e}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--lime);outline-offset:3px}.primary{background:var(--lime);color:#172010;border-color:var(--lime);font-weight:700}header{height:96px;display:flex;align-items:center;justify-content:space-between;padding:24px 36px;border-bottom:1px solid var(--line);gap:20px}.brand{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;font-weight:800;letter-spacing:2px}.brand>b{background:var(--lime);color:#182110;border-radius:9px;font-size:30px;padding:2px 12px}.brand small{display:block;font-size:12px;letter-spacing:3px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workspace{display:grid;grid-template-columns:260px minmax(0,1fr)}aside{padding:30px 20px;background:#151d18;min-height:calc(100vh - 96px);border-right:1px solid var(--line)}.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--muted);margin:0 0 15px}.nav{display:block;width:100%;text-align:left;margin-bottom:8px;border-color:transparent;background:transparent}.nav.active,.team.active{background:#303f25;color:var(--lime)}.aside-title{display:flex;justify-content:space-between;margin-top:34px}input,textarea{background:#111914;border:1px solid #3c4b40;color:inherit;border-radius:7px;padding:11px;width:100%;min-width:0}input[type=checkbox]{width:20px;height:20px;accent-color:var(--lime)}input[type=color]{width:44px;height:42px;padding:4px;flex-shrink:0}.team{width:100%;border:0;background:transparent;display:flex;text-align:left;gap:12px;align-items:center;padding:12px 8px;margin-top:4px}.team-icon{width:34px;height:34px;display:grid;place-items:center;background:#29362c;border-radius:8px;font-size:12px;flex-shrink:0}.team small{display:block;color:var(--muted);font-size:12px;margin-top:3px}main{padding:40px;max-width:1600px;width:100%}.heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;gap:16px}h1{font-size:36px;letter-spacing:-1px;margin:0 0 9px}h2{margin:0 0 16px;font-size:22px}p{color:var(--muted);line-height:1.6}.heading p:last-child{margin:0}.badge{font-size:12px;color:var(--lime);border:1px solid #4d6238;background:#202e1d;border-radius:100px;padding:8px 12px;white-space:nowrap}.card{border:1px solid var(--line);background:#19221c;border-radius:12px;padding:24px;margin-bottom:20px}.card>p{margin-top:0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.field>span{display:block;margin-bottom:8px;font-size:14px;color:#c6d0c9}.field small{display:block;color:var(--muted);font-size:12px;margin-top:5px}.field.wide{grid-column:1/-1}.color-line,.url-line{display:flex;gap:7px}.color-line button{padding:6px 9px;font-size:14px}.color-line select{max-width:108px}.field.invalid input{border-color:#ff8989}details{border:1px solid var(--line);border-radius:9px;padding:16px;margin:12px 0}summary{cursor:pointer;font-weight:600}details>.fields{margin-top:20px}.note{padding:12px 16px;border-left:3px solid var(--lime);background:#202b21;font-size:14px;margin-bottom:24px}.filters{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}.filters input{flex:1;min-width:150px}.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:18px}.asset{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#19221c}.asset img{width:100%;height:158px;object-fit:contain;padding:15px;background:repeating-conic-gradient(#253028 0% 25%,#202922 0% 50%) 0/20px 20px;image-rendering:pixelated}.asset-body{padding:16px}.asset h3{margin:0 0 6px;font-size:16px}.asset p{font-size:12px;margin:0 0 12px}.asset input{font-size:12px;margin-bottom:10px}.asset button{font-size:14px}#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--lime);color:#172010;padding:12px 20px;border-radius:9px;display:none;z-index:5;max-width:90vw}dialog{width:min(780px,94vw);background:#19221c;color:inherit;border:1px solid #526449;border-radius:16px;padding:28px}dialog::backdrop{background:#000a}.dialog-head{display:flex;justify-content:space-between;align-items:start}.canvas-wrap{position:relative;background:#101612;margin-top:14px;overflow:hidden}#canvas{display:block;max-width:100%;height:auto;cursor:crosshair;image-rendering:pixelated}#zoom{position:absolute;right:8px;top:8px;border:2px solid white;pointer-events:none;image-rendering:pixelated}.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.swatches button{width:38px;height:38px;border:2px solid #8a978d}.color-result{display:flex;gap:12px;align-items:center}.color-result input:not([type=color]){width:120px}#picker .eyebrow{margin-top:18px}#teams{max-height:calc(100vh - 335px);overflow:auto}button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:900px){header{padding:20px;height:auto}.workspace{grid-template-columns:210px minmax(0,1fr)}main{padding:24px}.fields{grid-template-columns:1fr}.heading{align-items:start;flex-direction:column}.color-line{flex-wrap:wrap}}@media(max-width:620px){header{align-items:start;flex-direction:column}.workspace{display:block}aside{min-height:0;border-right:0;padding:18px}#teams{max-height:180px}.aside-title{margin-top:16px}main{padding:20px}h1{font-size:28px}.card{padding:18px}.color-line input:not([type=color]){width:90px;flex:1}.actions button,.actions .button{font-size:14px}.brand{font-size:14px}}
@@ -1713,8 +1713,25 @@ body.pwa-install-open{
   -webkit-touch-callout:none;
 }
 
+
+/* App-like interaction guardrails: keep the interface fixed-scale and media non-draggable/copyable. */
+html,body{touch-action:pan-x pan-y}
+img,canvas,.uniform-preview-stage{
+  -webkit-user-drag:none;
+  user-drag:none;
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
 </style>
-</head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
+<style id="mobile-no-focus-zoom">
+@media (max-width:760px){
+  input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select{font-size:16px!important}
+}
+</style></head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
     <div class="pwa-install-copy">
       <strong id="pwaInstallTitle">Install Hoop League Studio</strong>
@@ -4330,4 +4347,42 @@ if(document.modelContext?.registerTool){try{Promise.resolve(document.modelContex
  },true);
 })();
 </script>
+<script>
+/* Keep browser-style image and pinch gestures out of the app while preserving text editing. */
+(()=>{
+  const mediaSelector='img,canvas,.uniform-preview-stage';
+  const isMediaTarget=target=>target instanceof Element&&!!target.closest(mediaSelector);
+
+  document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
+  document.addEventListener('gesturechange',event=>event.preventDefault(),{passive:false});
+  document.addEventListener('gestureend',event=>event.preventDefault(),{passive:false});
+  document.addEventListener('touchmove',event=>{
+    if(event.touches&&event.touches.length>1)event.preventDefault();
+  },{passive:false,capture:true});
+  document.addEventListener('wheel',event=>{
+    if(event.ctrlKey)event.preventDefault();
+  },{passive:false,capture:true});
+
+  document.addEventListener('dragstart',event=>{
+    if(isMediaTarget(event.target))event.preventDefault();
+  },true);
+  document.addEventListener('contextmenu',event=>{
+    if(isMediaTarget(event.target))event.preventDefault();
+  },true);
+  document.addEventListener('copy',event=>{
+    if(isMediaTarget(event.target)){event.preventDefault();return}
+    const selection=window.getSelection?.();
+    if(!selection||selection.rangeCount===0||selection.isCollapsed)return;
+    try{
+      const fragment=selection.getRangeAt(0).cloneContents();
+      if(fragment.querySelector?.(mediaSelector))event.preventDefault();
+    }catch{}
+  },true);
+  document.addEventListener('paste',event=>{
+    const items=Array.from(event.clipboardData?.items||[]);
+    if(items.some(item=>String(item.type||'').toLowerCase().startsWith('image/')))event.preventDefault();
+  },true);
+})();
+</script>
+
 </body></html>
