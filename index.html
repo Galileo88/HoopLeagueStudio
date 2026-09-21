@@ -2227,7 +2227,7 @@ function renderTeamCountControl(parent){
  wrap.append(el('span','','Total Teams'));input.type='number';input.min='4';input.max='64';input.step='1';input.value=league.teams.length;input.dataset.teamCount='true';input.setAttribute('aria-label','Total Teams');minus.type=plus.type='button';minus.setAttribute('aria-label','Remove one team');plus.setAttribute('aria-label','Add one team');
  const sync=()=>{input.value=String(league.teams.length);input.disabled=teamCountBusy;minus.disabled=teamCountBusy||league.teams.length<=4;plus.disabled=teamCountBusy||league.teams.length>=64};
  minus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length-1)))sync()};plus.onclick=async()=>{if(!canNavigate())return;if(!(await setLeagueTeamCount(league.teams.length+1)))sync()};input.onchange=async()=>{if(!canNavigate()){sync();return}if(!(await setLeagueTeamCount(input.value)))sync()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();input.blur()}};
- row.append(minus,input,plus);parent.append(wrap);sync();return wrap;
+ row.append(minus,input,plus);wrap.append(row);parent.append(wrap);sync();return wrap;
 }
 function renderTeamDistributionSummary(parent){
  const summary=el('div','team-distribution-summary');summary.append(el('h3','','Total Teams: '+league.teams.length));
