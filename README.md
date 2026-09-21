@@ -1,17 +1,26 @@
 # Hoop League Studio
 
-Hoop League Studio is a browser app for creating and editing Hoop Land leagues.
+Hoop League Studio is a browser-based visual editor for creating and customizing Hoop Land league files.
 
-Use it to:
-- Create a league from a template
-- Import and edit an existing league
-- Manage league settings, teams, courts, logos, and ads
-- Save league drafts
-- Export leagues for Hoop Land
+## What does Hoop League Studio do?
+
+Start with a new Pro or College league, or import a league you already have. Customize league settings, team identities, uniforms, courts, logos, and other league details, then save your work in the browser or export a `.txt` file for Hoop Land.
+
+## Main Features
+
+- Create randomized Pro or College leagues from built-in templates
+- Import and edit existing Hoop Land league files
+- Configure league settings, season rules, conferences, divisions, schedules, playoffs, draft settings, and salary settings
+- Add teams and expand leagues up to the app's supported team limit
+- Automatically populate new and expansion teams with matching identities, 13–15 player rosters, and personnel using collision-safe IDs
+- Edit team names, short names, logos, locations, divisions, front-office details, team colors, uniforms, and courts
+- Preview uniform colors directly in the team editor
+- Save and load leagues in browser save slots
+- Export finished leagues as `.txt` files for Hoop Land
 
 ## Image Archive
 
-For images, you can connect a local folder or a public GitHub repository.
+The Image Archive helps organize league logos, court images, and ads. You can connect a local folder or a public GitHub repository.
 
 League image folders use this structure:
 
@@ -22,14 +31,16 @@ League Name/
   Ads/
 ```
 
+## Players and Personnel
+
+Hoop League Studio automatically creates rosters and personnel for new and expansion teams, but it does not provide individual player, coach, or staff editing.
+
+Existing roster and personnel data in imported teams is preserved unless you use a feature that intentionally changes league structure, such as adding teams.
+
+For individual roster, player, coach, or staff changes, edit them directly in Hoop Land after loading the league in game.
+
 ## Web App
 
-The app can be used directly in a web browser or installed as a web app on supported devices. Installing it adds Hoop League Studio to your home screen or app launcher and opens it in its own standalone window for quicker access.
+Hoop League Studio can run directly in a browser or be installed as a web app on supported devices. Installing it adds the app to your home screen or app launcher and opens it in a standalone window.
 
-Or use the app directly in your browser here: [Hoop League Studio](https://galileo88.github.io/HoopLeagueStudio/)
-
-## What it does not edit
-
-Hoop League Studio does not edit rosters, individual players, coaches, or other staff data. Existing roster and staff information in an imported league is preserved when you export the league again.
-
-If you want to change rosters, players, coaches, or staff, you can edit them directly in Hoop Land after loading the league in game.
+Use the app here: [Hoop League Studio](https://galileo88.github.io/HoopLeagueStudio/)
