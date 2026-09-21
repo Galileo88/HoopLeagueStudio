@@ -1,4 +1,4 @@
-const CACHE_NAME='hls-pwa-v104';
+const CACHE_NAME='hls-pwa-v105';
 const CORE=[
   './',
   './index.html',
@@ -67,9 +67,11 @@ self.addEventListener('fetch',event=>{
   if(url.hostname==='raw.githubusercontent.com'){
     event.respondWith(
       caches.match(request).then(cached=>{
-        if(cached)return cached;
+        // Preview images may be opaque; the color picker needs a CORS-readable response.
+        const compatible=cached&&(cached.type!=='opaque'||request.mode==='no-cors');
+        if(compatible&&request.cache!=='reload'&&request.cache!=='no-store')return cached;
         return fetch(request).then(response=>{
-          if(response.ok||response.type==='opaque'){
+          if(request.cache!=='no-store'&&(response.ok||response.type==='opaque')){
             const copy=response.clone();
             caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));
           }
