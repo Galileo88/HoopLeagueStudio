@@ -600,8 +600,57 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 #leagueTeamPanel[hidden]{display:none!important}
 
-.getting-started-intro{
-  margin-bottom:14px;
+.getting-started-shell{
+  display:grid;
+  gap:16px;
+  max-width:980px;
+  margin:0 auto;
+}
+.getting-started-hero{
+  padding:26px 28px;
+}
+.getting-started-hero .eyebrow{
+  margin-bottom:10px;
+}
+.getting-started-hero h1{
+  margin:0 0 10px;
+  font-size:clamp(28px,4vw,42px);
+  line-height:1.05;
+}
+.getting-started-hero>p:not(.eyebrow){
+  max-width:720px;
+  margin:0;
+  font-size:16px;
+  line-height:1.55;
+}
+.getting-started-flow{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.getting-started-step{
+  min-width:0;
+  padding:16px;
+  border:2px solid #247bb9;
+  background:#0b3c70;
+}
+.getting-started-step-number{
+  display:inline-grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  margin-bottom:10px;
+  border:2px solid #49e7e0;
+  font-family:var(--display);
+  font-size:14px;
+}
+.getting-started-step h2{
+  margin:0 0 6px;
+  font-size:18px;
+}
+.getting-started-step p{
+  margin:0;
+  line-height:1.45;
 }
 .starter-grid{
   display:grid;
@@ -664,6 +713,23 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
   body.workspace-home header>.actions>.mobile-menu-toggle{
     grid-column:1;
   }
+}
+@media(max-width:760px){
+  .getting-started-shell{gap:12px}
+  .getting-started-hero{padding:20px}
+  .getting-started-flow{grid-template-columns:1fr}
+  .getting-started-step{
+    display:grid;
+    grid-template-columns:38px minmax(0,1fr);
+    column-gap:12px;
+    align-items:start;
+  }
+  .getting-started-step-number{
+    grid-row:1 / span 2;
+    margin:0;
+  }
+  .getting-started-step h2{grid-column:2}
+  .getting-started-step p{grid-column:2}
 }
 @media(max-width:390px){
   .starter-actions{
@@ -1059,7 +1125,7 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 /* Workspace */
 
 .getting-started-workspaces{
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);
 }
 .starter-actions-single{
   grid-template-columns:minmax(0,1fr);
@@ -3298,23 +3364,33 @@ function renderWelcome(){
  $('#gettingStartedNav').classList.toggle('active',view==='home');$('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team');$('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){document.body.classList.remove('workspace-home');renderArchive();return}
- $('#title').textContent='Getting Started';$('#breadcrumb').textContent='HOOP LEAGUE STUDIO';$('#subtitle').textContent='Create Hoop Land leagues and manage league images.';$('#status').textContent=league?'League ready':'Choose how to begin';
- const overview=el('section','card getting-started-intro');overview.append(el('h2','','What does Hoop League Studio do?'),el('p','','Hoop League Studio helps you create and customize Hoop Land leagues. Start a new Pro or College league, or import one you already have. Change league settings, teams, uniforms, courts, logos, and images, then save your work or export it for Hoop Land.'));content.append(overview);
- const intro=el('section','card getting-started-intro');intro.append(el('h2','','Get Started'),el('p','','Set up your Image Archive or start working on a league.'));content.append(intro);
+ $('#title').textContent='Getting Started';$('#breadcrumb').textContent='HOOP LEAGUE STUDIO';$('#subtitle').textContent='Create and customize Hoop Land leagues.';$('#status').textContent=league?'League ready':'Choose how to begin';
+ const shell=el('div','getting-started-shell');
+ const hero=el('section','card getting-started-hero');
+ hero.append(el('p','eyebrow','HOOP LEAGUE STUDIO'),el('h1','','Build your league your way.'),el('p','','Create a new Pro or College league, open one you already have, customize the details, and export it for Hoop Land when you are ready.'));
+ shell.append(hero);
+ const flow=el('section','getting-started-flow');
+ [['1','Start','Create a new league, import a league file, or load a saved league.'],['2','Customize','Adjust league settings, teams, colors, uniforms, courts, logos, and images.'],['3','Finish','Save your progress in the browser or export the finished league for Hoop Land.']].forEach(([n,title,text])=>{
+  const step=el('div','getting-started-step');
+  step.append(el('span','getting-started-step-number',n),el('h2','',title),el('p','',text));
+  flow.append(step);
+ });
+ shell.append(flow);
  const grid=el('div','starter-grid getting-started-workspaces');
 
- const archiveCard=el('section','card starter-card');
- archiveCard.append(el('p','eyebrow','HOOP LEAGUE STUDIO'),el('h2','','Image Archive'),el('p','','Set up and manage league logos, courts, and ads.'));
- const archiveActions=el('div','starter-actions starter-actions-single'),openArchive=el('button','primary','Open Image Archive');
- openArchive.type='button';openArchive.onclick=()=>{view='images';render()};
- archiveActions.append(openArchive);archiveCard.append(archiveActions);grid.append(archiveCard);
-
  const card=el('section','card starter-card');
- card.append(el('p','eyebrow','HOOP LEAGUE STUDIO'),el('h2','','Create Your League'),el('p','','Create a new league or open one you already have.'));
+ card.append(el('p','eyebrow','LEAGUE STUDIO'),el('h2','','League Studio'),el('p','','Start a league or continue working on one you already have.'));
  const actions=el('div','starter-actions'),create=el('button','primary','New League'),upload=el('button','','Import League'),restore=el('button','','Load League');
  create.type=upload.type=restore.type='button';
  create.onclick=()=>$('#new').click();upload.onclick=()=>$('#import').click();restore.onclick=()=>$('#restoreProgress').click();
- actions.append(create,upload,restore);card.append(actions);grid.append(card);content.append(grid);
+ actions.append(create,upload,restore);card.append(actions);grid.append(card);
+
+ const archiveCard=el('section','card starter-card');
+ archiveCard.append(el('p','eyebrow','IMAGES'),el('h2','','Image Archive'),el('p','','Keep league logos, courts, and ads organized and ready to use.'));
+ const archiveActions=el('div','starter-actions starter-actions-single'),openArchive=el('button','','Open Image Archive');
+ openArchive.type='button';openArchive.onclick=()=>{view='images';render()};
+ archiveActions.append(openArchive);archiveCard.append(archiveActions);grid.append(archiveCard);
+ shell.append(grid);content.append(shell);
 }
 function renderLeagueStudioEmpty(){
  renderPageNav();
