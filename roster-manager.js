@@ -41,6 +41,18 @@
   if(!options.some(([id])=>String(id)===String(value))){const option=node('option','',`Imported value ${value}`);option.value=String(value);control.append(option)}
   control.value=String(value);control.onchange=()=>change(control.value);row(parent,title,control);return control;
  }
+ function optionStepper(parent,title,value,options,change){
+  const wrap=node('div','number-control option-control'),previous=node('button','','◀'),next=node('button','','▶'),control=node('select');
+  control.setAttribute('aria-label',title);previous.type=next.type='button';previous.setAttribute('aria-label','Previous '+title);next.setAttribute('aria-label','Next '+title);
+  for(const [id,label]of options){const option=node('option','',label);option.value=String(id);control.append(option)}
+  if(!options.some(([id])=>String(id)===String(value))){const option=node('option','',`Imported value ${value}`);option.value=String(value);control.append(option)}
+  control.value=String(value);
+  const sync=()=>{previous.disabled=control.selectedIndex<=0;next.disabled=control.selectedIndex<0||control.selectedIndex>=control.options.length-1};
+  const commit=()=>{sync();change(control.value)};
+  previous.onclick=()=>{if(control.selectedIndex>0){control.selectedIndex--;commit()}};
+  next.onclick=()=>{if(control.selectedIndex>=0&&control.selectedIndex<control.options.length-1){control.selectedIndex++;commit()}};
+  control.onchange=commit;wrap.append(previous,control,next);row(parent,title,wrap);sync();return control;
+ }
  function colorInput(parent,title,value,change,team){
   const wrap=node('div','roster-field roster-color-field'),line=node('div','color-line'),swatch=node('input'),code=node('input'),reference=node('select');
   wrap.append(node('span','',title),line);swatch.type='color';code.type='text';code.maxLength=7;
@@ -87,7 +99,7 @@
     for(const [key,title]of [['num','Jersey number'],['age','Age'],['ht','Height (inches)'],['wt','Weight (pounds)'],['yrs','Years of experience'],['pot','Potential']])if(key in player)input(identity,title,player[key],value=>commit(player,key,value),{type:'number',min:0,max:key==='num'?99:key==='pot'?10:999,step:1});
     if('pos'in player)select(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
     const archetypeOptions=[[0,'None'],...archetypes.map((title,index)=>[index+1,title])];
-    for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)select(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
+    for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)optionStepper(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
     if(player.appearance){
      const appearance=node('div','roster-appearance'),preview=node('div','roster-appearance-preview'),canvas=node('canvas');
      canvas.width=64;canvas.height=84;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
@@ -110,7 +122,7 @@
      }
      for(const [key,title,max,empty]of [['hair','Hair style',170,'Bald'],['fHair','Facial hair',31,'None']])if(key in player.appearance){
       const options=Array.from({length:max+1},(_,index)=>[String(index).padStart(4,'0'),index?`Style ${index}`:empty]);
-      const control=select(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.classList.add('roster-compact-field')
+      const control=optionStepper(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.parentElement?.classList.add('roster-compact-field')
      }
      if('unibrow'in player.appearance){const label=node('label','roster-check'),check=node('input');check.type='checkbox';check.checked=!!player.appearance.unibrow;check.onchange=()=>update('unibrow',check.checked);label.append(check,' Unibrow');fields.append(label)}
      const accessories=node('details','roster-accessories'),accessorySummary=node('summary'),accessoryGroups=node('div','roster-accessory-groups');
@@ -127,7 +139,7 @@
        const section=node('details','roster-accessory-group'),summary=node('summary','',title),groupFields=node('div','roster-appearance-fields');section.append(summary,groupFields);accessoryGroups.append(section);
        for(const [key,label,empty]of styles)if(key in gear){
         const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
-        const control=select(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
+        const control=optionStepper(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
        }
        for(const [key,label]of colors)if(key in gear)colorInput(groupFields,label,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team)
       }
@@ -142,7 +154,7 @@
     const refreshSkills=()=>{skills.replaceChildren();for(const [index,skill]of (player.skills||[]).entries()){
      const group=node('div','roster-skill');const available=[...new Set([...skillIds.filter(id=>!(player.skills||[]).some((entry,i)=>i!==index&&entry.id===id)),skill.id])].sort();
      const description=node('p','roster-skill-description',skillDescriptions[skill.id]||'Description unavailable for this imported skill.');
-     select(group,'Skill',skill.id,available.map(id=>[id,skillNames[id]||id]),value=>{change([...base,'skills',index,'id'],value);description.textContent=skillDescriptions[value]||'Description unavailable for this imported skill.'});group.append(description);
+     optionStepper(group,'Skill',skill.id,available.map(id=>[id,skillNames[id]||id]),value=>{change([...base,'skills',index,'id'],value);description.textContent=skillDescriptions[value]||'Description unavailable for this imported skill.'});group.append(description);
      input(group,'Level',skill.level,value=>change([...base,'skills',index,'level'],value),{type:'number',min:0,max:99,step:1});
      input(group,'XP Available',skill.xp,value=>change([...base,'skills',index,'xp'],value),{type:'number',min:0,max:999999,step:1});
      const equipped=node('label','roster-check'),check=node('input');check.type='checkbox';check.checked=!!skill.equipped;check.onchange=()=>change([...base,'skills',index,'equipped'],check.checked);equipped.append(check,' Equipped');group.append(equipped);
