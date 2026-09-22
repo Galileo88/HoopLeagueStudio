@@ -66,8 +66,7 @@ test('roster editor changes player data and moves the player without changing th
   assert(await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).isHidden());
   assert(await page.locator('#pageNav button').filter({hasText:'Team Configuration'}).isVisible());
   const teamLogoBackground=await page.locator('#teams button').first().locator('[data-team-logo="true"]').evaluate(icon=>getComputedStyle(icon).backgroundColor);
-  const secondary=template.teams[0].teamColors[1],expectedLogoBackground=`rgb(${parseInt(secondary.slice(0,2),16)}, ${parseInt(secondary.slice(2,4),16)}, ${parseInt(secondary.slice(4,6),16)})`;
-  assert.equal(teamLogoBackground,expectedLogoBackground,`Team logo background should use the secondary team color: ${teamLogoBackground}`);
+  assert.equal(teamLogoBackground,'rgba(0, 0, 0, 0)','Team logo background should be transparent');
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
    const samples=[];

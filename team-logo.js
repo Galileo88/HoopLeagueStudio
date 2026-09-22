@@ -3,7 +3,6 @@
  const letters=new Image();letters.src='./player-assets/team-letters.png';
  const valid=value=>/^[\da-f]{6}$/i.test(String(value||''));
  const rgb=value=>[0,2,4].map(i=>parseInt(value.slice(i,i+2),16));
- const css=color=>'rgb('+color.join(',')+')';
  const isImage=value=>/^(https?:|data:image|blob:|\/|\.\/)/i.test(value)||/\.(png|jpe?g|webp|gif)(?:[?#]|$)/i.test(value);
  function create(team){
   const icon=document.createElement('span');icon.className='team-icon';icon.dataset.teamLogo='true';
@@ -12,7 +11,6 @@
    const primary=rgb(valid(team.teamColors?.[0])?team.teamColors[0]:'147dff');
    const secondary=rgb(valid(team.teamColors?.[1])?team.teamColors[1]:'102737');
    const tertiary=rgb(valid(team.teamColors?.[2])?team.teamColors[2]:'05c8ff');
-   icon.style.backgroundColor=css(secondary);icon.style.borderColor=css(primary);
    const source=String(team.logoURL||'').trim();
    if(source&&isImage(source)){
     const img=document.createElement('img');img.alt='';img.src=source;
