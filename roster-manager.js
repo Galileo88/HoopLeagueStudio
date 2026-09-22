@@ -117,10 +117,11 @@
      };drawAccessories();
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
     }
-    const attributes=node('div','roster-attributes');editor.append(node('h3','','Attributes'),node('p','','Edit the stored current and potential values. The game calculates the displayed rating.'),attributes);
+    const attributeSection=node('details','roster-editor-section roster-attributes-section'),attributeSummary=node('summary','','Attributes'),attributeContent=node('div','roster-editor-section-content'),attributes=node('div','roster-attributes');
+    attributeContent.append(node('p','','Edit the stored current and potential values. The game calculates the displayed rating.'),attributes);attributeSection.append(attributeSummary,attributeContent);editor.append(attributeSection);
     for(const [key,levels]of Object.entries(player.attributes||{})){if(!Array.isArray(levels)||levels.length<2)continue;const group=node('div','roster-attribute');group.append(node('strong','',attributeNames[key]||key));
      for(const [index,title]of ['Current','Potential'].entries())input(group,title,levels[index],value=>change([...base,'attributes',key,index],value),{type:'number',min:index===1?levels[0]:0,max:index===0?levels[1]:20,step:1});attributes.append(group)}
-    const skills=node('div','roster-skills');editor.append(node('h3','','Skills'),skills);
+    const skillSection=node('details','roster-editor-section roster-skills-section'),skillSummary=node('summary','','Skills'),skills=node('div','roster-skills roster-editor-section-content');skillSection.append(skillSummary,skills);editor.append(skillSection);
     const refreshSkills=()=>{skills.replaceChildren();for(const [index,skill]of (player.skills||[]).entries()){
      const group=node('div','roster-skill');const available=[...new Set([...skillIds.filter(id=>!(player.skills||[]).some((entry,i)=>i!==index&&entry.id===id)),skill.id])].sort();
      const description=node('p','roster-skill-description',skillDescriptions[skill.id]||'Description unavailable for this imported skill.');
