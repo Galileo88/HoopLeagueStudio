@@ -27,27 +27,81 @@
   const x=number%columns*64+(frame%2)*32,y=Math.floor(number/columns)*64;
   paint(ctx,image,x,y,tint)
  }
+ const skinShades={'220,129,88':1,'215,85,66':.78,'225,174,120':1.15,'195,36,58':.65};
+ const shortsStarts=[21,22,23,22];
+ const numberGlyphs={
+  '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
+  '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
+  '4':['101','101','111','001','001'],'5':['111','100','111','001','111'],
+  '6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
+  '8':['111','101','111','101','111'],'9':['111','101','111','001','111']
+ };
  function body(ctx,frame,player,team,uniformIndex){
-  const image=images.idle;if(!image.complete||!image.naturalWidth)return;
+  const image=images.idle;if(!image.complete||!image.naturalWidth)return null;
   const off=document.createElement('canvas');off.width=off.height=32;
   const layer=off.getContext('2d',{willReadFrequently:true});layer.drawImage(image,frame*32,0,32,32,0,0,32,32);
-  const pixels=layer.getImageData(0,0,32,32),skin=rgb(hex(player.appearance?.skinC,'#dc8158'));
+  const pixels=layer.getImageData(0,0,32,32),source=new Uint8ClampedArray(pixels.data);
+  const skinColor=hex(player.appearance?.skinC,'#dc8158'),skin=rgb(skinColor);
   const uniform=team?.uniforms?.[uniformIndex]||team?.uniforms?.[0]||{};
+  const gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
   const jersey=rgb(color(uniform.jersey,team,'#147dff')),shorts=rgb(color(uniform.shorts,team,'#147dff'));
-  const trim=rgb(color(uniform.jerseyStripe,team,'#32af00'));
-  const skinShades={'220,129,88':1,'215,85,66':.78,'225,174,120':1.15,'195,36,58':.65};
+  const jerseyStripe=rgb(color(uniform.jerseyStripe,team,color(uniform.jersey,team,'#147dff')));
+  const shortsStripe=rgb(color(uniform.shortsStripe,team,color(uniform.shorts,team,'#147dff')));
+  const collar=rgb(color(uniform.jerseyCollar,team,color(uniform.jerseyStripe,team,'#ffffff')));
+  const shortsStart=shortsStarts[frame]??22;
+  const gearRgb=(key,fallback)=>rgb(color(gear[key],team,fallback));
+  const accessory={
+   L_Shoulder:gearRgb('L_Shoulder',skinColor),R_Shoulder:gearRgb('R_Shoulder',skinColor),
+   L_Elbow:gearRgb('L_Elbow',skinColor),R_Elbow:gearRgb('R_Elbow',skinColor),
+   L_Wrist:gearRgb('L_Wrist',skinColor),R_Wrist:gearRgb('R_Wrist',skinColor),
+   L_Knee:gearRgb('L_Knee',skinColor),R_Knee:gearRgb('R_Knee',skinColor),
+   L_Shin:gearRgb('L_Shin',skinColor),R_Shin:gearRgb('R_Shin',skinColor),
+   sockC:gearRgb('sockC','#ffffff'),shoeC:gearRgb('shoeC','#ffffff'),soleC:gearRgb('soleC','#202020')
+  };
+  const at=(x,y)=>{if(x<0||x>=32||y<0||y>=32)return null;const i=(y*32+x)*4;return [source[i],source[i+1],source[i+2],source[i+3]]};
+  const isBlue=(x,y)=>{const p=at(x,y);return !!p&&p[3]&&p[2]===255&&p[0]<=40};
+  const isSkin=(x,y)=>{const p=at(x,y);return !!p&&skinShades[`${p[0]},${p[1]},${p[2]}`]!==undefined};
+  const nearSkin=(x,y)=>{for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++)if((ox||oy)&&isSkin(x+ox,y+oy))return true;return false};
   for(let i=0;i<pixels.data.length;i+=4){if(!pixels.data[i+3])continue;
-   const r=pixels.data[i],g=pixels.data[i+1],b=pixels.data[i+2],y=Math.floor(i/4/32);
-   let next;if(skinShades[`${r},${g},${b}`]!==undefined)next=shade(skin,skinShades[`${r},${g},${b}`]);
-   else if(b===255&&r<=40)next=shade(y<17?jersey:shorts,Math.max(.55,Math.min(1.3,g/150)));
-   else if(b===0&&g>=120)next=shade(trim,Math.max(.6,Math.min(1.2,g/175)));
+   const r=source[i],g=source[i+1],b=source[i+2],pixel=Math.floor(i/4),x=pixel%32,y=Math.floor(pixel/32);
+   let next;
+   const skinScale=skinShades[`${r},${g},${b}`];
+   if(skinScale!==undefined)next=shade(skin,skinScale);
+   else if(b===255&&r<=40){
+    const isShorts=y>=shortsStart;
+    let target=isShorts?shorts:jersey;
+    if(!isShorts&&nearSkin(x,y))target=collar;
+    else if(!isBlue(x-1,y)||!isBlue(x+1,y))target=isShorts?shortsStripe:jerseyStripe;
+    next=shade(target,Math.max(.55,Math.min(1.3,g/150)));
+   }else if(b===0&&g>=120){
+    const key=r<75?'L_Shoulder':r<120?'R_Shoulder':r<150?'L_Knee':'R_Knee';
+    next=shade(accessory[key],Math.max(.6,Math.min(1.2,g/175)));
+   }else if(g===0&&b>=100){
+    const key=r<90?'L_Elbow':r<130?'R_Elbow':r<160?'L_Shin':'R_Shin';
+    next=shade(accessory[key],Math.max(.6,Math.min(1.2,b/200)));
+   }else if(b===150&&g>=100){
+    const key=r<100?'L_Wrist':r<150?'R_Wrist':'sockC';
+    next=shade(accessory[key],Math.max(.6,Math.min(1.1,g/150)));
+   }else if(r===200&&g===255&&b===255)next=accessory.shoeC;
+   else if(r===205&&g===172&&b===190)next=accessory.soleC;
    if(next){pixels.data[i]=next[0];pixels.data[i+1]=next[1];pixels.data[i+2]=next[2]}
   }
-  layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0)
+  layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0);
+  return {uniform,shortsStart}
+ }
+ function jerseyNumber(ctx,player,team,uniform,shortsStart){
+  const value=Number(player.num);if(!Number.isInteger(value)||value<0)return;
+  const text=String(value).slice(-2),width=text.length*3+(text.length-1),startX=Math.floor((32-width)/2),startY=shortsStart-5;
+  ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
+  for(const [index,digit]of [...text].entries()){
+   const glyph=numberGlyphs[digit];if(!glyph)continue;
+   for(let y=0;y<glyph.length;y++)for(let x=0;x<3;x++)if(glyph[y][x]==='1')ctx.fillRect(startX+index*4+x,startY+y,1,1)
+  }
  }
  function draw(canvas,player,team,uniformIndex,frame){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,32,32);
   const appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  body(ctx,frame,player,team,uniformIndex);
+  const bodyState=body(ctx,frame,player,team,uniformIndex);
+  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart);
   // The idle sheet has four front-facing motion frames across its first row.
   // Head layers are anchored eight pixels lower in their own 32px cells.
   ctx.save();ctx.translate(0,[-8,-7,-6,-7][frame]);
