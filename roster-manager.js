@@ -53,16 +53,18 @@
   next.onclick=()=>{if(control.selectedIndex>=0&&control.selectedIndex<control.options.length-1){control.selectedIndex++;commit()}};
   control.onchange=commit;wrap.append(previous,control,next);row(parent,title,wrap);sync();return control;
  }
- function colorInput(parent,title,value,change,team){
+ function colorInput(parent,title,value,change,team,skinColor){
   const wrap=node('div','roster-field roster-color-field'),line=node('div','color-line'),swatch=node('input'),code=node('input'),reference=node('select');
   wrap.append(node('span','',title),line);swatch.type='color';code.type='text';code.maxLength=7;
   swatch.setAttribute('aria-label',title+' custom color');code.setAttribute('aria-label',title+' value');reference.setAttribute('aria-label',title+' team color');
   for(const [id,label]of [['','Custom'],['PRI','Primary'],['SEC','Secondary'],['TER','Tertiary']]){const option=node('option','',label);option.value=id;reference.append(option)}
+  if(skinColor){const option=node('option','','None');option.value='none';reference.append(option)}
   const resolved=stored=>{const index={PRI:0,SEC:1,TER:2}[String(stored||'').toUpperCase()],chosen=index===undefined?stored:team?.teamColors?.[index];return /^#?[\da-f]{6}$/i.test(String(chosen||''))?'#'+String(chosen).replace('#',''):'#ffffff'};
-  const sync=stored=>{swatch.value=resolved(stored);code.value=String(stored??'');reference.value=['PRI','SEC','TER'].includes(stored)?stored:''};
+  const skinHex=()=>String(skinColor?.()||'DC8158').replace(/^#/,'').toUpperCase();
+  const sync=stored=>{swatch.value=resolved(stored);code.value=String(stored??'');reference.value=['PRI','SEC','TER'].includes(stored)?stored:skinColor&&String(stored||'').replace(/^#/,'').toUpperCase()===skinHex()?'none':''};
   const commit=stored=>{change(stored);sync(stored)};
   swatch.oninput=()=>commit(swatch.value.slice(1).toUpperCase());
-  reference.onchange=()=>commit(reference.value||swatch.value.slice(1).toUpperCase());
+  reference.onchange=()=>commit(reference.value==='none'?skinHex():reference.value||swatch.value.slice(1).toUpperCase());
   code.onchange=()=>{const next=code.value.trim().replace(/^#/,'').toUpperCase();if(next&&!/^(?:[\da-f]{6}|PRI|SEC|TER)$/.test(next)){code.setCustomValidity('Use a six-digit color or a team color.');code.reportValidity();return}code.setCustomValidity('');commit(next)};
   line.append(swatch,code,reference);parent.append(wrap);sync(value)
  }
@@ -147,7 +149,7 @@
         const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
         const control=optionStepper(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
        }
-       for(const [key,label]of colors)if(key in gear)colorInput(groupFields,label,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team)
+       for(const [key,label]of colors)if(key in gear)colorInput(groupFields,label,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team,title==='Arms'||title==='Legs'?()=>player.appearance.skinC:undefined)
       }
      };drawAccessories();
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
