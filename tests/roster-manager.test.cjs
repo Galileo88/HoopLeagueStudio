@@ -65,11 +65,12 @@ test('roster editor changes player data and moves the player without changing th
     if(r===122&&g===1&&b===254)shortsStripe++;
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,canvasWidth:canvas.width};
+   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<64?minY:null,canvasWidth:canvas.width};
   });
   assert.equal(previewColors.canvasWidth,64);
   assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.numberWidth<=7&&previewColors.numberHeight<=5,`High-resolution jersey number should stay compact: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.numberTop===null||previewColors.numberTop>=34,`Jersey number should sit below the collar area: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.shortsStripe>0,`Shorts stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);

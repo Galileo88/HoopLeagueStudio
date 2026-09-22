@@ -91,7 +91,7 @@
   // The player sprite is rendered at 2x internally, but the number uses 1px
   // high-resolution cells. This keeps the chest number half the old visual size
   // while remaining crisp when the preview is enlarged with pixel rendering.
-  const startX=Math.floor((ctx.canvas.width-width)/2),startY=shortsStart*scale-10;
+  const startX=Math.floor((ctx.canvas.width-width)/2),startY=shortsStart*scale-8;
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
