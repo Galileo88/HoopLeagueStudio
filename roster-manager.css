@@ -29,6 +29,7 @@
 .roster-appearance-settings .roster-compact-field{max-width:280px}
 .roster-appearance-settings .roster-appearance-color{width:56px;height:42px;min-width:56px;padding:3px}
 .roster-appearance-settings .roster-compact-select,.roster-accessory-group .roster-compact-select{width:min(240px,100%)}
+.roster-accessory-copy{display:flex;gap:8px;align-items:center;margin-top:12px}.roster-accessory-copy select{min-width:170px;max-width:260px}.roster-accessory-copy button{white-space:nowrap}
 .roster-accessory-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
 .roster-accessory-group{padding:10px;box-shadow:none}
 .roster-accessory-group>summary{font-size:14px}
@@ -41,4 +42,4 @@
 .roster-check input{width:auto}
 .roster-skill>button{grid-column:1/-1;justify-self:start}
 @media(max-width:900px){.roster-manager{grid-template-columns:1fr}.roster-list{max-height:220px}}
-@media(max-width:620px){.roster-fields,.roster-attributes,.roster-appearance-fields,.roster-accessory-groups{grid-template-columns:1fr}.roster-skill{grid-template-columns:repeat(2,minmax(0,1fr))}.roster-uniform-tabs{gap:4px}.roster-uniform-tab{font-size:11px;padding-inline:2px}}
+@media(max-width:620px){.roster-fields,.roster-attributes,.roster-appearance-fields,.roster-accessory-groups{grid-template-columns:1fr}.roster-accessory-copy{display:grid;grid-template-columns:minmax(0,1fr) auto}.roster-accessory-copy select{min-width:0;max-width:none}.roster-skill{grid-template-columns:repeat(2,minmax(0,1fr))}.roster-uniform-tabs{gap:4px}.roster-uniform-tab{font-size:11px;padding-inline:2px}}

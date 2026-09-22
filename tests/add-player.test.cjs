@@ -58,11 +58,11 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   const uniforms=page.locator('.roster-uniform-tabs');
   assert.deepEqual(await uniforms.locator('button').allTextContents(),['Home','Road','Alt 1','Alt 2']);
   await uniforms.getByRole('button',{name:'Alt 2'}).click();
-  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Alt 2 accessories');
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Accessories');
   await uniforms.getByRole('button',{name:'Road'}).click();
   assert.equal(await uniforms.getByRole('button',{name:'Road'}).getAttribute('aria-pressed'),'true');
   assert.equal(await uniforms.getByRole('button',{name:'Home'}).getAttribute('aria-pressed'),'false');
-  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Accessories');
   assert.deepEqual(await page.locator('.free-agents-editor .roster-accessory-group > summary').allTextContents(),['Head','Arms','Legs','Shoes']);
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   await page.locator('.free-agents-editor').screenshot({path:path.join(root,'artifacts/free-agents-inline.png')});
@@ -80,6 +80,9 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   await page.locator('.free-agents-editor .roster-accessory-group').filter({has:page.getByText('Shoes',{exact:true})}).locator('summary').click();
   await page.getByLabel('Socks custom color').fill('#22cc88');
   await page.getByLabel('Socks custom color').dispatchEvent('input');
+  assert.deepEqual(await page.getByLabel('Copy accessories destination').locator('option').allTextContents(),['Home','Alt 1','Alt 2','All other uniforms']);
+  await page.getByLabel('Copy accessories destination').selectOption('all');
+  await page.getByRole('button',{name:'Copy to'}).click();
   await attributesSection.locator('summary').click();
   await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().fill('9');
   await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().dispatchEvent('change');
@@ -107,9 +110,8 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(added.pos,2);
   assert.equal(added.appearance.hair,'0002');
   assert.equal(added.appearance.skinC,'A36342');
-  assert.equal(added.accessories[1].headAccC,'SEC');
-  assert.equal(added.accessories[1].sockC,'22CC88');
-  assert.notEqual(added.accessories[0].sockC,'22CC88');
+  assert(added.accessories.every(accessory=>accessory.headAccC==='SEC'),`Copy to all uniforms should copy head accessory color: ${JSON.stringify(added.accessories)}`);
+  assert(added.accessories.every(accessory=>accessory.sockC==='22CC88'),`Copy to all uniforms should copy socks color: ${JSON.stringify(added.accessories)}`);
   assert.equal(added.tag,'J');
   assert.equal(added.attributes.LAY[0],9);
   assert.equal(added.skills[0].id,'BUL');
