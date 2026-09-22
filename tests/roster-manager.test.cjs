@@ -20,6 +20,9 @@ test('roster editor changes player data and moves the player without changing th
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   const template=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));
+  // Use a unique number color so the preview test can distinguish the drawn jersey digits
+  // from the team's other uniform colors.
+  for(const team of template.teams)if(team.uniforms?.[0])team.uniforms[0].jerseyNumber='01FE7A';
   await page.locator('#import').setInputFiles({name:'roster-test.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(template))});
   await page.waitForFunction(()=>document.querySelector('#teams button'));
   await page.locator('#teams button').first().evaluate(button=>button.click());
@@ -46,6 +49,18 @@ test('roster editor changes player data and moves the player without changing th
    return samples;
   });
   assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
+  const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
+   const pixels=canvas.getContext('2d').getImageData(0,14,32,16).data;
+   let jerseyNumber=0,rawPalette=0;
+   for(let i=0;i<pixels.length;i+=4){
+    const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
+    if(r===1&&g===254&&b===122)jerseyNumber++;
+    if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
+   }
+   return {jerseyNumber,rawPalette};
+  });
+  assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);
   const uniformCanvas=page.locator('.roster-appearance canvas');
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
   await page.locator('.roster-uniform-tabs').getByRole('button',{name:'Road'}).click();
