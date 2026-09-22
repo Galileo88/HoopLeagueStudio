@@ -71,6 +71,7 @@
  window.HLSRosterManager={
   focusId:null,
   render(parent,{league,teamIndex,change,move,freeAgents=false,draftPlayer=null,onAddPlayer=null,onCreatePlayer=null,onCancelPlayer=null}){
+   const applyChange=change;change=(path,value)=>{applyChange(path,value);for(const rating of parent.querySelectorAll('[data-star-rating]'))rating.syncRating()};
    const team=freeAgents?{name:'Free Agents',roster:league.freeAgents||[],teamColors:['FFFFFF','102737','808080'],uniforms:[{jersey:'FFFFFF',shorts:'FFFFFF',jerseyStripe:'102737'}]}:league.teams[teamIndex];
    const roster=Array.isArray(team?.roster)?team.roster:[];
    if(!team){parent.append(node('p','','Choose a team to manage its roster.'));return}
@@ -81,16 +82,18 @@
     if(draftPlayer){active=draftPlayer;drawList();drawEditor();return}
     add.disabled=true;try{await onAddPlayer()}finally{add.disabled=false}
    };listPanel.insertBefore(add,search)}
+   if(!freeAgents){const rating=node('div','team-rating-summary','Team rating');rating.append(window.HLSRatings.create(()=>window.HLSRatings.team(team),'Team rating'));listPanel.insertBefore(rating,search)}
    shell.append(listPanel,editor);parent.append(shell);
    let active=draftPlayer||roster.find(player=>player.id===this.focusId)||roster[0]||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
    const drawList=()=>{list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();for(const player of roster.filter(player=>name(player).toLocaleLowerCase().includes(query)||String(player.num??'').includes(query))){
-    const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};list.append(button)
+    const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating'));list.append(button)
    }if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
    const drawEditor=()=>{
     editor.replaceChildren();if(!active){editor.append(node('h2','',freeAgents?'No free agents yet':'No players on this team'));return}
     const player=active,base=path(player),creating=player===draftPlayer;editor.append(node('h2','',creating&&!player.fn&&!player.ln?'New Free Agent':name(player)),node('p','roster-player-id',creating?'Set the player’s details before adding them to Free Agents.':`Player ID ${player.id} · Team ID ${player.tid}`));
+    editor.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating'));
     if(!creating){const moveRow=node('div','roster-move'),target=node('select'),button=node('button','primary','Move player');target.setAttribute('aria-label','Destination team');
     for(const [index,other]of league.teams.entries())if(index!==teamIndex){const option=node('option','',`${other.city?other.city+' ':''}${other.name}`);option.value=String(index);target.append(option)}
     button.type='button';button.textContent=freeAgents?'Add to team':'Move player';button.disabled=!target.options.length;
@@ -155,7 +158,7 @@
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
     }
     const attributeSection=node('details','roster-editor-section roster-attributes-section'),attributeSummary=node('summary','','Attributes'),attributeContent=node('div','roster-editor-section-content'),attributes=node('div','roster-attributes');
-    attributeContent.append(node('p','','Edit the stored current and potential values. The game calculates the displayed rating.'),attributes);attributeSection.append(attributeSummary,attributeContent);editor.append(attributeSection);
+    attributeContent.append(node('p','','Edit the stored current and potential values. Stars update as you change basketball attributes.'),attributes);attributeSection.append(attributeSummary,attributeContent);editor.append(attributeSection);
     for(const [key,levels]of Object.entries(player.attributes||{})){if(!Array.isArray(levels)||levels.length<2)continue;const group=node('div','roster-attribute');group.append(node('strong','',attributeNames[key]||key));
      for(const [index,title]of ['Current','Potential'].entries())input(group,title,levels[index],value=>change([...base,'attributes',key,index],value),{type:'number',min:index===1?levels[0]:0,max:index===0?levels[1]:20,step:1});attributes.append(group)}
     const skillSection=node('details','roster-editor-section roster-skills-section'),skillSummary=node('summary','','Skills'),skills=node('div','roster-skills roster-editor-section-content');skillSection.append(skillSummary,skills);editor.append(skillSection);

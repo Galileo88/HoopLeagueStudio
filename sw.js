@@ -1,10 +1,12 @@
-const CACHE_NAME='hls-pwa-v149';
+const CACHE_NAME='hls-pwa-v152';
 const CORE=[
   './',
   './index.html',
   './court-preview.js',
   './roster-manager.js',
   './roster-manager.css',
+  './star-rating.js',
+  './star-rating.css',
   './team-logo.js',
   './team-logo.css',
   './player-preview.js',
