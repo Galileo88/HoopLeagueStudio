@@ -90,13 +90,19 @@
   layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0);
   return {uniform,shortsStart}
  }
- function jerseyNumber(ctx,player,team,uniform,shortsStart,scale){
+ function alphaBounds(canvas){
+  const context=canvas.getContext('2d',{willReadFrequently:true}),data=context.getImageData(0,0,canvas.width,canvas.height).data;
+  let minX=canvas.width,minY=canvas.height,maxX=-1,maxY=-1;
+  for(let i=0;i<data.length;i+=4){if(!data[i+3])continue;const pixel=i/4,x=pixel%canvas.width,y=Math.floor(pixel/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
+  return maxX<0?{minX:0,minY:0,width:canvas.width,height:canvas.height}:{minX,minY,width:maxX-minX+1,height:maxY-minY+1}
+ }
+ function jerseyNumber(ctx,player,team,uniform,shortsStart,fit){
   const value=Number(player.num);if(!Number.isInteger(value)||value<0)return;
   const text=String(value).slice(-2),width=text.length*3+(text.length-1);
-  // The player sprite is rendered at 2x internally, but the number uses 1px
-  // high-resolution cells. This keeps the chest number half the old visual size
-  // while remaining crisp when the preview is enlarged with pixel rendering.
-  const startX=Math.floor((ctx.canvas.width-width)/2),startY=shortsStart*scale-8;
+  // The player art is fitted with padding first, then the number stays on the
+  // high-resolution preview canvas so the digits remain small and crisp.
+  const centerX=fit.dx+(fit.originX+16-fit.minX)*fit.scale;
+  const startX=Math.round(centerX-width/2),startY=Math.round(fit.dy+(fit.originY+shortsStart-4-fit.minY)*fit.scale);
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
@@ -104,12 +110,14 @@
   }
  }
  function draw(canvas,player,team,uniformIndex,frame){
-  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=scene.height=32;
+  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=scene.height=48;
   const sceneCtx=scene.getContext('2d'),appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  const bodyState=body(sceneCtx,frame,player,team,uniformIndex);
-  // The idle sheet has four front-facing motion frames across its first row.
-  // Head layers are anchored eight pixels lower in their own 32px cells.
-  sceneCtx.save();sceneCtx.translate(0,[-8,-7,-6,-7][frame]);
+  const originX=8,originY=12;
+  sceneCtx.save();sceneCtx.translate(originX,originY);
+  const bodyState=body(sceneCtx,frame,player,team,uniformIndex);sceneCtx.restore();
+  // Give the hair/head layers room above the body before fitting the complete
+  // player into the visible preview. This prevents tall hairstyles from clipping.
+  sceneCtx.save();sceneCtx.translate(originX,originY+[-8,-7,-6,-7][frame]);
   paint(sceneCtx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
   paint(sceneCtx,images['eye-white'],0,0);
   paint(sceneCtx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
@@ -120,9 +128,13 @@
   if(gear.headAcc!=='none')atlas(sceneCtx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
   atlas(sceneCtx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
   sceneCtx.restore();
+  const bounds=alphaBounds(scene),padding=2,available=canvas.width-padding*2;
+  const scale=Math.min(available/bounds.width,available/bounds.height,1.75);
+  const width=bounds.width*scale,height=bounds.height*scale;
+  const dx=Math.round((canvas.width-width)/2),dy=Math.round((canvas.height-height)/2);
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(scene,0,0,32,32,0,0,canvas.width,canvas.height);
-  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,canvas.width/32)
+  ctx.drawImage(scene,bounds.minX,bounds.minY,bounds.width,bounds.height,dx,dy,width,height);
+  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,{scale,dx,dy,minX:bounds.minX,minY:bounds.minY,originX,originY})
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
