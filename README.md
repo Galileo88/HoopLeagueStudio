@@ -13,7 +13,7 @@ Start a new Pro or College league, or import one you already have. Change league
 - Customize league settings, conferences, divisions, schedules, playoffs, draft settings, and salary settings
 - Add teams and expand your league
 - New teams come with a roster and staff
-- Customize team names, logos, locations, divisions, colors, uniforms, and courts
+- Customize team names, logos, locations, divisions, colors, uniforms, and courts; teams without a custom logo show a team-colored letter mark
 - Preview uniform colors while you edit
 - Save and load leagues in the browser
 - Export finished leagues for Hoop Land
@@ -33,7 +33,7 @@ League Name/
 
 ## Players and Staff
 
-New leagues and added teams come with rosters and staff. Use Manage Roster in Team Configuration to edit players, their stored attributes and skills, or move them between teams. Hoop League Studio does not edit coaches or staff members.
+New leagues and added teams come with rosters and staff. Use Manage Roster in Team Configuration to edit players, their appearance, stored attributes and skills, or move them between teams. League Configuration has an Add Player button that creates an editable free agent. Hoop League Studio does not edit coaches or staff members.
 
 For coaches and staff changes, edit them directly in Hoop Land after loading the league in game.
 

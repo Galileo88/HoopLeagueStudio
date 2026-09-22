@@ -44,6 +44,9 @@ test('roster editor changes player data and moves the player without changing th
   await page.getByLabel('Level',{exact:true}).first().dispatchEvent('change');
   await page.getByRole('button',{name:'Add skill'}).click();
   assert(await page.locator('.roster-skill select option').filter({hasText:'Ball Hawk'}).count());
+  const ballHawk=page.locator('.roster-skill').filter({has:page.locator('option[value="BAL"]')}).first();
+  await ballHawk.getByLabel('Skill').selectOption('BAL');
+  assert.match(await ballHawk.locator('.roster-skill-description').textContent(),/catching a deflected pass/);
   assert.equal(await page.getByLabel('First name',{exact:true}).inputValue(),'Roster');
   await page.getByLabel('Destination team').selectOption(String(original.targetIndex));
   await page.getByRole('button',{name:'Move player'}).click();
