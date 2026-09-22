@@ -33,7 +33,7 @@ League Name/
 
 ## Players and Staff
 
-New leagues and added teams come with rosters and staff. Use Manage Roster in Team Configuration to edit players, their appearance, stored attributes and skills, or move them between teams. League Configuration has an Add Player button that creates an editable free agent. Hoop League Studio does not edit coaches or staff members.
+New leagues and added teams come with rosters and staff. Use Manage Roster in Team Configuration to edit players, their appearance, stored attributes and skills, or move them between teams. League Configuration has a Free Agents section below Simulation Sliders. Its Add Player button opens the same editor so you can set the player's details, appearance, attributes, and skills before creating the free agent. Hoop League Studio does not edit coaches or staff members.
 
 For coaches and staff changes, edit them directly in Hoop Land after loading the league in game.
 

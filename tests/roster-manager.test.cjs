@@ -34,6 +34,18 @@ test('roster editor changes player data and moves the player without changing th
   assert(await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).isHidden());
   assert(await page.locator('#pageNav button').filter({hasText:'Team Configuration'}).isVisible());
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
+  const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
+   const samples=[];
+   for(let frame=0;frame<5;frame++){
+    const pixels=canvas.getContext('2d').getImageData(10,5,13,9).data;
+    let eyeWhite=0;
+    for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]&&pixels[i]>215&&pixels[i+1]>215&&pixels[i+2]>215)eyeWhite++;
+    samples.push(eyeWhite);
+    await new Promise(resolve=>setTimeout(resolve,230));
+   }
+   return samples;
+  });
+  assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
   await page.screenshot({path:path.join(root,'artifacts/roster-manager.png'),fullPage:true});
   await page.getByLabel('First name',{exact:true}).fill('Roster');
   await page.getByLabel('First name',{exact:true}).dispatchEvent('change');

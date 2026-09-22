@@ -30,7 +30,7 @@
  function body(ctx,frame,player,team,uniformIndex){
   const image=images.idle;if(!image.complete||!image.naturalWidth)return;
   const off=document.createElement('canvas');off.width=off.height=32;
-  const layer=off.getContext('2d',{willReadFrequently:true});layer.drawImage(image,frame*32,32,32,32,0,0,32,32);
+  const layer=off.getContext('2d',{willReadFrequently:true});layer.drawImage(image,frame*32,0,32,32,0,0,32,32);
   const pixels=layer.getImageData(0,0,32,32),skin=rgb(hex(player.appearance?.skinC,'#dc8158'));
   const uniform=team?.uniforms?.[uniformIndex]||team?.uniforms?.[0]||{};
   const jersey=rgb(color(uniform.jersey,team,'#147dff')),shorts=rgb(color(uniform.shorts,team,'#147dff'));
@@ -48,16 +48,19 @@
  function draw(canvas,player,team,uniformIndex,frame){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,32,32);
   const appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
   body(ctx,frame,player,team,uniformIndex);
-  const side=(frame%2)*32;
-  paint(ctx,images.head,side,0,hex(appearance.skinC,'#dc8158'));
-  paint(ctx,images['eye-white'],side,0);
-  paint(ctx,images['eye-color'],side,0,hex(appearance.eyeC,'#472d3c'));
-  paint(ctx,images['brow-color'],side,0,hex(appearance.browC,'#262539'));
-  if(appearance.unibrow)paint(ctx,images['unibrow-color'],side,0,hex(appearance.browC,'#262539'));
-  atlas(ctx,images['facial-hair'],appearance.fHair,8,hex(appearance.fHairC,'#262539'),frame);
-  atlas(ctx,images.hair,appearance.hair,16,hex(appearance.hairC,'#262539'),frame);
-  if(gear.headAcc!=='none')atlas(ctx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),frame);
-  atlas(ctx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),frame)
+  // The idle sheet has four front-facing motion frames across its first row.
+  // Head layers are anchored eight pixels lower in their own 32px cells.
+  ctx.save();ctx.translate(0,[-8,-7,-6,-7][frame]);
+  paint(ctx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
+  paint(ctx,images['eye-white'],0,0);
+  paint(ctx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
+  paint(ctx,images['brow-color'],0,0,hex(appearance.browC,'#262539'));
+  if(appearance.unibrow)paint(ctx,images['unibrow-color'],0,0,hex(appearance.browC,'#262539'));
+  atlas(ctx,images['facial-hair'],appearance.fHair,8,hex(appearance.fHairC,'#262539'),0);
+  atlas(ctx,images.hair,appearance.hair,16,hex(appearance.hairC,'#262539'),0);
+  if(gear.headAcc!=='none')atlas(ctx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
+  atlas(ctx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
+  ctx.restore()
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;

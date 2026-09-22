@@ -3080,8 +3080,8 @@ function renderFacilities(parent,facilities,path){
  parent.append(section);
 }
 function renderObject(parent,obj,path,depth=0,seasonSubset=false){if(path.length===3&&path[2]==='court'&&['teams','starTeams'].includes(path[0]))window.HLSCourtPreview?.mount(parent,()=>get(path.slice(0,2)));if(path.length===3&&path.at(-1)==='uniforms'&&Array.isArray(obj)){renderUniformsEditor(parent,obj,path);return}if(path.length===1&&path[0]==='sliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'gameStyle',league.settings?.gameStyle??0,['settings','gameStyle'])}if(path.length===1&&path[0]==='awards'){renderAwards(parent);return}if(path.length===1&&path[0]==='simulationSliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'simulationPreset',league.season?.simulationPreset??0,['season','simulationPreset'])}if(path.length===2&&path[0]==='meta'&&path[1]==='generatedCountries'&&Array.isArray(obj)){renderCountries(parent,path);return}if(path.length===1&&path[0]==='season'&&!seasonSubset){renderSeason(parent,obj);return}if(path.at(-1)==='teamColors'){renderTeamColors(parent,path);return}if(isUniformPath(path))renderUniformPreview(parent,path);const teamRoot=path.length===2&&['teams','starTeams'].includes(path[0]);const fields=el('div','fields');parent.append(fields);for(const [k,v]of orderedFields(obj,path)){if(teamRoot&&k==='retiredNumbers'){renderTeamRetiredNumbers(parent,obj,[...path,k]);continue}if(path.length===0&&k==='conferences'){renderLeagueStructure(parent);continue}if(path.length===0&&k==='divisions')continue;if(path.length===0&&['gameballs','courts','settings','optimization','coachSettings'].includes(k))continue;if(path.length===1&&path[0]==='settings'&&['gameBall','referee','gameStyle'].includes(k))continue;if(path.length===1&&path[0]==='rules'&&['blockingFouls','partialShotClock'].includes(k))continue;if(path.length===1&&path[0]==='difficulty'&&['defensiveAssistance','offensiveAssistance'].includes(k))continue;if(teamRoot&&k==='frontOffice')renderTeamLocation(parent,obj,path);if(path.at(-1)==='frontOffice'&&['coins','condition','morale','fans','adsURL','adSize','scoutAssignment'].includes(k))continue;if(path.at(-1)==='frontOffice'&&k==='facilities'){renderFacilities(parent,v,[...path,k]);continue}if(protectedKeys.has(k)||hiddenState.has(k)||(['teams','starTeams'].includes(k)&&path.length===0))continue;if((teamRoot&&['city','location','logoSize'].includes(k))||(path.length===0&&k==='logoSize'))continue;if(path[0]==='teams'||path[0]==='starTeams'){if(['id','isPlayer','season','coinFlip','status','rnk','following'].includes(k))continue}if(path.length===1&&path[0]==='meta'&&!['generatedCountries'].includes(k))continue;
- const p=[...path,k];if(path.length===1&&path[0]==='meta'&&k==='generatedCountries'){renderCountries(parent,p);continue}if(v!==null&&typeof v==='object'){const d=el('details'),summary=el('summary','',entryLabel(path,k,v)+(Array.isArray(v)&&k!=='awards'?` · ${v.length}`:''));d.append(summary);parent.append(d);d.addEventListener('toggle',()=>{if(d.open&&!d.dataset.built){d.dataset.built='1';if(Array.isArray(v)&&!v.length)d.append(el('p','','No entries in this league.'));else renderObject(d,v,p,depth+1)}},{once:false})}else field(fields,k,v,p);if(k==='court'&&path.length===2&&['teams','starTeams'].includes(path[0]))renderAnnouncerTable(parent,obj,path)}
- if(!fields.children.length)fields.remove();if(path.length===0)renderLeagueRetiredNumbers(parent);}
+ const p=[...path,k];if(path.length===1&&path[0]==='meta'&&k==='generatedCountries'){renderCountries(parent,p);continue}if(v!==null&&typeof v==='object'){const d=el('details'),summary=el('summary','',entryLabel(path,k,v)+(Array.isArray(v)&&k!=='awards'?` · ${v.length}`:''));d.append(summary);parent.append(d);d.addEventListener('toggle',()=>{if(d.open&&!d.dataset.built){d.dataset.built='1';if(Array.isArray(v)&&!v.length)d.append(el('p','','No entries in this league.'));else renderObject(d,v,p,depth+1)}},{once:false})}else field(fields,k,v,p);if(k==='court'&&path.length===2&&['teams','starTeams'].includes(path[0]))renderAnnouncerTable(parent,obj,path);if(path.length===0&&k==='simulationSliders')renderFreeAgentsSection(parent)}
+ if(!fields.children.length)fields.remove();if(path.length===0){if(!Object.hasOwn(obj,'simulationSliders'))renderFreeAgentsSection(parent);renderLeagueRetiredNumbers(parent)};}
 function renderAnnouncerTable(parent,team,path){if(!team.frontOffice)return;const section=el('details');section.append(el('summary','','Announcer Table'));const fields=el('div','fields');section.append(fields);for(const key of ['adsURL','adSize'])if(Object.hasOwn(team.frontOffice,key))field(fields,key,team.frontOffice[key],[...path,'frontOffice',key]);parent.append(section)}
 const TEMPLATE_LOCATION_LABELS=new Map([
  ['-4288,14733','Hobart'],
@@ -3532,34 +3532,33 @@ function moveFreeAgentToTeam(targetIndex,playerId){
  set(['teams',targetIndex,'roster'],[...(target.roster||[]),{...player,tid:target.id}]);
  selected=targetIndex;teamList='teams';view='roster';window.HLSRosterManager.focusId=playerId;render();
 }
-function renderAddPlayer(parent){
- const section=el('section','add-player-section'),heading=el('h3','','Free Agents'),count=el('p','',`${(league.freeAgents||[]).length} free agents`);
+function renderFreeAgentsSection(parent){
+ const section=el('details','free-agents-editor'),summary=el('summary','',`Free Agents · ${(league.freeAgents||[]).length}`),count=el('p','',`${(league.freeAgents||[]).length} free agents`);
  const actions=el('div','add-player-actions'),add=el('button','primary','Add Player'),manage=el('button','','Manage Free Agents');
  add.type=manage.type='button';manage.onclick=()=>{view='freeAgents';render()};actions.append(add,manage);
- const form=el('form','add-player-form');form.hidden=true;
- const fields=el('div','fields');form.append(fields);
- const entry=(title,type,value,min,max)=>{const label=el('label','field'),input=el('input');label.append(el('span','',title),input);input.type=type;input.value=value;input.required=true;
-  if(min!==undefined)input.min=String(min);if(max!==undefined)input.max=String(max);fields.append(label);return input};
- const first=entry('First name','text',''),last=entry('Last name','text','');
- const age=entry('Age','number',league.leagueType===1?18:19,14,60),height=entry('Height (inches)','number',72,48,100);
- const weight=entry('Weight (pounds)','number',180,80,500),number=entry('Jersey number','number',0,0,99),potential=entry('Potential','number',5,0,10);
- const positionLabel=el('label','field'),position=el('select');positionLabel.append(el('span','','Position'),position);
- PLAYER_POSITION_LABELS.forEach((title,id)=>{const option=el('option','',title);option.value=String(id);position.append(option)});fields.append(positionLabel);
+ const form=el('form','add-player-form'),editorHost=el('div');form.hidden=true;form.append(editorHost);
  const create=el('button','primary','Create Free Agent');create.type='submit';form.append(create);
- add.onclick=()=>{form.hidden=!form.hidden;add.setAttribute('aria-expanded',String(!form.hidden));if(!form.hidden)first.focus()};
- form.onsubmit=async event=>{event.preventDefault();if(!form.reportValidity())return;create.disabled=true;
-  try{
+ let draft=null;
+ add.onclick=async()=>{form.hidden=!form.hidden;add.setAttribute('aria-expanded',String(!form.hidden));if(form.hidden)return;
+  if(!draft){add.disabled=true;try{
    const response=await fetch('./data/player-blueprint.json');if(!response.ok)throw Error('Player template could not be loaded.');
-   const player=await response.json();
-   player.id=expansionPersonIdAllocator(league)();player.tid=0;player.league=league.leagueType;
-   player.fn=first.value.trim();player.ln=last.value.trim();player.age=Number(age.value);player.ht=Number(height.value);
-   player.wt=Number(weight.value);player.num=Number(number.value);player.pot=Number(potential.value);
-   player.pos=player.teamPos=Number(position.value);
-   set(['freeAgents'],[...(league.freeAgents||[]),player]);
-   window.HLSRosterManager.focusId=player.id;view='freeAgents';render();
+   draft=await response.json();draft.league=league.leagueType;
+   window.HLSRosterManager.render(editorHost,{league,freeAgents:true,draftPlayer:draft,change:(path,value)=>{
+    let target=draft;for(const key of path.slice(2,-1))target=target[key];target[path.at(-1)]=value;
+   }});
+  }catch(error){draft=null;form.hidden=true;add.setAttribute('aria-expanded','false');toast(error.message||'Could not load player editor.')}finally{add.disabled=false}}
+  form.querySelector('input[aria-label="First name"]')?.focus()
+ };
+ form.onsubmit=async event=>{event.preventDefault();if(!form.reportValidity())return;create.disabled=true;
+  try{if(!draft)throw Error('Player editor has not loaded.');
+   draft.fn=draft.fn.trim();draft.ln=draft.ln.trim();
+   if(!draft.fn||!draft.ln){toast('Enter a first and last name.');form.querySelector(!draft.fn?'input[aria-label="First name"]':'input[aria-label="Last name"]')?.focus();create.disabled=false;return}
+   draft.id=expansionPersonIdAllocator(league)();draft.tid=0;draft.teamPos=draft.pos;
+   set(['freeAgents'],[...(league.freeAgents||[]),draft]);
+   window.HLSRosterManager.focusId=draft.id;view='freeAgents';render();
   }catch(error){toast(error.message||'Could not create player.');create.disabled=false}
  };
- section.append(heading,count,actions,form);parent.append(section);
+ section.append(summary,count,actions,form);parent.append(section);
 }
 function render(){
  if(view!=='images')$('#status').hidden=false;
@@ -3604,7 +3603,6 @@ function render(){
  }
  content.append(shell);
  shell.append(card);
- if(view==='league')renderAddPlayer(card);
  renderObject(card,view==='league'?league:t,view==='league'?[]:[teamList,selected]);
 }
 let localAssets=[],archiveSources=[],openSourceEditor=false,archiveSourceTab='online';
