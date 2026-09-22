@@ -1,4 +1,4 @@
-const CACHE_NAME='hls-pwa-v142';
+const CACHE_NAME='hls-pwa-v143';
 const CORE=[
   './',
   './index.html',

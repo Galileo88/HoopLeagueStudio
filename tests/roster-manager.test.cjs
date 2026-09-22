@@ -153,15 +153,15 @@ test('roster editor changes player data and moves the player without changing th
   await page.getByLabel('Primary archetype').selectOption('2');
   await skillsSection.locator('summary').click();
   assert.equal(await skillsSection.evaluate(details=>details.open),true);
-  assert.equal(await page.getByLabel('Skill').first().locator('..').locator('button').count(),2);
-  const skillSelect=page.getByLabel('Skill').first(),skillNext=page.getByRole('button',{name:'Next Skill'}).first(),skillBefore=await skillSelect.inputValue();
-  if(await skillNext.isEnabled()){await skillNext.click();assert.notEqual(await skillSelect.inputValue(),skillBefore)}
+  assert.equal(await page.getByLabel('Skill',{exact:true}).first().locator('..').locator('button').count(),0);
+  const skillSelect=page.getByLabel('Skill',{exact:true}).first(),skillBefore=await skillSelect.inputValue();
+  if(await skillSelect.locator('option').count()>1){const nextIndex=await skillSelect.evaluate(select=>(select.selectedIndex+1)%select.options.length);await skillSelect.selectOption({index:nextIndex});assert.notEqual(await skillSelect.inputValue(),skillBefore)}
   await page.getByLabel('Level',{exact:true}).first().fill('2');
   await page.getByLabel('Level',{exact:true}).first().dispatchEvent('change');
   await page.getByRole('button',{name:'Add skill'}).click();
   assert(await page.locator('.roster-skill select option').filter({hasText:'Ball Hawk'}).count());
   const ballHawk=page.locator('.roster-skill').filter({has:page.locator('option[value="BAL"]')}).first();
-  await ballHawk.getByLabel('Skill').selectOption('BAL');
+  await ballHawk.getByLabel('Skill',{exact:true}).selectOption('BAL');
   assert.match(await ballHawk.locator('.roster-skill-description').textContent(),/catching a deflected pass/);
   assert.equal(await page.getByLabel('First name',{exact:true}).inputValue(),'Roster');
   await page.getByLabel('Destination team').selectOption(String(original.targetIndex));
