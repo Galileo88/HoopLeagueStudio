@@ -1,6 +1,7 @@
 /* Top-down court preview. PNG layers live in ./court/ and can be replaced independently. */
 (()=>{
  const images=new Map(),pixels=new Map();
+ const BASE_WIDTH=321,BASE_HEIGHT=161,LOGICAL_WIDTH=1024,LOGICAL_HEIGHT=512;
  function load(url){
   if(!images.has(url))images.set(url,new Promise((resolve,reject)=>{const image=new Image();const fail=()=>{clearTimeout(timer);images.delete(url);reject(Error('Image unavailable'))};const timer=setTimeout(fail,10000);image.onload=()=>{clearTimeout(timer);resolve(image)};image.onerror=fail;image.src=url}));
   return images.get(url);
@@ -32,15 +33,21 @@
  window.HLSCourtPreview={mount(parent,getTeam){
   const wrapper=document.createElement('section');wrapper.className='court-preview';wrapper.dataset.courtPreview='true';
   const heading=document.createElement('h3');heading.textContent='Court Preview';
-  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Top-down court color and layout preview');
+  const canvas=document.createElement('canvas');canvas.width=BASE_WIDTH;canvas.height=BASE_HEIGHT;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Top-down court color and layout preview');
   const note=document.createElement('p');note.className='court-preview-note';note.setAttribute('role','status');
-  const viewport=document.createElement('div');viewport.className='court-preview-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Court preview, 642 by 322 pixels. Scroll horizontally to see the full court.');viewport.append(canvas);
-  const sizeLabel=document.createElement('label');sizeLabel.className='court-preview-size';sizeLabel.append('Preview size ');
-  const sizeSelect=document.createElement('select');sizeSelect.setAttribute('aria-label','Court preview size');
-  for(const scale of [1,2,3]){const option=document.createElement('option');option.value=String(scale);option.textContent=`${scale}× · ${642*scale} × ${322*scale}`;sizeSelect.append(option)}
-  sizeSelect.onchange=()=>{const scale=Number(sizeSelect.value);wrapper.style.setProperty('--court-preview-width',`${642*scale}px`);wrapper.style.setProperty('--court-preview-height',`${322*scale}px`);viewport.setAttribute('aria-label',`Court preview, ${642*scale} by ${322*scale} pixels. Scroll horizontally to see the full court.`)};
-  sizeLabel.append(sizeSelect);wrapper.append(heading,sizeLabel,viewport,note);parent.append(wrapper);let revision=0;
+  const viewport=document.createElement('div');viewport.className='court-preview-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.append(canvas);
+  wrapper.append(heading,viewport,note);parent.append(wrapper);let revision=0,resizeFrame=0;
+  function fitPreview(){
+   const available=Math.max(1,Math.floor(viewport.clientWidth||wrapper.clientWidth||BASE_WIDTH));
+   const scale=Math.max(1,Math.floor(available/BASE_WIDTH));
+   const width=BASE_WIDTH*scale,height=BASE_HEIGHT*scale;
+   wrapper.style.setProperty('--court-preview-width',`${width}px`);wrapper.style.setProperty('--court-preview-height',`${height}px`);
+   viewport.setAttribute('aria-label',`Court preview, ${width} by ${height} pixels.`);
+   if(canvas.width===width&&canvas.height===height)return false;
+   canvas.width=width;canvas.height=height;return true;
+  }
   wrapper.syncCourtPreview=async()=>{
+   fitPreview();
    const current=++revision,team=getTeam(),court={...team.court};
    note.textContent='Loading court preview…';
    const college=Number(court.threePointLine)===1;
@@ -53,12 +60,15 @@
     const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png'].map(file=>load('./court/'+file)));
     const custom=await Promise.allSettled([court.overlayURL,team.logoURL].map(url=>validURL(url)?load(url):Promise.resolve(null)));
     if(current!==revision||!wrapper.isConnected)return;
-    const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,1024,512);
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    ctx.setTransform(canvas.width/LOGICAL_WIDTH,0,0,canvas.height/LOGICAL_HEIGHT,0,0);
     ctx.drawImage(recolor(textures[0],null,palette(outerColors,court,team)),0,0);
     surfaces.forEach((key,i)=>ctx.drawImage(recolor(textures[i+1],rgb(court[key+'C'],team)),191,95));
     const drawCustom=layer=>{
      const overlay=custom[0].status==='fulfilled'?custom[0].value:null,logo=custom[1].status==='fulfilled'?custom[1].value:null;
-     if(overlay&&Number(court.overlayLayer)===layer)ctx.drawImage(overlay,0,0,1024,512);
+     if(overlay&&Number(court.overlayLayer)===layer)ctx.drawImage(overlay,0,0,LOGICAL_WIDTH,LOGICAL_HEIGHT);
      const scale=[0,.5,1,1.5,2][Number(court.logoSize)]??0;
      if(logo&&scale&&Number(court.logoLayer)===layer){const size=128*scale,ratio=Math.min(size/logo.width,size/logo.height);ctx.drawImage(logo,512-logo.width*ratio/2,256-logo.height*ratio/2,logo.width*ratio,logo.height*ratio)}
     };
@@ -68,9 +78,12 @@
     drawCustom(1);
     const text=(key,x,y,rotation,max)=>{if(!court[key])return;ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.fillStyle='#'+rgb(court[key+'C'],team).map(n=>n.toString(16).padStart(2,'0')).join('');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 22px sans-serif';ctx.fillText(String(court[key]),0,0,max);ctx.restore()};
     text('baseline1',176,256,-Math.PI/2,280);text('baseline2',848,256,Math.PI/2,280);text('sideline1',512,80,0,580);text('sideline2',512,432,Math.PI,580);
+    ctx.setTransform(1,0,0,1,0,0);
     note.textContent='Floor preview · Text and custom-image sizing are approximate. Hoops are not shown.'+(team.logoURL&&!validURL(team.logoURL)?' Built-in team logos are not shown.':'')+(custom.some(r=>r.status==='rejected')?' A custom image could not be loaded.':'');
-   }catch{if(current===revision){canvas.getContext('2d').clearRect(0,0,1024,512);note.textContent='Court preview unavailable. Check that the court image files are present, then change a court setting to retry.'}}
+   }catch{if(current===revision){const ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);note.textContent='Court preview unavailable. Check that the court image files are present, then change a court setting to retry.'}}
   };
-  wrapper.syncCourtPreview();return wrapper;
+  const resize=()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(!wrapper.isConnected)return;if(fitPreview())wrapper.syncCourtPreview()})};
+  if('ResizeObserver'in window){const observer=new ResizeObserver(resize);observer.observe(viewport);wrapper._courtPreviewObserver=observer}else window.addEventListener('resize',resize,{passive:true});
+  fitPreview();wrapper.syncCourtPreview();return wrapper;
  }};
 })();
