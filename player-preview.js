@@ -66,8 +66,13 @@
    if(skinScale!==undefined)next=shade(skin,skinScale);
    else if(b===255&&r<=40){
     const isShorts=y>=shortsStart,row=uniformRows[y],width=row.max-row.min+1;
-    const stripe=width>=4&&(x===row.min||x===row.max);
-    const target=stripe?(isShorts?shortsStripe:jerseyStripe):(isShorts?shorts:jersey);
+    const leftEdge=x===row.min,rightEdge=x===row.max;
+    // Hoop Land's front-facing uniform is asymmetric: the viewer-left torso and
+    // shorts edge stay in the base uniform color. Only the upper left shoulder
+    // accent and the full viewer-right edge use the configured stripe colors.
+    const leftShoulder=!isShorts&&y<=shortsStart-5;
+    const stripe=width>=4&&(rightEdge||(leftEdge&&leftShoulder));
+    const base=isShorts?shorts:jersey,target=stripe?(isShorts?shortsStripe:jerseyStripe):base;
     next=stripe?target:shade(target,Math.max(.55,Math.min(1.3,g/150)));
    }else if(b===0&&g>=120){
     const key=r<75?'L_Shoulder':r<120?'R_Shoulder':r<150?'L_Knee':'R_Knee';
@@ -122,7 +127,7 @@
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
    const redraw=()=>{if(canvas.isConnected){const {player,team,uniformIndex}=state();draw(canvas,player,team,uniformIndex,frame)}};
-   const tick=()=>{if(!canvas.isConnected)return;redraw();frame=(frame+1)%4;setTimeout(tick,220)};
+   const tick=()=>{if(!canvas.isConnected)return;redraw();frame=(frame+1)%4;setTimeout(tick,110)};
    tick();return redraw
   }
  };

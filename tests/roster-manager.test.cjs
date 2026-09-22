@@ -42,6 +42,8 @@ test('roster editor changes player data and moves the player without changing th
   await page.setViewportSize({width:1200,height:850});
   assert(await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).isHidden());
   assert(await page.locator('#pageNav button').filter({hasText:'Team Configuration'}).isVisible());
+  const teamLogoBackground=await page.locator('[data-team-logo="true"]').first().evaluate(icon=>getComputedStyle(icon).backgroundColor);
+  assert(['rgba(0, 0, 0, 0)','transparent'].includes(teamLogoBackground),`Team logo background should be transparent: ${teamLogoBackground}`);
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
    const samples=[];
@@ -55,24 +57,34 @@ test('roster editor changes player data and moves the player without changing th
    return samples;
   });
   assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
+  const fastAnimation=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
+   const before=canvas.toDataURL();await new Promise(resolve=>setTimeout(resolve,135));return before!==canvas.toDataURL();
+  });
+  assert.equal(fastAnimation,true,'Player preview should advance within about 135ms');
   const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
    const pixels=canvas.getContext('2d').getImageData(0,28,64,32).data;
    let jerseyNumber=0,jerseyStripe=0,shortsStripe=0,rawPalette=0,minX=64,maxX=-1,minY=64,maxY=-1;
+   let jerseyStripeLeftLower=0,jerseyStripeRight=0,shortsStripeLeft=0,shortsStripeRight=0;
    for(let i=0;i<pixels.length;i+=4){
     const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
-    if(r===1&&g===254&&b===122){jerseyNumber++;const p=i/4,x=p%64,y=Math.floor(p/64)+28;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
-    if(r===254&&g===1&&b===169)jerseyStripe++;
-    if(r===122&&g===1&&b===254)shortsStripe++;
+    const p=i/4,x=p%64,y=Math.floor(p/64)+28;
+    if(r===1&&g===254&&b===122){jerseyNumber++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
+    if(r===254&&g===1&&b===169){jerseyStripe++;if(x>=32)jerseyStripeRight++;else if(y>=38)jerseyStripeLeftLower++}
+    if(r===122&&g===1&&b===254){shortsStripe++;if(x>=32)shortsStripeRight++;else shortsStripeLeft++}
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<64?minY:null,canvasWidth:canvas.width};
+   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,jerseyStripeLeftLower,jerseyStripeRight,shortsStripeLeft,shortsStripeRight,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<64?minY:null,canvasWidth:canvas.width};
   });
   assert.equal(previewColors.canvasWidth,64);
   assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.numberWidth<=7&&previewColors.numberHeight<=5,`High-resolution jersey number should stay compact: ${JSON.stringify(previewColors)}`);
   assert(previewColors.numberTop===null||previewColors.numberTop>=34,`Jersey number should sit below the collar area: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.jerseyStripeRight>0,`Right jersey stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.jerseyStripeLeftLower,0,`Left jersey body stripe should match the jersey color: ${JSON.stringify(previewColors)}`);
   assert(previewColors.shortsStripe>0,`Shorts stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.shortsStripeRight>0,`Right shorts stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.shortsStripeLeft,0,`Left shorts stripe should match the shorts color: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);
   const uniformCanvas=page.locator('.roster-appearance canvas');
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
