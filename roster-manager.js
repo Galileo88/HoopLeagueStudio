@@ -92,7 +92,8 @@
       drawAccessories();redraw()
      };button.classList.toggle('selected',index===uniformIndex);uniformTabs.append(button)}
      preview.append(canvas,uniformTabs,node('small','','Appearance preview may differ slightly in Hoop Land.'));
-     const fields=node('div','roster-appearance-fields');appearance.append(preview,fields);
+     const appearanceSettings=node('details','roster-appearance-settings'),settingsSummary=node('summary','','Skin, eyes & hair'),fields=node('div','roster-appearance-fields');
+     appearanceSettings.append(settingsSummary,fields);appearance.append(preview,appearanceSettings);
      editor.append(node('h3','','Appearance'),appearance);
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
