@@ -50,12 +50,12 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should be compact: ${JSON.stringify(hairStyleBox)}`);
   assert.equal(await page.getByLabel('Hair style').locator('..').locator('button').count(),2);
   const hairStepperLayout=await page.getByLabel('Hair style').locator('..').evaluate(wrap=>{
-   const [previous,select,next]=wrap.children,p=previous.getBoundingClientRect(),s=select.getBoundingClientRect(),n=next.getBoundingClientRect(),w=wrap.getBoundingClientRect();
-   return {width:w.width,buttonWidth:p.width,leftGap:s.left-p.right,rightGap:n.left-s.right};
+   const [previous,select,next]=wrap.children,p=previous.getBoundingClientRect(),s=select.getBoundingClientRect(),n=next.getBoundingClientRect(),w=wrap.getBoundingClientRect(),field=wrap.parentElement.getBoundingClientRect();
+   return {width:w.width,fieldWidth:field.width,buttonWidth:p.width,leftGap:s.left-p.right,rightGap:n.left-s.right};
   });
-  assert(hairStepperLayout.width<=280,`Option stepper should stay compact: ${JSON.stringify(hairStepperLayout)}`);
-  assert(hairStepperLayout.buttonWidth<=34,`Option stepper arrows should be narrow: ${JSON.stringify(hairStepperLayout)}`);
-  assert(hairStepperLayout.leftGap<=6&&hairStepperLayout.rightGap<=6,`Arrow buttons should sit close to the selector: ${JSON.stringify(hairStepperLayout)}`);
+  assert(Math.abs(hairStepperLayout.width-hairStepperLayout.fieldWidth)<=1,`Option stepper should fill its field cleanly: ${JSON.stringify(hairStepperLayout)}`);
+  assert(hairStepperLayout.buttonWidth>=41&&hairStepperLayout.buttonWidth<=43,`Option stepper arrows should keep the original 42px size: ${JSON.stringify(hairStepperLayout)}`);
+  assert(hairStepperLayout.leftGap>=7&&hairStepperLayout.leftGap<=9&&hairStepperLayout.rightGap>=7&&hairStepperLayout.rightGap<=9,`Arrow buttons should use the original 8px spacing: ${JSON.stringify(hairStepperLayout)}`);
   const optionSelectAppearance=await page.getByLabel('Hair style').evaluate(select=>getComputedStyle(select).appearance);
   assert.equal(optionSelectAppearance,'none','Native dropdown arrow should be hidden inside left/right steppers');
   assert.equal(await page.getByLabel('Facial hair').locator('..').locator('button').count(),2);
