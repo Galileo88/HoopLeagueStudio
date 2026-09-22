@@ -41,6 +41,8 @@ test('roster editor changes player data and moves the player without changing th
   assert.equal(await hairStepper.locator('button').count(),2);
   const hairBefore=await page.getByLabel('Hair style').inputValue(),hairNext=page.getByRole('button',{name:'Next Hair style'});
   if(await hairNext.isEnabled()){await hairNext.click();assert.notEqual(await page.getByLabel('Hair style').inputValue(),hairBefore);await page.getByRole('button',{name:'Previous Hair style'}).click()}
+  const positionStepper=page.getByLabel('Position',{exact:true}).locator('..');
+  assert.equal(await positionStepper.locator('button').count(),2);
   const archetypeStepper=page.getByLabel('Primary archetype').locator('..');
   assert.equal(await archetypeStepper.locator('button').count(),2);
   const attributesSection=page.locator('.roster-attributes-section'),skillsSection=page.locator('.roster-skills-section');
