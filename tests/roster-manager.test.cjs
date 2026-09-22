@@ -88,17 +88,18 @@ test('roster editor changes player data and moves the player without changing th
   const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
    const pixels=canvas.getContext('2d').getImageData(0,46,64,32).data;
    let jerseyNumber=0,jerseyStripe=0,jerseyCollar=0,shortsStripe=0,rawPalette=0,minX=64,maxX=-1,minY=64,maxY=-1;
+   let collarMinX=64,collarMaxX=-1,collarMinY=84,collarMaxY=-1;
    let jerseyStripeLeftLower=0,jerseyStripeRight=0,shortsStripeLeft=0,shortsStripeRight=0,shortsStripeHip=0;
    for(let i=0;i<pixels.length;i+=4){
     const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
     const p=i/4,x=p%64,y=Math.floor(p/64)+46;
     if(r===1&&g===254&&b===122){jerseyNumber++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
     if(r===254&&g===1&&b===169){jerseyStripe++;if(x>=32)jerseyStripeRight++;else if(y>=56)jerseyStripeLeftLower++}
-    if(r===17&&g===204&&b===238)jerseyCollar++;
+    if(r===17&&g===204&&b===238){jerseyCollar++;collarMinX=Math.min(collarMinX,x);collarMaxX=Math.max(collarMaxX,x);collarMinY=Math.min(collarMinY,y);collarMaxY=Math.max(collarMaxY,y)}
     if(r===122&&g===1&&b===254){shortsStripe++;if(x>=32){shortsStripeRight++;if(y>=58&&y<=66)shortsStripeHip++}else shortsStripeLeft++}
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,jerseyStripe,jerseyCollar,shortsStripe,rawPalette,jerseyStripeLeftLower,jerseyStripeRight,shortsStripeLeft,shortsStripeRight,shortsStripeHip,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<84?minY:null,canvasWidth:canvas.width,canvasHeight:canvas.height};
+   return {jerseyNumber,jerseyStripe,jerseyCollar,shortsStripe,rawPalette,jerseyStripeLeftLower,jerseyStripeRight,shortsStripeLeft,shortsStripeRight,shortsStripeHip,collarWidth:collarMaxX>=collarMinX?collarMaxX-collarMinX+1:0,collarHeight:collarMaxY>=collarMinY?collarMaxY-collarMinY+1:0,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<84?minY:null,canvasWidth:canvas.width,canvasHeight:canvas.height};
   });
   assert.equal(previewColors.canvasWidth,64);
   assert.equal(previewColors.canvasHeight,84);
@@ -107,7 +108,9 @@ test('roster editor changes player data and moves the player without changing th
   assert(previewColors.numberTop===null||previewColors.numberTop>=52,`Jersey number should sit below the collar area: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripeRight>0,`Right jersey stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
-  assert(previewColors.jerseyCollar>0,`Jersey collar should use jerseyCollar from the uniform: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.jerseyCollar,12,`Collar should contain exactly the three 2x2 sprite pixels from the collar mask: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.collarWidth,6,`Collar should stay aligned to the six-pixel high-resolution mask width: ${JSON.stringify(previewColors)}`);
+  assert.equal(previewColors.collarHeight,4,`Collar should stay aligned to the four-pixel high-resolution mask height: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.jerseyStripeLeftLower,0,`Left jersey body stripe should match the jersey color: ${JSON.stringify(previewColors)}`);
   assert(previewColors.shortsStripe>0,`Shorts stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.shortsStripeRight>0,`Right shorts stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
