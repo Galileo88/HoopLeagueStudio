@@ -45,6 +45,9 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(await appearanceSettings.evaluate(details=>details.open),false);
   await appearanceSettings.locator('summary').click();
   assert(await page.getByLabel('Skin',{exact:true}).isVisible());
+  const skinBox=await page.getByLabel('Skin',{exact:true}).boundingBox(),hairStyleBox=await page.getByLabel('Hair style').boundingBox();
+  assert(skinBox&&skinBox.width<=64,`Skin color picker should be compact: ${JSON.stringify(skinBox)}`);
+  assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should be compact: ${JSON.stringify(hairStyleBox)}`);
   const attributesSection=page.locator('.free-agents-editor .roster-attributes-section'),skillsSection=page.locator('.free-agents-editor .roster-skills-section');
   assert.equal(await attributesSection.evaluate(details=>details.open),false);
   assert.equal(await skillsSection.evaluate(details=>details.open),false);
@@ -56,6 +59,7 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(await uniforms.getByRole('button',{name:'Road'}).getAttribute('aria-pressed'),'true');
   assert.equal(await uniforms.getByRole('button',{name:'Home'}).getAttribute('aria-pressed'),'false');
   assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
+  assert.deepEqual(await page.locator('.free-agents-editor .roster-accessory-group > summary').allTextContents(),['Head','Arms','Legs','Shoes']);
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   await page.locator('.free-agents-editor').screenshot({path:path.join(root,'artifacts/free-agents-inline.png')});
   await page.getByLabel('First name',{exact:true}).fill('Jordan');
@@ -65,7 +69,9 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   await page.getByLabel('Skin').fill('#a36342');
   await page.getByLabel('Skin').dispatchEvent('input');
   await page.locator('.roster-accessories > summary').click();
+  await page.locator('.free-agents-editor .roster-accessory-group').filter({has:page.getByText('Head',{exact:true})}).locator('summary').click();
   await page.getByLabel('Head accessory color team color',{exact:true}).selectOption('SEC');
+  await page.locator('.free-agents-editor .roster-accessory-group').filter({has:page.getByText('Shoes',{exact:true})}).locator('summary').click();
   await page.getByLabel('Socks custom color').fill('#22cc88');
   await page.getByLabel('Socks custom color').dispatchEvent('input');
   await attributesSection.locator('summary').click();
