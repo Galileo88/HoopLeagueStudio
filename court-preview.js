@@ -48,7 +48,7 @@
     const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png'].map(file=>load('./court/'+file)));
     const custom=await Promise.allSettled([court.overlayURL,team.logoURL].map(url=>validURL(url)?load(url):Promise.resolve(null)));
     if(current!==revision||!wrapper.isConnected)return;
-    const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,1024,512);
+    const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,1024,512);
     ctx.drawImage(recolor(textures[0],null,palette(outerColors,court,team)),0,0);
     surfaces.forEach((key,i)=>ctx.drawImage(recolor(textures[i+1],rgb(court[key+'C'],team)),191,95));
     const drawCustom=layer=>{
