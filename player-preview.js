@@ -85,32 +85,39 @@
   layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0);
   return {uniform,shortsStart}
  }
- function jerseyNumber(ctx,player,team,uniform,shortsStart){
+ function jerseyNumber(ctx,player,team,uniform,shortsStart,scale){
   const value=Number(player.num);if(!Number.isInteger(value)||value<0)return;
-  const text=String(value).slice(-2),width=text.length*3+(text.length-1),startX=Math.floor((32-width)/2),startY=shortsStart-5;
+  const text=String(value).slice(-2),width=text.length*3+(text.length-1);
+  // The player sprite is rendered at 2x internally, but the number uses 1px
+  // high-resolution cells. This keeps the chest number half the old visual size
+  // while remaining crisp when the preview is enlarged with pixel rendering.
+  const startX=Math.floor((ctx.canvas.width-width)/2),startY=shortsStart*scale-10;
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
    for(let y=0;y<glyph.length;y++)for(let x=0;x<3;x++)if(glyph[y][x]==='1')ctx.fillRect(startX+index*4+x,startY+y,1,1)
   }
  }
- function draw(canvas,player,team,uniformIndex,frame){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,32,32);
-  const appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  const bodyState=body(ctx,frame,player,team,uniformIndex);
-  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart);
+ function draw(canvas,player,team,uniformIndex,frame){
+  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=scene.height=32;
+  const sceneCtx=scene.getContext('2d'),appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
+  const bodyState=body(sceneCtx,frame,player,team,uniformIndex);
   // The idle sheet has four front-facing motion frames across its first row.
   // Head layers are anchored eight pixels lower in their own 32px cells.
-  ctx.save();ctx.translate(0,[-8,-7,-6,-7][frame]);
-  paint(ctx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
-  paint(ctx,images['eye-white'],0,0);
-  paint(ctx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
-  paint(ctx,images['brow-color'],0,0,hex(appearance.browC,'#262539'));
-  if(appearance.unibrow)paint(ctx,images['unibrow-color'],0,0,hex(appearance.browC,'#262539'));
-  atlas(ctx,images['facial-hair'],appearance.fHair,8,hex(appearance.fHairC,'#262539'),0);
-  atlas(ctx,images.hair,appearance.hair,16,hex(appearance.hairC,'#262539'),0);
-  if(gear.headAcc!=='none')atlas(ctx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
-  atlas(ctx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
-  ctx.restore()
+  sceneCtx.save();sceneCtx.translate(0,[-8,-7,-6,-7][frame]);
+  paint(sceneCtx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
+  paint(sceneCtx,images['eye-white'],0,0);
+  paint(sceneCtx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
+  paint(sceneCtx,images['brow-color'],0,0,hex(appearance.browC,'#262539'));
+  if(appearance.unibrow)paint(sceneCtx,images['unibrow-color'],0,0,hex(appearance.browC,'#262539'));
+  atlas(sceneCtx,images['facial-hair'],appearance.fHair,8,hex(appearance.fHairC,'#262539'),0);
+  atlas(sceneCtx,images.hair,appearance.hair,16,hex(appearance.hairC,'#262539'),0);
+  if(gear.headAcc!=='none')atlas(sceneCtx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
+  atlas(sceneCtx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
+  sceneCtx.restore();
+  ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(scene,0,0,32,32,0,0,canvas.width,canvas.height);
+  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,canvas.width/32)
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
