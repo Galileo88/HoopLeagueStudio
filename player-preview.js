@@ -103,9 +103,9 @@
   }
  }
  function draw(canvas,player,team,uniformIndex,frame){
-  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=32;scene.height=40;
+  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=32;scene.height=42;
   const sceneCtx=scene.getContext('2d'),appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  const offsetY=8;
+  const offsetY=9;
   sceneCtx.save();sceneCtx.translate(0,offsetY);
   const bodyState=body(sceneCtx,frame,player,team,uniformIndex);sceneCtx.restore();
   // The taller staging area adds eight logical pixels above the body. The
