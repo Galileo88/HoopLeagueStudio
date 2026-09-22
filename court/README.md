@@ -10,4 +10,6 @@ The outer-court and court-lines images use palette colors as region identifiers;
 
 Court geometry, surface ordering, and hoop sprite placement come from the extracted assets and scene renderers. The hoop base, pole, and padding colors respond to their court settings. Text styling, logo size, custom overlay placement, and their ordering are provisional until checked against the running game.
 
+The Court Overlay image preview uses the same hoop sprite renderer, so its hoops and colors match the full court preview.
+
 The browser regression test is `tests/court-preview.test.cjs`. It requires Playwright and Microsoft Edge; `PLAYWRIGHT_MODULE` can point to an existing Playwright installation. Run with `node --test --test-isolation=none tests/court-preview.test.cjs`. It checks all 15 floor-pattern/line-style combinations, color changes, the actual editor integration, and mobile sizing.

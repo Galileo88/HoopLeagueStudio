@@ -50,7 +50,18 @@
  }
  function palette(mapping,court,team){return Object.fromEntries(Object.entries(mapping).map(([color,key])=>[color,rgb(court[key],team)]))}
  function validURL(value){return typeof value==='string'&&/^(https?:\/\/|data:image\/|blob:)/i.test(value)}
- window.HLSCourtPreview={mount(parent,getTeam){
+ window.HLSCourtPreview={
+  async paintHoops(canvas,team){
+   if(!team)return;
+   const revision=canvas._hoopRevision=(canvas._hoopRevision||0)+1;
+   const images=await Promise.all(hoopFiles.map(file=>load('./court/'+file)));
+   if(!canvas.isConnected||revision!==canvas._hoopRevision)return;
+   const ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
+   ctx.setTransform(canvas.width/LOGICAL_WIDTH,0,0,canvas.height/LOGICAL_HEIGHT,0,0);
+   drawHoops(ctx,images,team.court||{},team);
+   ctx.setTransform(1,0,0,1,0,0);
+  },
+  mount(parent,getTeam){
   const wrapper=document.createElement('section');wrapper.className='court-preview';wrapper.dataset.courtPreview='true';
   const heading=document.createElement('h3');heading.textContent='Court Preview';
   const canvas=document.createElement('canvas');canvas.width=BASE_WIDTH;canvas.height=BASE_HEIGHT;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Top-down court color and layout preview');

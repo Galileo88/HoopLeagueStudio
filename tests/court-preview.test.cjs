@@ -47,6 +47,8 @@ test('court preview renders extracted layers and updates colors, patterns and li
   await page.evaluate(async team=>{window.previewTeam=team;await preview.syncCourtPreview()},team);
   await page.locator('#test-preview').screenshot({path:path.join(root,'artifacts/court-reference/preview.png')});
   await page.locator('#import').setInputFiles({name:'court-test.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(sample))});
+  await page.waitForTimeout(300);
+  assert((await page.locator('#teams button').count())>0,JSON.stringify({errors,toast:await page.locator('#toast').textContent()}));
   await page.locator('#teams button').first().click();
   await page.locator('#content summary').filter({hasText:/^Court$/}).click();
   await page.waitForFunction(()=>document.querySelector('#content .court-preview-note')?.textContent.startsWith('Court preview'));
@@ -57,6 +59,20 @@ test('court preview renders extracted layers and updates colors, patterns and li
   });
   await page.waitForFunction(()=>document.querySelector('#content .court-preview-note')?.textContent.startsWith('Court preview'));
   assert.notEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.toDataURL()),beforeChange);
+  const overlayData='data:image/png;base64,'+fs.readFileSync(path.join(root,'court/outer-court.png')).toString('base64');
+  await page.locator('#content input[data-path]').evaluateAll((inputs,url)=>{
+   const input=inputs.find(node=>{const path=JSON.parse(node.dataset.path);return path.at(-1)==='overlayURL'&&path.at(-2)==='court'});
+   if(!input)throw Error('Court overlay URL field missing');input.value=url;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));
+  },overlayData);
+  await page.waitForFunction(()=>document.querySelector('#content .court-overlay-stage img')?.naturalWidth>0);
+  await page.waitForFunction(()=>{const canvas=document.querySelector('#content .court-overlay-stage canvas');return canvas&&canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.some((value,index)=>index%4===3&&value>0)});
+  const overlayBefore=await page.locator('#content .court-overlay-stage canvas').evaluate(canvas=>canvas.toDataURL());
+  await page.locator('#content input[data-path]').evaluateAll(inputs=>{
+   const input=inputs.find(node=>{const path=JSON.parse(node.dataset.path);return path.at(-1)==='hoopBase'&&path.at(-2)==='court'});
+   if(!input)throw Error('Hoop base field missing');input.value='00FF00';input.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await page.waitForFunction(previous=>document.querySelector('#content .court-overlay-stage canvas')?.toDataURL()!==previous,overlayBefore);
+  await page.locator('#content .court-overlay-image-preview').screenshot({path:path.join(root,'artifacts/court-reference/overlay-preview.png')});
   await page.setViewportSize({width:390,height:844});
   assert.deepEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>{const rect=canvas.getBoundingClientRect();return [rect.width,rect.height]}),[321,161]);
   assert.deepEqual(errors,[]);
