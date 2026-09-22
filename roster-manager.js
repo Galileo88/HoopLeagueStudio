@@ -63,7 +63,6 @@
     if('pos'in player)select(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
     const archetypeOptions=[[0,'None'],...archetypes.map(([title],index)=>[index+1,title])];
     for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)select(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
-    if('arc'in player)input(identity,'Archetype code',player.arc,value=>commit(player,'arc',value));
     const reference=node('details','roster-archetype-reference');reference.append(node('summary','','Archetype and position values'));
     reference.append(node('p','','These point weights are stored in Hoop Land’s archetype and position tables. The game applies additional rules when it calculates ratings.'));
     const table=node('table'),head=node('tr');for(const title of ['Attribute','Position base','Primary','Secondary'])head.append(node('th','',title));table.append(head);
@@ -78,7 +77,7 @@
     const refreshSkills=()=>{skills.replaceChildren();for(const [index,skill]of (player.skills||[]).entries()){
      const group=node('div','roster-skill');const available=[...new Set([...skillIds.filter(id=>!(player.skills||[]).some((entry,i)=>i!==index&&entry.id===id)),skill.id])].sort();select(group,'Skill',skill.id,available.map(id=>[id,id]),value=>change([...base,'skills',index,'id'],value));
      input(group,'Level',skill.level,value=>change([...base,'skills',index,'level'],value),{type:'number',min:0,max:99,step:1});
-     input(group,'Experience',skill.xp,value=>change([...base,'skills',index,'xp'],value),{type:'number',min:0,max:999999,step:1});
+     input(group,'XP Available',skill.xp,value=>change([...base,'skills',index,'xp'],value),{type:'number',min:0,max:999999,step:1});
      const equipped=node('label','roster-check'),check=node('input');check.type='checkbox';check.checked=!!skill.equipped;check.onchange=()=>change([...base,'skills',index,'equipped'],check.checked);equipped.append(check,' Equipped');group.append(equipped);
      const remove=node('button','','Remove skill');remove.type='button';remove.onclick=()=>{change([...base,'skills'],player.skills.filter((_,i)=>i!==index));refreshSkills()};group.append(remove);skills.append(group)
     }const add=node('button','','Add skill');add.type='button';const nextSkill=skillIds.find(id=>!(player.skills||[]).some(skill=>skill.id===id));add.disabled=!nextSkill;add.onclick=()=>{change([...base,'skills'],[...(player.skills||[]),{id:nextSkill,xp:0,level:1,equipped:false}]);refreshSkills()};skills.append(add)};refreshSkills();
