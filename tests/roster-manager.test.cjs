@@ -114,9 +114,17 @@ test('roster editor changes player data and moves the player without changing th
   const uniformCanvas=page.locator('.roster-appearance canvas');
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
   await page.locator('.roster-uniform-tabs').getByRole('button',{name:'Road'}).click();
-  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Accessories');
   assert.deepEqual(await page.locator('.roster-accessory-group > summary').allTextContents(),['Head','Arms','Legs','Shoes']);
   assert((await page.locator('.roster-accessory-group').evaluateAll(groups=>groups.every(group=>!group.open))),'Accessory subgroups should be collapsed by default');
+  await page.locator('.roster-accessories > summary').click();
+  assert.deepEqual(await page.getByLabel('Copy accessories destination').locator('option').allTextContents(),['Home','Alt 1','Alt 2','All other uniforms']);
+  const shoesGroup=page.locator('.roster-accessory-group').filter({has:page.getByText('Shoes',{exact:true})});
+  await shoesGroup.locator('summary').click();
+  await page.getByLabel('Socks custom color').fill('#123456');
+  await page.getByLabel('Socks custom color').dispatchEvent('input');
+  await page.getByLabel('Copy accessories destination').selectOption('all');
+  await page.getByRole('button',{name:'Copy to'}).click();
   const headGroup=page.locator('.roster-accessory-group').filter({has:page.getByText('Head',{exact:true})});
   await headGroup.locator('summary').click();
   assert.equal(await page.getByLabel('Head accessory').locator('..').locator('button').count(),2);
@@ -154,6 +162,7 @@ test('roster editor changes player data and moves the player without changing th
   assert.equal(exported.teams[original.teamIndex].roster.some(player=>player.id===original.playerId),false);
   assert.equal(moved.id,original.playerId);assert.equal(moved.tid,template.teams[original.targetIndex].id);
   assert.equal(moved.fn,'Roster');assert.equal(moved.attributes.LAY[0],15);assert.equal(moved.pri,2);assert.equal(moved.skills[0].level,2);
+  assert(moved.accessories.every(accessory=>accessory.sockC==='123456'),`Copy to all uniforms should copy Road accessories: ${JSON.stringify(moved.accessories)}`);
   assert.equal(moved.skills.length,3);assert.equal(new Set(moved.skills.map(skill=>skill.id)).size,3);
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
