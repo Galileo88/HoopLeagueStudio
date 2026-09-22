@@ -22,12 +22,18 @@ test('roster editor changes player data and moves the player without changing th
   const template=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));
   // Use a unique number color so the preview test can distinguish the drawn jersey digits
   // from the team's other uniform colors.
-  for(const team of template.teams)if(team.uniforms?.[0])team.uniforms[0].jerseyNumber='01FE7A';
+  for(const team of template.teams)if(team.uniforms?.[0]){team.uniforms[0].jerseyNumber='01FE7A';team.uniforms[0].jerseyStripe='FE01A9';team.uniforms[0].shortsStripe='7A01FE'}
   await page.locator('#import').setInputFiles({name:'roster-test.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(template))});
   await page.waitForFunction(()=>document.querySelector('#teams button'));
   await page.locator('#teams button').first().evaluate(button=>button.click());
   await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).click();
   assert.equal(await page.getByText('Archetype and position values').count(),0);
+  const appearanceSettings=page.locator('.roster-appearance-settings');
+  assert.equal(await appearanceSettings.locator('summary').textContent(),'Skin, eyes & hair');
+  assert.equal(await appearanceSettings.evaluate(details=>details.open),false);
+  await appearanceSettings.locator('summary').click();
+  assert.equal(await appearanceSettings.evaluate(details=>details.open),true);
+  assert(await page.getByLabel('Skin',{exact:true}).isVisible());
   const teamTitle=await page.locator('#subtitle').textContent();
   const teamIndex=template.teams.findIndex(team=>teamTitle.includes(team.name)&&teamTitle.includes(team.city));
   assert(teamIndex>=0,`Team not found: ${teamTitle}`);
@@ -51,15 +57,19 @@ test('roster editor changes player data and moves the player without changing th
   assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
   const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
    const pixels=canvas.getContext('2d').getImageData(0,14,32,16).data;
-   let jerseyNumber=0,rawPalette=0;
+   let jerseyNumber=0,jerseyStripe=0,shortsStripe=0,rawPalette=0;
    for(let i=0;i<pixels.length;i+=4){
     const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
     if(r===1&&g===254&&b===122)jerseyNumber++;
+    if(r===254&&g===1&&b===169)jerseyStripe++;
+    if(r===122&&g===1&&b===254)shortsStripe++;
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,rawPalette};
+   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette};
   });
   assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.shortsStripe>0,`Shorts stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);
   const uniformCanvas=page.locator('.roster-appearance canvas');
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());

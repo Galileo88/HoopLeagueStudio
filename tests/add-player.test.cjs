@@ -38,6 +38,11 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   await page.locator('.free-agents-editor .roster-list-panel').getByRole('button',{name:'Add Player'}).click();
   await page.locator('.free-agents-editor .roster-player-panel').getByRole('heading',{name:'New Free Agent'}).waitFor();
   assert.equal(await page.getByLabel('Potential',{exact:true}).first().getAttribute('max'),'10');
+  const appearanceSettings=page.locator('.free-agents-editor .roster-appearance-settings');
+  assert.equal(await appearanceSettings.locator('summary').textContent(),'Skin, eyes & hair');
+  assert.equal(await appearanceSettings.evaluate(details=>details.open),false);
+  await appearanceSettings.locator('summary').click();
+  assert(await page.getByLabel('Skin',{exact:true}).isVisible());
   const uniforms=page.locator('.roster-uniform-tabs');
   assert.deepEqual(await uniforms.locator('button').allTextContents(),['Home','Road','Alt 1','Alt 2']);
   await uniforms.getByRole('button',{name:'Alt 2'}).click();
