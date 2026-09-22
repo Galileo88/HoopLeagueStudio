@@ -37,6 +37,12 @@ test('roster editor changes player data and moves the player without changing th
   const skinBox=await page.getByLabel('Skin',{exact:true}).boundingBox(),hairStyleBox=await page.getByLabel('Hair style').boundingBox();
   assert(skinBox&&skinBox.width<=64,`Skin color picker should be a compact box: ${JSON.stringify(skinBox)}`);
   assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should stay compact: ${JSON.stringify(hairStyleBox)}`);
+  const hairStepper=page.getByLabel('Hair style').locator('..');
+  assert.equal(await hairStepper.locator('button').count(),2);
+  const hairBefore=await page.getByLabel('Hair style').inputValue(),hairNext=page.getByRole('button',{name:'Next Hair style'});
+  if(await hairNext.isEnabled()){await hairNext.click();assert.notEqual(await page.getByLabel('Hair style').inputValue(),hairBefore);await page.getByRole('button',{name:'Previous Hair style'}).click()}
+  const archetypeStepper=page.getByLabel('Primary archetype').locator('..');
+  assert.equal(await archetypeStepper.locator('button').count(),2);
   const attributesSection=page.locator('.roster-attributes-section'),skillsSection=page.locator('.roster-skills-section');
   assert.equal(await attributesSection.locator('summary').textContent(),'Attributes');
   assert.equal(await skillsSection.locator('summary').textContent(),'Skills');
@@ -111,6 +117,10 @@ test('roster editor changes player data and moves the player without changing th
   assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
   assert.deepEqual(await page.locator('.roster-accessory-group > summary').allTextContents(),['Head','Arms','Legs','Shoes']);
   assert((await page.locator('.roster-accessory-group').evaluateAll(groups=>groups.every(group=>!group.open))),'Accessory subgroups should be collapsed by default');
+  const headGroup=page.locator('.roster-accessory-group').filter({has:page.getByText('Head',{exact:true})});
+  await headGroup.locator('summary').click();
+  assert.equal(await page.getByLabel('Head accessory').locator('..').locator('button').count(),2);
+  assert.equal(await page.getByLabel('Second head accessory').locator('..').locator('button').count(),2);
   assert.notEqual(await uniformCanvas.evaluate(canvas=>canvas.toDataURL()),homePreview);
   await page.screenshot({path:path.join(root,'artifacts/roster-manager.png'),fullPage:true});
   await page.getByLabel('First name',{exact:true}).fill('Roster');
@@ -124,6 +134,9 @@ test('roster editor changes player data and moves the player without changing th
   await page.getByLabel('Primary archetype').selectOption('2');
   await skillsSection.locator('summary').click();
   assert.equal(await skillsSection.evaluate(details=>details.open),true);
+  assert.equal(await page.getByLabel('Skill').first().locator('..').locator('button').count(),2);
+  const skillSelect=page.getByLabel('Skill').first(),skillNext=page.getByRole('button',{name:'Next Skill'}).first(),skillBefore=await skillSelect.inputValue();
+  if(await skillNext.isEnabled()){await skillNext.click();assert.notEqual(await skillSelect.inputValue(),skillBefore)}
   await page.getByLabel('Level',{exact:true}).first().fill('2');
   await page.getByLabel('Level',{exact:true}).first().dispatchEvent('change');
   await page.getByRole('button',{name:'Add skill'}).click();
