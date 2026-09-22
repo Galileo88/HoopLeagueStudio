@@ -90,13 +90,12 @@
   layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0);
   return {uniform,shortsStart}
  }
- function jerseyNumber(ctx,player,team,uniform,shortsStart,scale){
+ function jerseyNumber(ctx,player,team,uniform,shortsStart,scale,offsetY){
   const value=Number(player.num);if(!Number.isInteger(value)||value<0)return;
   const text=String(value).slice(-2),width=text.length*3+(text.length-1);
-  // The player sprite is rendered at 2x internally, but the number uses 1px
-  // high-resolution cells. This keeps the chest number half the old visual size
-  // while remaining crisp when the preview is enlarged with pixel rendering.
-  const startX=Math.floor((ctx.canvas.width-width)/2),startY=shortsStart*scale-8;
+  // Keep the compact high-resolution digits at the same scale as before; the
+  // taller preview only adds vertical room for hair and accessories.
+  const startX=Math.floor((ctx.canvas.width-width)/2),startY=(offsetY+shortsStart)*scale-8;
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
@@ -104,12 +103,14 @@
   }
  }
  function draw(canvas,player,team,uniformIndex,frame){
-  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=scene.height=32;
+  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=32;scene.height=42;
   const sceneCtx=scene.getContext('2d'),appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  const bodyState=body(sceneCtx,frame,player,team,uniformIndex);
-  // The idle sheet has four front-facing motion frames across its first row.
-  // Head layers are anchored eight pixels lower in their own 32px cells.
-  sceneCtx.save();sceneCtx.translate(0,[-8,-7,-6,-7][frame]);
+  const offsetY=9;
+  sceneCtx.save();sceneCtx.translate(0,offsetY);
+  const bodyState=body(sceneCtx,frame,player,team,uniformIndex);sceneCtx.restore();
+  // The taller staging area adds eight logical pixels above the body. The
+  // player stays at the original 2x preview scale instead of being shrunk.
+  sceneCtx.save();sceneCtx.translate(0,offsetY+[-8,-7,-6,-7][frame]);
   paint(sceneCtx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
   paint(sceneCtx,images['eye-white'],0,0);
   paint(sceneCtx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
@@ -120,9 +121,10 @@
   if(gear.headAcc!=='none')atlas(sceneCtx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
   atlas(sceneCtx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
   sceneCtx.restore();
+  const scale=canvas.width/32;
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(scene,0,0,32,32,0,0,canvas.width,canvas.height);
-  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,canvas.width/32)
+  ctx.drawImage(scene,0,0,scene.width,scene.height,0,0,canvas.width,canvas.height);
+  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,scale,offsetY)
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;

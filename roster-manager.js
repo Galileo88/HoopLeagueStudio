@@ -25,7 +25,15 @@
  function input(parent,title,value,change,{type='text',min,max,step}={}){
   const control=node('input');control.type=type;control.value=value??'';if(min!==undefined)control.min=String(min);if(max!==undefined)control.max=String(max);if(step!==undefined)control.step=String(step);
   control.setAttribute('aria-label',title);
-  control.onchange=()=>{const next=type==='number'?Number(control.value):control.value;if(type==='number'&&(!control.value||!Number.isFinite(next)||!control.checkValidity())){control.setCustomValidity('Enter a valid number.');control.reportValidity();return}control.setCustomValidity('');change(next)};
+  const syncStepper=()=>{if(type!=='number'||!control.value)return;const current=Number(control.value);if(!Number.isFinite(current))return;const wrap=control.parentElement;if(!wrap?.classList.contains('number-control'))return;const [minus,,plus]=wrap.children;minus.disabled=min!==undefined&&current<=Number(min);plus.disabled=max!==undefined&&current>=Number(max)};
+  control.onchange=()=>{const next=type==='number'?Number(control.value):control.value;if(type==='number'&&(!control.value||!Number.isFinite(next)||!control.checkValidity())){control.setCustomValidity('Enter a valid number.');control.reportValidity();return}control.setCustomValidity('');change(next);syncStepper()};
+  if(type==='number'){
+   const wrap=node('div','number-control'),minus=node('button','','−'),plus=node('button','','+');
+   minus.type=plus.type='button';minus.setAttribute('aria-label','Decrease '+title);plus.setAttribute('aria-label','Increase '+title);
+   const stepBy=direction=>{if(direction<0)control.stepDown();else control.stepUp();control.dispatchEvent(new Event('change',{bubbles:true}))};
+   minus.onclick=()=>stepBy(-1);plus.onclick=()=>stepBy(1);control.oninput=syncStepper;
+   wrap.append(minus,control,plus);row(parent,title,wrap);syncStepper();return control
+  }
   row(parent,title,control);return control;
  }
  function select(parent,title,value,options,change){const control=node('select');control.setAttribute('aria-label',title);
@@ -82,7 +90,7 @@
     for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)select(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
     if(player.appearance){
      const appearance=node('div','roster-appearance'),preview=node('div','roster-appearance-preview'),canvas=node('canvas');
-     canvas.width=canvas.height=64;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
+     canvas.width=64;canvas.height=84;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
      let uniformIndex=selectedUniformIndex,redraw=()=>{};
      const outfits=(player.accessories||[]).map((_,index)=>[index,['Home','Road','Alt 1','Alt 2'][index]||`Uniform ${index+1}`]);
      const uniformTabs=node('div','roster-uniform-tabs');uniformTabs.setAttribute('role','group');uniformTabs.setAttribute('aria-label','Uniform appearance');
@@ -117,10 +125,11 @@
      };drawAccessories();
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
     }
-    const attributes=node('div','roster-attributes');editor.append(node('h3','','Attributes'),node('p','','Edit the stored current and potential values. The game calculates the displayed rating.'),attributes);
+    const attributeSection=node('details','roster-editor-section roster-attributes-section'),attributeSummary=node('summary','','Attributes'),attributeContent=node('div','roster-editor-section-content'),attributes=node('div','roster-attributes');
+    attributeContent.append(node('p','','Edit the stored current and potential values. The game calculates the displayed rating.'),attributes);attributeSection.append(attributeSummary,attributeContent);editor.append(attributeSection);
     for(const [key,levels]of Object.entries(player.attributes||{})){if(!Array.isArray(levels)||levels.length<2)continue;const group=node('div','roster-attribute');group.append(node('strong','',attributeNames[key]||key));
      for(const [index,title]of ['Current','Potential'].entries())input(group,title,levels[index],value=>change([...base,'attributes',key,index],value),{type:'number',min:index===1?levels[0]:0,max:index===0?levels[1]:20,step:1});attributes.append(group)}
-    const skills=node('div','roster-skills');editor.append(node('h3','','Skills'),skills);
+    const skillSection=node('details','roster-editor-section roster-skills-section'),skillSummary=node('summary','','Skills'),skills=node('div','roster-skills roster-editor-section-content');skillSection.append(skillSummary,skills);editor.append(skillSection);
     const refreshSkills=()=>{skills.replaceChildren();for(const [index,skill]of (player.skills||[]).entries()){
      const group=node('div','roster-skill');const available=[...new Set([...skillIds.filter(id=>!(player.skills||[]).some((entry,i)=>i!==index&&entry.id===id)),skill.id])].sort();
      const description=node('p','roster-skill-description',skillDescriptions[skill.id]||'Description unavailable for this imported skill.');

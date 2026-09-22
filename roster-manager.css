@@ -15,17 +15,19 @@
 .roster-field{display:block;min-width:0}
 .roster-field>span{display:block;margin-bottom:5px;font-size:13px;color:#c6d0c9}
 .roster-field>input,.roster-field>select{width:100%}
+.roster-field>.number-control{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;width:100%;align-items:center}.roster-field>.number-control input{width:100%;min-width:0;text-align:center}.roster-field>.number-control button{width:42px;min-width:42px;min-height:42px;padding:5px;font-size:22px}
 .roster-attribute{border:1px solid var(--line);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .roster-attribute>strong{grid-column:1/-1}
 .roster-appearance{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
 .roster-appearance-preview{display:grid;justify-items:center;gap:10px;padding:12px;border:1px solid var(--line);background:#0b2234}
-.roster-appearance-preview canvas{width:256px;height:256px;max-width:100%;image-rendering:pixelated}
+.roster-appearance-preview canvas{width:256px;height:auto;max-width:100%;image-rendering:pixelated}
 .roster-uniform-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
 .roster-uniform-tab{min-width:0;padding:8px 3px;font-size:13px;font-weight:700;text-transform:uppercase;white-space:nowrap}
 .roster-uniform-tab.selected{border-color:#79fff4;color:#fff;box-shadow:0 3px 0 #79fff4}
 .roster-appearance-preview small{font-size:12px;color:#c6d0c9;text-align:center}
 .roster-appearance-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
 .roster-appearance-settings,.roster-accessories{margin-top:16px}.roster-appearance-settings summary,.roster-accessories summary{cursor:pointer}.roster-appearance-settings .roster-appearance-fields,.roster-accessories .roster-appearance-fields{margin-top:12px}
+.roster-editor-section{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}.roster-editor-section>summary{cursor:pointer;font-size:18px;font-weight:700}.roster-editor-section-content{margin-top:12px}.roster-editor-section-content>p{margin-top:0}
 .roster-skill{border:1px solid var(--line);padding:12px;margin-bottom:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
 .roster-skill-description{grid-column:1/-1;margin:0;color:#c6d0c9;font-size:13px;line-height:1.4}
 .roster-check{display:flex;align-items:center;gap:6px}
