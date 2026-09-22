@@ -1256,8 +1256,23 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 .page-nav{
   display:none;
 }
+.page-nav button{
+  background:#3d5746;
+  border-color:#708775;
+  color:#f0f5f6;
+  box-shadow:2px 3px 0 #203328;
+}
+.page-nav button:hover{
+  background:#4b6854;
+  border-color:#8a9e8d;
+}
+.page-nav button:focus-visible{
+  outline:2px solid #b0c2b2;
+  outline-offset:3px;
+}
 .page-nav.team-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
 .page-nav.team-actions button{width:100%;min-height:44px}
+.page-nav.team-actions.single{grid-template-columns:minmax(0,1fr)}
 .page-nav[hidden]{
   display:none!important;
 }
@@ -3416,6 +3431,11 @@ function listTeams(){
  $('#teamCount').textContent=league.teams.length;
 }
 function canNavigate(){if($('.invalid')){toast('Fix the highlighted number before continuing.');return false}return true}
+const teamSelectionViewport=window.matchMedia('(max-width:760px)');
+teamSelectionViewport.addEventListener('change',()=>{
+ if(!teamSelectionViewport.matches&&view==='teamSelect'){view='league';render()}
+ else renderPageNav();
+});
 function renderPageNav(){
  const nav=$('#pageNav');
  if(!nav)return;
@@ -3440,15 +3460,16 @@ function renderPageNav(){
   add(league?'League Configuration →':'← Home',league?'league':'home');
  }else if(view==='league'&&league){
   add('← Image Archive','images');
-  add('Team Configuration →','teamSelect');
+  if(teamSelectionViewport.matches)add('Team Configuration →','teamSelect');
  }else if(view==='teamSelect'&&league){
   add('← League Configuration','league');
  }else if(view==='team'&&league){
-  add('← Team Selection','teamSelect');
+  if(teamSelectionViewport.matches)add('← Team Selection','teamSelect');
+  else add('← League Configuration','league');
   if(teamList==='teams')add('Manage Roster','roster');
  }else if(view==='roster'&&league){
   add('← Team Configuration','team');
-  add('Team Selection','teamSelect');
+  if(teamSelectionViewport.matches)add('Team Selection','teamSelect');
  }
 
  if(nav.children.length){
@@ -3537,6 +3558,7 @@ function renderFreeAgentsSection(parent){
  refresh();
 }
 function render(){
+ if(view==='teamSelect'&&!teamSelectionViewport.matches)view='league';
  if(view!=='images')$('#status').hidden=false;
  if(view==='home'){renderWelcome();return}
  if(view==='league'&&!league){renderLeagueStudioEmpty();return}
