@@ -95,7 +95,7 @@
   const text=String(value).slice(-2),width=text.length*3+(text.length-1);
   // Keep the compact high-resolution digits at the same scale as before; the
   // taller preview only adds vertical room for hair and accessories.
-  const startX=Math.floor((ctx.canvas.width-width)/2),startY=(offsetY+shortsStart)*scale-8;
+  const startX=Math.floor((ctx.canvas.width-width)/2),startY=(offsetY+shortsStart)*scale-7;
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
