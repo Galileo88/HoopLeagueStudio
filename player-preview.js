@@ -74,14 +74,15 @@
     const collar=r===5&&g===200;
     // Hoop Land's front-facing uniform is asymmetric: the viewer-left torso and
     // shorts edge stay in the base uniform color. The upper-left shoulder and
-    // viewer-right edges use the configured stripe colors. The first hip row
-    // can sit one sprite row above shortsStart, so treat it as shorts stripe.
+    // viewer-right edges use the configured stripe colors.
     const leftShoulder=!isShorts&&y<=shortsStart-5;
-    const rightHip=rightEdge&&y>=shortsStart-1;
+    // Exact shorts-stripe mask includes the isolated hip and inset pixels.
+    const isShortsStripe=r===15&&g===150;
     const base=isShorts?shorts:jersey;
     let target=base,direct=false;
-    if(collar){target=jerseyCollar;direct=true}
-    else if(width>=4&&rightEdge){target=rightHip?shortsStripe:jerseyStripe;direct=true}
+    if(isShortsStripe){target=shortsStripe;direct=true}
+    else if(collar){target=jerseyCollar;direct=true}
+    else if(width>=4&&rightEdge&&y<shortsStart-2){target=jerseyStripe;direct=true}
     else if(width>=4&&leftEdge&&leftShoulder){target=jerseyStripe;direct=true}
     next=direct?target:shade(base,Math.max(.55,Math.min(1.3,g/150)));
    }else if(b===0&&g>=120){
