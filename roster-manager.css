@@ -46,10 +46,11 @@
 .roster-check{display:flex;align-items:center;gap:6px}
 .roster-check input{width:auto}
 .roster-free-agents{grid-template-columns:minmax(0,1fr)}
+.roster-free-agents>.roster-list-panel,.roster-free-agents .roster-player-panel{border:0;background:transparent;box-shadow:none;padding:0}
 .roster-free-agents .roster-list{max-height:none;overflow:visible}
 .roster-free-agent>summary{cursor:pointer;overflow-wrap:anywhere}
 .roster-free-agent>summary>.star-rating{display:inline-flex;margin-left:10px}
-.roster-free-agent .roster-player-panel{margin-top:12px;box-shadow:none}
+.roster-free-agent .roster-player-panel{margin-top:12px}
 .roster-player-panel[hidden]{display:none}
 .roster-appearance-settings .roster-color-field{grid-column:span 2}
 .roster-color-stepper{display:flex;align-items:center;gap:6px}
@@ -63,3 +64,4 @@
 .roster-attributes{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))}
 .roster-field>.number-control input{padding-inline:2px;min-width:60px}
 .roster-field>.number-control{grid-template-columns:42px minmax(60px,1fr) 42px}
+.roster-free-agents .roster-free-agent .roster-player-panel{padding:0}
