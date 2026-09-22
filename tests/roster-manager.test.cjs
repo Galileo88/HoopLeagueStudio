@@ -34,6 +34,9 @@ test('roster editor changes player data and moves the player without changing th
   await appearanceSettings.locator('summary').click();
   assert.equal(await appearanceSettings.evaluate(details=>details.open),true);
   assert(await page.getByLabel('Skin',{exact:true}).isVisible());
+  const skinBox=await page.getByLabel('Skin',{exact:true}).boundingBox(),hairStyleBox=await page.getByLabel('Hair style').boundingBox();
+  assert(skinBox&&skinBox.width<=64,`Skin color picker should be a compact box: ${JSON.stringify(skinBox)}`);
+  assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should stay compact: ${JSON.stringify(hairStyleBox)}`);
   const attributesSection=page.locator('.roster-attributes-section'),skillsSection=page.locator('.roster-skills-section');
   assert.equal(await attributesSection.locator('summary').textContent(),'Attributes');
   assert.equal(await skillsSection.locator('summary').textContent(),'Skills');
@@ -50,8 +53,9 @@ test('roster editor changes player data and moves the player without changing th
   await page.setViewportSize({width:1200,height:850});
   assert(await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).isHidden());
   assert(await page.locator('#pageNav button').filter({hasText:'Team Configuration'}).isVisible());
-  const teamLogoBackground=await page.locator('[data-team-logo="true"]').first().evaluate(icon=>getComputedStyle(icon).backgroundColor);
-  assert(['rgba(0, 0, 0, 0)','transparent'].includes(teamLogoBackground),`Team logo background should be transparent: ${teamLogoBackground}`);
+  const teamLogoBackground=await page.locator('#teams button').first().locator('[data-team-logo="true"]').evaluate(icon=>getComputedStyle(icon).backgroundColor);
+  const secondary=template.teams[0].teamColors[1],expectedLogoBackground=`rgb(${parseInt(secondary.slice(0,2),16)}, ${parseInt(secondary.slice(2,4),16)}, ${parseInt(secondary.slice(4,6),16)})`;
+  assert.equal(teamLogoBackground,expectedLogoBackground,`Team logo background should use the secondary team color: ${teamLogoBackground}`);
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
    const samples=[];
@@ -105,6 +109,8 @@ test('roster editor changes player data and moves the player without changing th
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
   await page.locator('.roster-uniform-tabs').getByRole('button',{name:'Road'}).click();
   assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
+  assert.deepEqual(await page.locator('.roster-accessory-group > summary').allTextContents(),['Head','Arms','Legs','Shoes']);
+  assert((await page.locator('.roster-accessory-group').evaluateAll(groups=>groups.every(group=>!group.open))),'Accessory subgroups should be collapsed by default');
   assert.notEqual(await uniformCanvas.evaluate(canvas=>canvas.toDataURL()),homePreview);
   await page.screenshot({path:path.join(root,'artifacts/roster-manager.png'),fullPage:true});
   await page.getByLabel('First name',{exact:true}).fill('Roster');
