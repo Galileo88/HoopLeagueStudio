@@ -1,9 +1,8 @@
 .roster-manager{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:18px;align-items:start}
-.roster-manager-draft{grid-template-columns:minmax(0,1fr)}
 .roster-list-panel,.roster-player-panel{min-width:0}
-.free-agents-editor>p{margin:14px 0;color:#c6d0c9;font-size:13px}
-.add-player-actions{display:flex;flex-wrap:wrap;gap:10px}.add-player-form{margin-top:16px}.add-player-form[hidden]{display:none}
-.add-player-form .fields{margin-bottom:12px}
+.free-agents-roster{margin-top:16px}
+.roster-add-player{width:100%;margin:0 0 12px}
+.roster-draft-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
 .roster-list-panel h2,.roster-player-panel h2{margin-top:0}
 .roster-list-panel>p,.roster-player-id{margin:0 0 14px;font-size:13px}
 .roster-list{max-height:680px;overflow:auto;margin-top:12px}

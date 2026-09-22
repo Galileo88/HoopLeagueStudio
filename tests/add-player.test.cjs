@@ -21,6 +21,7 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   const template=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));
   await page.locator('#import').setInputFiles({name:'add-player-test.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(template))});
+  await page.waitForTimeout(300);assert.deepEqual(errors,[]);
   await page.waitForFunction(()=>document.querySelector('#teams button'));
   await page.locator('#leagueNav').evaluate(button=>button.click());
   const order=await page.locator('.configuration-card').evaluate(card=>{
@@ -30,22 +31,30 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.match(order[0],/Simulation Sliders/);
   assert.match(order[1],/Free Agents/);
   assert.match(order[2],/Retired Numbers/);
+  await page.setViewportSize({width:1200,height:850});
   await page.locator('.free-agents-editor > summary').click();
-  await page.getByRole('button',{name:'Add Player'}).click();
-  await page.locator('.add-player-form .roster-player-panel').waitFor();
+  assert.equal(await page.locator('.free-agents-editor .roster-manager').count(),1);
+  assert.equal(await page.getByRole('button',{name:'Manage Free Agents'}).count(),0);
+  await page.locator('.free-agents-editor .roster-list-panel').getByRole('button',{name:'Add Player'}).click();
+  await page.locator('.free-agents-editor .roster-player-panel').getByRole('heading',{name:'New Free Agent'}).waitFor();
+  await page.locator('#toast').evaluate(toast=>toast.style.display='none');
+  await page.locator('.free-agents-editor').screenshot({path:path.join(root,'artifacts/free-agents-inline.png')});
   await page.getByLabel('First name',{exact:true}).fill('Jordan');
   await page.getByLabel('Last name',{exact:true}).fill('Example');
   await page.getByLabel('Position',{exact:true}).selectOption('2');
   await page.getByLabel('Hair style').selectOption('0002');
   await page.getByLabel('Skin').fill('#a36342');
   await page.getByLabel('Skin').dispatchEvent('input');
-  await page.locator('.add-player-form .roster-attributes input[aria-label="Current"]').first().fill('9');
-  await page.locator('.add-player-form .roster-attributes input[aria-label="Current"]').first().dispatchEvent('change');
-  await page.locator('.add-player-form').getByRole('button',{name:'Add skill'}).click();
-  await page.locator('.add-player-form .roster-skill').first().getByLabel('Skill').selectOption('BUL');
+  await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().fill('9');
+  await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().dispatchEvent('change');
+  await page.locator('.free-agents-editor').getByRole('button',{name:'Add skill'}).click();
+  await page.locator('.free-agents-editor .roster-skill').first().getByLabel('Skill').selectOption('BUL');
   await page.getByRole('button',{name:'Create Free Agent'}).click();
-  await page.getByText('Jordan Example').first().waitFor();
-  assert.match(await page.locator('#subtitle').textContent(),/unsigned players/);
+  await page.locator('.free-agents-editor .roster-list').getByText(/Jordan Example/).waitFor();
+  assert.equal(await page.locator('#title').textContent(),template.leagueName);
+  assert.equal(await page.locator('.free-agents-editor').evaluate(section=>section.open),true);
+  await page.getByLabel('Nickname',{exact:true}).fill('J');
+  await page.getByLabel('Nickname',{exact:true}).dispatchEvent('change');
   const canvas=page.locator('.roster-appearance canvas').first();
   await canvas.waitFor();
   await page.waitForFunction(()=>{const c=document.querySelector('.roster-appearance canvas');return c&&[...c.getContext('2d').getImageData(0,0,c.width,c.height).data].some((v,i)=>i%4===3&&v>0)});
@@ -59,9 +68,21 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(added.pos,2);
   assert.equal(added.appearance.hair,'0002');
   assert.equal(added.appearance.skinC,'A36342');
+  assert.equal(added.tag,'J');
   assert.equal(added.attributes.LAY[0],9);
   assert.equal(added.skills[0].id,'BUL');
   assert(added.attributes&&added.contract&&added.accessories);
+  if(!await page.locator('.free-agents-editor').evaluate(section=>section.open))await page.locator('.free-agents-editor > summary').click();
+  const destination=Number(await page.getByLabel('Destination team').inputValue());
+  assert((await page.locator('.free-agents-editor .roster-player-panel button').allTextContents()).some(text=>text.includes('Add to team')),
+   `Editor buttons: ${await page.locator('.free-agents-editor .roster-player-panel button').allTextContents()}`);
+  await page.getByRole('button',{name:'Add to team'}).click();
+  assert.equal(await page.locator('#title').textContent(),template.leagueName);
+  assert.equal(await page.locator('.free-agents-editor .roster-list .roster-player').count(),0);
+  const [movedDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#export').evaluate(button=>button.click())]);
+  const movedLeague=JSON.parse(fs.readFileSync(await movedDownload.path(),'utf8'));
+  assert.equal(movedLeague.freeAgents.some(player=>player.id===added.id),false);
+  assert.equal(movedLeague.teams[destination].roster.some(player=>player.id===added.id),true);
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
 });

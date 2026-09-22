@@ -3446,8 +3446,6 @@ function renderPageNav(){
  }else if(view==='league'&&league){
   add('← Image Archive','images');
   add('Team Configuration →','teamSelect');
- }else if(view==='freeAgents'&&league){
-  add('← League Configuration','league');
  }else if(view==='teamSelect'&&league){
   add('← League Configuration','league');
  }else if(view==='team'&&league){
@@ -3525,40 +3523,23 @@ function moveRosterPlayer(sourceIndex,targetIndex,playerId){
  if(Array.isArray(source.startingLineup)&&source.startingLineup.some(item=>Number(item?.id??item)===Number(playerId)))set(['teams',sourceIndex,'startingLineup'],source.startingLineup.filter(item=>Number(item?.id??item)!==Number(playerId)));
  selected=targetIndex;teamList='teams';window.HLSRosterManager.focusId=playerId;render();
 }
-function moveFreeAgentToTeam(targetIndex,playerId){
- const target=league.teams[targetIndex],freeAgents=league.freeAgents||[];
- const player=freeAgents.find(item=>Number(item.id)===Number(playerId));if(!target||!player)return;
- set(['freeAgents'],freeAgents.filter(item=>item!==player));
- set(['teams',targetIndex,'roster'],[...(target.roster||[]),{...player,tid:target.id}]);
- selected=targetIndex;teamList='teams';view='roster';window.HLSRosterManager.focusId=playerId;render();
-}
 function renderFreeAgentsSection(parent){
- const section=el('details','free-agents-editor'),summary=el('summary','',`Free Agents · ${(league.freeAgents||[]).length}`),count=el('p','',`${(league.freeAgents||[]).length} free agents`);
- const actions=el('div','add-player-actions'),add=el('button','primary','Add Player'),manage=el('button','','Manage Free Agents');
- add.type=manage.type='button';manage.onclick=()=>{view='freeAgents';render()};actions.append(add,manage);
- const form=el('form','add-player-form'),editorHost=el('div');form.hidden=true;form.append(editorHost);
- const create=el('button','primary','Create Free Agent');create.type='submit';form.append(create);
- let draft=null;
- add.onclick=async()=>{form.hidden=!form.hidden;add.setAttribute('aria-expanded',String(!form.hidden));if(form.hidden)return;
-  if(!draft){add.disabled=true;try{
-   const response=await fetch('./data/player-blueprint.json');if(!response.ok)throw Error('Player template could not be loaded.');
-   draft=await response.json();draft.league=league.leagueType;
-   window.HLSRosterManager.render(editorHost,{league,freeAgents:true,draftPlayer:draft,change:(path,value)=>{
-    let target=draft;for(const key of path.slice(2,-1))target=target[key];target[path.at(-1)]=value;
-   }});
-  }catch(error){draft=null;form.hidden=true;add.setAttribute('aria-expanded','false');toast(error.message||'Could not load player editor.')}finally{add.disabled=false}}
-  form.querySelector('input[aria-label="First name"]')?.focus()
+ const section=el('details','free-agents-editor'),summary=el('summary','','Free Agents'),host=el('div','free-agents-roster');
+ section.append(summary,host);parent.append(section);let draft=null;
+ const refresh=()=>{
+  summary.textContent=`Free Agents · ${(league.freeAgents||[]).length}`;host.replaceChildren();
+  window.HLSRosterManager.render(host,{league,freeAgents:true,draftPlayer:draft,
+   change:(path,value)=>{if(path[0]!=='draft'){set(path,value);return}let target=draft;for(const key of path.slice(1,-1))target=target[key];target[path.at(-1)]=value},
+   move:(targetIndex,playerId)=>{const target=league.teams[targetIndex],agents=league.freeAgents||[],player=agents.find(item=>Number(item.id)===Number(playerId));if(!target||!player)return;
+    set(['freeAgents'],agents.filter(item=>item!==player));set(['teams',targetIndex,'roster'],[...(target.roster||[]),{...player,tid:target.id}]);window.HLSRosterManager.focusId=null;refresh()},
+   onAddPlayer:async()=>{if(!draft){try{const response=await fetch('./data/player-blueprint.json');if(!response.ok)throw Error('Player template could not be loaded.');draft=await response.json();draft.league=league.leagueType}catch(error){toast(error.message||'Could not load player editor.');return}}refresh();host.querySelector('input[aria-label="First name"]')?.focus()},
+   onCreatePlayer:player=>{const invalid=[...host.querySelectorAll('.roster-player-panel input')].find(input=>!input.checkValidity());if(invalid){invalid.reportValidity();return}const first=player.fn.trim(),last=player.ln.trim();if(!first||!last){toast('Enter a first and last name.');host.querySelector(!first?'input[aria-label="First name"]':'input[aria-label="Last name"]')?.focus();return}
+    player.fn=first;player.ln=last;player.id=expansionPersonIdAllocator(league)();player.tid=0;player.teamPos=player.pos;
+    set(['freeAgents'],[...(league.freeAgents||[]),player]);window.HLSRosterManager.focusId=player.id;draft=null;refresh()},
+   onCancelPlayer:()=>{draft=null;refresh()}
+  });
  };
- form.onsubmit=async event=>{event.preventDefault();if(!form.reportValidity())return;create.disabled=true;
-  try{if(!draft)throw Error('Player editor has not loaded.');
-   draft.fn=draft.fn.trim();draft.ln=draft.ln.trim();
-   if(!draft.fn||!draft.ln){toast('Enter a first and last name.');form.querySelector(!draft.fn?'input[aria-label="First name"]':'input[aria-label="Last name"]')?.focus();create.disabled=false;return}
-   draft.id=expansionPersonIdAllocator(league)();draft.tid=0;draft.teamPos=draft.pos;
-   set(['freeAgents'],[...(league.freeAgents||[]),draft]);
-   window.HLSRosterManager.focusId=draft.id;view='freeAgents';render();
-  }catch(error){toast(error.message||'Could not create player.');create.disabled=false}
- };
- section.append(summary,count,actions,form);parent.append(section);
+ refresh();
 }
 function render(){
  if(view!=='images')$('#status').hidden=false;
@@ -3569,7 +3550,7 @@ function render(){
  $('#teamSearch').disabled=!league;$('#saveProgress').disabled=!league;$('#export').disabled=!league;
  if(league&&view!=='images')listTeams();
  $('#gettingStartedNav').classList.toggle('active',view==='home');
- $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team'||view==='roster'||view==='freeAgents');
+ $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team'||view==='roster');
  $('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){renderArchive();return}
@@ -3581,10 +3562,6 @@ function render(){
   $('#subtitle').textContent=`Choose a team to configure · ${league.teams.length} teams`;
   renderTeamSelection(content);
   return;
- }
- if(view==='freeAgents'){
-  $('#title').textContent='Free Agents';$('#breadcrumb').textContent='LEAGUE / FREE AGENTS';$('#subtitle').textContent='Edit unsigned players or add them to a team.';
-  window.HLSRosterManager.render(content,{league,change:set,move:moveFreeAgentToTeam,freeAgents:true});return;
  }
  const t=league[teamList]?.[selected];
  if(!t&&(view==='team'||view==='roster')){view='teamSelect';render();return}
