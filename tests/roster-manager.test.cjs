@@ -39,6 +39,9 @@ test('roster editor changes player data and moves the player without changing th
   assert.equal(await skillsSection.locator('summary').textContent(),'Skills');
   assert.equal(await attributesSection.evaluate(details=>details.open),false);
   assert.equal(await skillsSection.evaluate(details=>details.open),false);
+  const numericFields=page.locator('.roster-player-panel input[type="number"]');
+  const steppedNumericFields=page.locator('.roster-player-panel .number-control > input[type="number"]');
+  assert.equal(await steppedNumericFields.count(),await numericFields.count(),'Every numeric player field should use a minus/plus stepper');
   const teamTitle=await page.locator('#subtitle').textContent();
   const teamIndex=template.teams.findIndex(team=>teamTitle.includes(team.name)&&teamTitle.includes(team.city));
   assert(teamIndex>=0,`Team not found: ${teamTitle}`);
