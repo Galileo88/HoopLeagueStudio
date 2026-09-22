@@ -82,7 +82,7 @@
     for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)select(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
     if(player.appearance){
      const appearance=node('div','roster-appearance'),preview=node('div','roster-appearance-preview'),canvas=node('canvas');
-     canvas.width=canvas.height=32;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
+     canvas.width=canvas.height=64;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
      let uniformIndex=selectedUniformIndex,redraw=()=>{};
      const outfits=(player.accessories||[]).map((_,index)=>[index,['Home','Road','Alt 1','Alt 2'][index]||`Uniform ${index+1}`]);
      const uniformTabs=node('div','roster-uniform-tabs');uniformTabs.setAttribute('role','group');uniformTabs.setAttribute('aria-label','Uniform appearance');
