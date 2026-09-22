@@ -46,7 +46,7 @@ test('roster editor changes player data and moves the player without changing th
   const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
    const samples=[];
    for(let frame=0;frame<5;frame++){
-    const pixels=canvas.getContext('2d').getImageData(10,5,13,9).data;
+    const pixels=canvas.getContext('2d').getImageData(20,10,26,18).data;
     let eyeWhite=0;
     for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]&&pixels[i]>215&&pixels[i+1]>215&&pixels[i+2]>215)eyeWhite++;
     samples.push(eyeWhite);
@@ -56,18 +56,20 @@ test('roster editor changes player data and moves the player without changing th
   });
   assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
   const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
-   const pixels=canvas.getContext('2d').getImageData(0,14,32,16).data;
-   let jerseyNumber=0,jerseyStripe=0,shortsStripe=0,rawPalette=0;
+   const pixels=canvas.getContext('2d').getImageData(0,28,64,32).data;
+   let jerseyNumber=0,jerseyStripe=0,shortsStripe=0,rawPalette=0,minX=64,maxX=-1,minY=64,maxY=-1;
    for(let i=0;i<pixels.length;i+=4){
     const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
-    if(r===1&&g===254&&b===122)jerseyNumber++;
+    if(r===1&&g===254&&b===122){jerseyNumber++;const p=i/4,x=p%64,y=Math.floor(p/64)+28;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
     if(r===254&&g===1&&b===169)jerseyStripe++;
     if(r===122&&g===1&&b===254)shortsStripe++;
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette};
+   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,canvasWidth:canvas.width};
   });
+  assert.equal(previewColors.canvasWidth,64);
   assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.numberWidth<=7&&previewColors.numberHeight<=5,`High-resolution jersey number should stay compact: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.shortsStripe>0,`Shorts stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);
