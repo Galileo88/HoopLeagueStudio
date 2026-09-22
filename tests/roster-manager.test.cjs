@@ -36,7 +36,11 @@ test('roster editor changes player data and moves the player without changing th
   assert(await page.getByLabel('Skin',{exact:true}).isVisible());
   const skinBox=await page.getByLabel('Skin',{exact:true}).boundingBox(),hairStyleBox=await page.getByLabel('Hair style').boundingBox();
   assert(skinBox&&skinBox.width<=64,`Skin color picker should be a compact box: ${JSON.stringify(skinBox)}`);
-  assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should stay compact: ${JSON.stringify(hairStyleBox)}`);
+  assert(hairStyleBox&&hairStyleBox.width>220,`Hair style selector should use the available field length: ${JSON.stringify(hairStyleBox)}`);
+  const colorLayout=await Promise.all(['Skin','Eyes','Eyebrows','Hair color','Facial hair color'].map(async label=>({label,box:await page.getByLabel(label,{exact:true}).locator('..').boundingBox()})));
+  const [skinField,eyeField,browField,hairColorField,facialColorField]=colorLayout.map(item=>item.box);
+  assert(skinField&&eyeField&&browField&&Math.abs(skinField.y-eyeField.y)<=2&&Math.abs(skinField.y-browField.y)<=2,`Skin, Eyes, and Eyebrows should share a compact row: ${JSON.stringify(colorLayout)}`);
+  assert(hairColorField&&facialColorField&&Math.abs(hairColorField.y-facialColorField.y)<=2&&hairColorField.x<facialColorField.x,`Hair color fields should sit side-by-side instead of stacking: ${JSON.stringify(colorLayout)}`);
   const hairStepper=page.getByLabel('Hair style').locator('..');
   assert.equal(await hairStepper.locator('button').count(),2);
   const hairBefore=await page.getByLabel('Hair style').inputValue(),hairNext=page.getByRole('button',{name:'Next Hair style'});

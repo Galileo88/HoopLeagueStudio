@@ -47,7 +47,9 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert(await page.getByLabel('Skin',{exact:true}).isVisible());
   const skinBox=await page.getByLabel('Skin',{exact:true}).boundingBox(),hairStyleBox=await page.getByLabel('Hair style').boundingBox();
   assert(skinBox&&skinBox.width<=64,`Skin color picker should be compact: ${JSON.stringify(skinBox)}`);
-  assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should be compact: ${JSON.stringify(hairStyleBox)}`);
+  assert(hairStyleBox&&hairStyleBox.width>400,`Hair style selector should regain the long field length: ${JSON.stringify(hairStyleBox)}`);
+  const desktopColorRow=await Promise.all(['Skin','Eyes','Eyebrows','Hair color','Facial hair color'].map(async label=>({label,box:await page.getByLabel(label,{exact:true}).locator('..').boundingBox()})));
+  assert(desktopColorRow.every(item=>item.box&&Math.abs(item.box.y-desktopColorRow[0].box.y)<=2),`Appearance color boxes should share one horizontal row on desktop: ${JSON.stringify(desktopColorRow)}`);
   assert.equal(await page.getByLabel('Hair style').locator('..').locator('button').count(),2);
   const hairStepperLayout=await page.getByLabel('Hair style').locator('..').evaluate(wrap=>{
    const [previous,select,next]=wrap.children,p=previous.getBoundingClientRect(),s=select.getBoundingClientRect(),n=next.getBoundingClientRect(),w=wrap.getBoundingClientRect(),field=wrap.parentElement.getBoundingClientRect();
