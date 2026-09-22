@@ -127,7 +127,7 @@
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
    const redraw=()=>{if(canvas.isConnected){const {player,team,uniformIndex}=state();draw(canvas,player,team,uniformIndex,frame)}};
-   const tick=()=>{if(!canvas.isConnected)return;redraw();frame=(frame+1)%4;setTimeout(tick,220)};
+   const tick=()=>{if(!canvas.isConnected)return;redraw();frame=(frame+1)%4;setTimeout(tick,110)};
    tick();return redraw
   }
  };
