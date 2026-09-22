@@ -56,7 +56,13 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert(hairStepperLayout.width<=280,`Option stepper should stay compact: ${JSON.stringify(hairStepperLayout)}`);
   assert(hairStepperLayout.buttonWidth<=34,`Option stepper arrows should be narrow: ${JSON.stringify(hairStepperLayout)}`);
   assert(hairStepperLayout.leftGap<=6&&hairStepperLayout.rightGap<=6,`Arrow buttons should sit close to the selector: ${JSON.stringify(hairStepperLayout)}`);
+  const optionSelectAppearance=await page.getByLabel('Hair style').evaluate(select=>getComputedStyle(select).appearance);
+  assert.equal(optionSelectAppearance,'none','Native dropdown arrow should be hidden inside left/right steppers');
   assert.equal(await page.getByLabel('Facial hair').locator('..').locator('button').count(),2);
+  const positionStepper=page.getByLabel('Position',{exact:true}).locator('..');
+  assert.equal(await positionStepper.locator('button').count(),2);
+  const positionBefore=await page.getByLabel('Position',{exact:true}).inputValue(),positionNext=page.getByRole('button',{name:'Next Position'});
+  if(await positionNext.isEnabled()){await positionNext.click();assert.notEqual(await page.getByLabel('Position',{exact:true}).inputValue(),positionBefore);await page.getByRole('button',{name:'Previous Position'}).click()}
   assert.equal(await page.getByLabel('Primary archetype').locator('..').locator('button').count(),2);
   assert.equal(await page.getByLabel('Secondary archetype').locator('..').locator('button').count(),2);
   const attributesSection=page.locator('.free-agents-editor .roster-attributes-section'),skillsSection=page.locator('.free-agents-editor .roster-skills-section');
