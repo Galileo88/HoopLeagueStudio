@@ -18,10 +18,5 @@
 .roster-check{display:flex;align-items:center;gap:6px}
 .roster-check input{width:auto}
 .roster-skill>button{grid-column:1/-1;justify-self:start}
-.roster-archetype-reference{margin-top:14px;overflow-x:auto}
-.roster-archetype-reference summary{cursor:pointer}
-.roster-archetype-reference p{font-size:13px}
-.roster-archetype-reference table{width:100%;border-collapse:collapse;font-size:12px}
-.roster-archetype-reference th,.roster-archetype-reference td{padding:6px;text-align:left;border-bottom:1px solid var(--line)}
 @media(max-width:900px){.roster-manager{grid-template-columns:1fr}.roster-list{max-height:220px}}
 @media(max-width:620px){.roster-fields,.roster-attributes{grid-template-columns:1fr}.roster-skill{grid-template-columns:repeat(2,minmax(0,1fr))}}

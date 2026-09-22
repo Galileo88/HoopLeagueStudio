@@ -24,6 +24,7 @@ test('roster editor changes player data and moves the player without changing th
   await page.waitForFunction(()=>document.querySelector('#teams button'));
   await page.locator('#teams button').first().evaluate(button=>button.click());
   await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).click();
+  assert.equal(await page.getByText('Archetype and position values').count(),0);
   const teamTitle=await page.locator('#subtitle').textContent();
   const teamIndex=template.teams.findIndex(team=>teamTitle.includes(team.name)&&teamTitle.includes(team.city));
   assert(teamIndex>=0,`Team not found: ${teamTitle}`);
@@ -42,6 +43,7 @@ test('roster editor changes player data and moves the player without changing th
   await page.getByLabel('Level',{exact:true}).first().fill('2');
   await page.getByLabel('Level',{exact:true}).first().dispatchEvent('change');
   await page.getByRole('button',{name:'Add skill'}).click();
+  assert(await page.locator('.roster-skill select option').filter({hasText:'Ball Hawk'}).count());
   assert.equal(await page.getByLabel('First name',{exact:true}).inputValue(),'Roster');
   await page.getByLabel('Destination team').selectOption(String(original.targetIndex));
   await page.getByRole('button',{name:'Move player'}).click();
