@@ -46,6 +46,11 @@ test('roster editor changes player data and moves the player without changing th
    return samples;
   });
   assert(faceFrames.every(count=>count>0),`Front-facing eyes should remain visible in every idle frame: ${faceFrames}`);
+  const uniformCanvas=page.locator('.roster-appearance canvas');
+  const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
+  await page.locator('.roster-uniform-tabs').getByRole('button',{name:'Road'}).click();
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
+  assert.notEqual(await uniformCanvas.evaluate(canvas=>canvas.toDataURL()),homePreview);
   await page.screenshot({path:path.join(root,'artifacts/roster-manager.png'),fullPage:true});
   await page.getByLabel('First name',{exact:true}).fill('Roster');
   await page.getByLabel('First name',{exact:true}).dispatchEvent('change');

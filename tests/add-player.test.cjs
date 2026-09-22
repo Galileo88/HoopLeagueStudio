@@ -37,6 +37,15 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(await page.getByRole('button',{name:'Manage Free Agents'}).count(),0);
   await page.locator('.free-agents-editor .roster-list-panel').getByRole('button',{name:'Add Player'}).click();
   await page.locator('.free-agents-editor .roster-player-panel').getByRole('heading',{name:'New Free Agent'}).waitFor();
+  assert.equal(await page.getByLabel('Potential',{exact:true}).first().getAttribute('max'),'10');
+  const uniforms=page.locator('.roster-uniform-tabs');
+  assert.deepEqual(await uniforms.locator('button').allTextContents(),['Home','Road','Alt 1','Alt 2']);
+  await uniforms.getByRole('button',{name:'Alt 2'}).click();
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Alt 2 accessories');
+  await uniforms.getByRole('button',{name:'Road'}).click();
+  assert.equal(await uniforms.getByRole('button',{name:'Road'}).getAttribute('aria-pressed'),'true');
+  assert.equal(await uniforms.getByRole('button',{name:'Home'}).getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('.roster-accessories > summary').textContent(),'Road accessories');
   await page.locator('#toast').evaluate(toast=>toast.style.display='none');
   await page.locator('.free-agents-editor').screenshot({path:path.join(root,'artifacts/free-agents-inline.png')});
   await page.getByLabel('First name',{exact:true}).fill('Jordan');
@@ -45,6 +54,10 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   await page.getByLabel('Hair style').selectOption('0002');
   await page.getByLabel('Skin').fill('#a36342');
   await page.getByLabel('Skin').dispatchEvent('input');
+  await page.locator('.roster-accessories > summary').click();
+  await page.getByLabel('Head accessory color team color',{exact:true}).selectOption('SEC');
+  await page.getByLabel('Socks custom color').fill('#22cc88');
+  await page.getByLabel('Socks custom color').dispatchEvent('input');
   await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().fill('9');
   await page.locator('.free-agents-editor .roster-attributes input[aria-label="Current"]').first().dispatchEvent('change');
   await page.locator('.free-agents-editor').getByRole('button',{name:'Add skill'}).click();
@@ -68,6 +81,9 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert.equal(added.pos,2);
   assert.equal(added.appearance.hair,'0002');
   assert.equal(added.appearance.skinC,'A36342');
+  assert.equal(added.accessories[1].headAccC,'SEC');
+  assert.equal(added.accessories[1].sockC,'22CC88');
+  assert.notEqual(added.accessories[0].sockC,'22CC88');
   assert.equal(added.tag,'J');
   assert.equal(added.attributes.LAY[0],9);
   assert.equal(added.skills[0].id,'BUL');
