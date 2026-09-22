@@ -12,7 +12,7 @@
    icon.replaceChildren();
    const primary=rgb(valid(team.teamColors?.[0])?team.teamColors[0]:'147dff');
    const secondary=rgb(valid(team.teamColors?.[1])?team.teamColors[1]:'102737');
-   icon.style.backgroundColor='transparent';icon.style.borderColor=css(primary);
+   icon.style.backgroundColor=css(secondary);icon.style.borderColor=css(primary);
    const source=String(team.logoURL||'').trim();
    if(source&&isImage(source)){
     const img=document.createElement('img');img.alt='';img.src=source;
