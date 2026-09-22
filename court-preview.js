@@ -35,7 +35,11 @@
   const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Top-down court color and layout preview');
   const note=document.createElement('p');note.className='court-preview-note';note.setAttribute('role','status');
   const viewport=document.createElement('div');viewport.className='court-preview-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Court preview, 642 by 322 pixels. Scroll horizontally to see the full court.');viewport.append(canvas);
-  wrapper.append(heading,viewport,note);parent.append(wrapper);let revision=0;
+  const sizeLabel=document.createElement('label');sizeLabel.className='court-preview-size';sizeLabel.append('Preview size ');
+  const sizeSelect=document.createElement('select');sizeSelect.setAttribute('aria-label','Court preview size');
+  for(const scale of [1,2,3]){const option=document.createElement('option');option.value=String(scale);option.textContent=`${scale}× · ${642*scale} × ${322*scale}`;sizeSelect.append(option)}
+  sizeSelect.onchange=()=>{const scale=Number(sizeSelect.value);wrapper.style.setProperty('--court-preview-width',`${642*scale}px`);wrapper.style.setProperty('--court-preview-height',`${322*scale}px`);viewport.setAttribute('aria-label',`Court preview, ${642*scale} by ${322*scale} pixels. Scroll horizontally to see the full court.`)};
+  sizeLabel.append(sizeSelect);wrapper.append(heading,sizeLabel,viewport,note);parent.append(wrapper);let revision=0;
   wrapper.syncCourtPreview=async()=>{
    const current=++revision,team=getTeam(),court={...team.court};
    note.textContent='Loading court preview…';
