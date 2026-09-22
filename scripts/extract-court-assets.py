@@ -21,7 +21,8 @@ regions = {
     (129, 128, 513, 194): "outerFT",
     (96, 129, 546, 193): "innerFT",
 }
-fixed = {188: "outer-court", 333: "court-lines", 502: "three-point-pro", 271: "three-point-college"}
+fixed = {188: "outer-court", 333: "court-lines", 502: "three-point-pro", 271: "three-point-college",
+         390: "backboard", 447: "rim", 647: "hoop-pole", 804: "hoop-connector", 948: "hoop-shadow", 1045: "hoop-base"}
 manifest = []
 for obj in env.objects:
     if obj.type.name != "Texture2D" or obj.assets_file.name != "sharedassets0.assets":

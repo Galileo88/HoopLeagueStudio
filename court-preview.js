@@ -28,6 +28,26 @@
  }
  const outerColors={'38,36,58':'outerFloor','65,182,230':'outerBorder','219,62,177':'innerBorder','123,207,92':'mediaLines'};
  const lineColors={'13,47,109':'outerLine','80,155,75':'halfCourtLine','19,178,242':'outerKeyLine','26,69,59':'innerKeyLine','15,77,163':'outerFTCircle','14,130,206':'innerFTCircle'};
+ const hoopFiles=['hoop-shadow.png','hoop-base.png','hoop-pole.png','backboard.png','hoop-connector.png','rim.png'];
+ function hoopPalette(court,team){
+  const colors={};
+  function shades(key,entries){const base=rgb(court[key],team);for(const [source,shade]of entries)colors[source]=base.map(value=>Math.min(255,Math.round(value*shade)))}
+  shades('hoopBase',[['10,47,109',.75],['5,77,163',1],['7,130,206',1.2]]);
+  shades('hoopPole',[['70,178,242',1],['75,243,252',1.2],['77,112,139',.65]]);
+  shades('polePadding',[['210,44,54',1],['205,82,89',1.15],['207,151,155',1.35],['196,44,54',.85]]);
+  shades('hoopPadding',[['85,155,75',1],['95,106,66',.7]]);
+  return colors;
+ }
+ function drawHoops(ctx,images,court,team){
+  const colors=hoopPalette(court,team),layers=images.map((image,i)=>i===0||i===5?image:recolor(image,null,colors));
+  // Sprite positions and pivots from the game's court scene, in 1024 × 512 coordinates.
+  const positions=[[110,148],[110,148],[110,148],[110,148],[134,197],[214,184]];
+  for(const right of [false,true]){
+   ctx.save();if(right){ctx.translate(LOGICAL_WIDTH,0);ctx.scale(-1,1)}
+   layers.forEach((image,i)=>{ctx.globalAlpha=i===0?.25:1;ctx.drawImage(image,...positions[i])});
+   ctx.restore();
+  }
+ }
  function palette(mapping,court,team){return Object.fromEntries(Object.entries(mapping).map(([color,key])=>[color,rgb(court[key],team)]))}
  function validURL(value){return typeof value==='string'&&/^(https?:\/\/|data:image\/|blob:)/i.test(value)}
  window.HLSCourtPreview={mount(parent,getTeam){
@@ -57,7 +77,7 @@
     return key+(key==='innerWood'?(college?'-college':'-pro'):'')+'-'+pattern+'.png';
    });
    try{
-    const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png'].map(file=>load('./court/'+file)));
+    const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png',...hoopFiles].map(file=>load('./court/'+file)));
     const custom=await Promise.allSettled([court.overlayURL,team.logoURL].map(url=>validURL(url)?load(url):Promise.resolve(null)));
     if(current!==revision||!wrapper.isConnected)return;
     const ctx=canvas.getContext('2d');
@@ -78,8 +98,9 @@
     drawCustom(1);
     const text=(key,x,y,rotation,max)=>{if(!court[key])return;ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.fillStyle='#'+rgb(court[key+'C'],team).map(n=>n.toString(16).padStart(2,'0')).join('');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 22px sans-serif';ctx.fillText(String(court[key]),0,0,max);ctx.restore()};
     text('baseline1',176,256,-Math.PI/2,280);text('baseline2',848,256,Math.PI/2,280);text('sideline1',512,80,0,580);text('sideline2',512,432,Math.PI,580);
+    drawHoops(ctx,textures.slice(9),court,team);
     ctx.setTransform(1,0,0,1,0,0);
-    note.textContent='Floor preview · Text and custom-image sizing are approximate. Hoops are not shown.'+(team.logoURL&&!validURL(team.logoURL)?' Built-in team logos are not shown.':'')+(custom.some(r=>r.status==='rejected')?' A custom image could not be loaded.':'');
+    note.textContent='Court preview · Text and custom-image sizing are approximate.'+(team.logoURL&&!validURL(team.logoURL)?' Built-in team logos are not shown.':'')+(custom.some(r=>r.status==='rejected')?' A custom image could not be loaded.':'');
    }catch{if(current===revision){const ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);note.textContent='Court preview unavailable. Check that the court image files are present, then change a court setting to retry.'}}
   };
   const resize=()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(!wrapper.isConnected)return;if(fitPreview())wrapper.syncCourtPreview()})};
