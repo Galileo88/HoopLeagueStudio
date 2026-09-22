@@ -55,7 +55,8 @@ test('court preview renders extracted layers and updates colors, patterns and li
   await page.waitForFunction(()=>document.querySelector('#content .court-preview-note')?.textContent.startsWith('Floor preview'));
   assert.notEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.toDataURL()),beforeChange);
   await page.setViewportSize({width:390,height:844});
-  assert(await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.getBoundingClientRect().width<=window.innerWidth));
+  assert.deepEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>{const rect=canvas.getBoundingClientRect();return [rect.width,rect.height]}),[642,322]);
+  assert(await page.locator('#content .court-preview-viewport').evaluate(node=>node.clientWidth<=window.innerWidth&&node.scrollWidth>node.clientWidth));
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
 });

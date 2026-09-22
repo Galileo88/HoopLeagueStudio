@@ -34,7 +34,8 @@
   const heading=document.createElement('h3');heading.textContent='Court Preview';
   const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Top-down court color and layout preview');
   const note=document.createElement('p');note.className='court-preview-note';note.setAttribute('role','status');
-  wrapper.append(heading,canvas,note);parent.append(wrapper);let revision=0;
+  const viewport=document.createElement('div');viewport.className='court-preview-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Court preview, 642 by 322 pixels. Scroll horizontally to see the full court.');viewport.append(canvas);
+  wrapper.append(heading,viewport,note);parent.append(wrapper);let revision=0;
   wrapper.syncCourtPreview=async()=>{
    const current=++revision,team=getTeam(),court={...team.court};
    note.textContent='Loading court preview…';
