@@ -15,11 +15,12 @@
 .roster-field{display:block;min-width:0}
 .roster-field>span{display:block;margin-bottom:5px;font-size:13px;color:#c6d0c9}
 .roster-field>input,.roster-field>select{width:100%}
+.roster-field>.number-control{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;width:100%;align-items:center}.roster-field>.number-control input{width:100%;min-width:0;text-align:center}.roster-field>.number-control button{width:42px;min-width:42px;min-height:42px;padding:5px;font-size:22px}
 .roster-attribute{border:1px solid var(--line);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .roster-attribute>strong{grid-column:1/-1}
 .roster-appearance{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
 .roster-appearance-preview{display:grid;justify-items:center;gap:10px;padding:12px;border:1px solid var(--line);background:#0b2234}
-.roster-appearance-preview canvas{width:256px;height:256px;max-width:100%;image-rendering:pixelated}
+.roster-appearance-preview canvas{width:256px;height:auto;max-width:100%;image-rendering:pixelated}
 .roster-uniform-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
 .roster-uniform-tab{min-width:0;padding:8px 3px;font-size:13px;font-weight:700;text-transform:uppercase;white-space:nowrap}
 .roster-uniform-tab.selected{border-color:#79fff4;color:#fff;box-shadow:0 3px 0 #79fff4}
