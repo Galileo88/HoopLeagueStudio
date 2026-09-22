@@ -97,7 +97,7 @@
     const identity=node('div','roster-fields');editor.append(node('h3','','Player Details'),identity);
     for(const [key,title]of [['fn','First name'],['ln','Last name'],['tag','Nickname']])if(key in player){const control=input(identity,title,player[key],value=>commit(player,key,value));if(creating&&['fn','ln'].includes(key))control.required=true}
     for(const [key,title]of [['num','Jersey number'],['age','Age'],['ht','Height (inches)'],['wt','Weight (pounds)'],['yrs','Years of experience'],['pot','Potential']])if(key in player)input(identity,title,player[key],value=>commit(player,key,value),{type:'number',min:0,max:key==='num'?99:key==='pot'?10:999,step:1});
-    if('pos'in player)select(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
+    if('pos'in player)optionStepper(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
     const archetypeOptions=[[0,'None'],...archetypes.map((title,index)=>[index+1,title])];
     for(const [key,title]of [['pri','Primary archetype'],['sec','Secondary archetype']])if(key in player)optionStepper(identity,title,player[key],archetypeOptions,value=>{commit(player,key,Number(value));drawEditor()});
     if(player.appearance){
