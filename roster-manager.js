@@ -118,13 +118,13 @@
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
       const control=node('input');control.type='color';control.value='#'+String(player.appearance[key]||'262539').replace('#','');control.className='roster-appearance-color';
-      control.setAttribute('aria-label',title);control.oninput=()=>update(key,control.value.slice(1).toUpperCase());row(fields,title,control).classList.add('roster-compact-field')
+      control.setAttribute('aria-label',title);control.oninput=()=>update(key,control.value.slice(1).toUpperCase());row(fields,title,control).classList.add('roster-color-field')
      }
+     if('unibrow'in player.appearance){const label=node('label','roster-check roster-unibrow-field'),check=node('input');check.type='checkbox';check.checked=!!player.appearance.unibrow;check.onchange=()=>update('unibrow',check.checked);label.append(check,' Unibrow');fields.append(label)}
      for(const [key,title,max,empty]of [['hair','Hair style',170,'Bald'],['fHair','Facial hair',31,'None']])if(key in player.appearance){
       const options=Array.from({length:max+1},(_,index)=>[String(index).padStart(4,'0'),index?`Style ${index}`:empty]);
-      const control=optionStepper(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.parentElement?.classList.add('roster-compact-field')
+      const control=optionStepper(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.parentElement?.classList.add('roster-style-field')
      }
-     if('unibrow'in player.appearance){const label=node('label','roster-check'),check=node('input');check.type='checkbox';check.checked=!!player.appearance.unibrow;check.onchange=()=>update('unibrow',check.checked);label.append(check,' Unibrow');fields.append(label)}
      const accessories=node('details','roster-accessories'),accessorySummary=node('summary','','Accessories'),copyRow=node('div','roster-accessory-copy'),copyDestination=node('select'),copyButton=node('button','','Copy to'),accessoryGroups=node('div','roster-accessory-groups');
      copyDestination.setAttribute('aria-label','Copy accessories destination');copyButton.type='button';copyButton.className='roster-copy-accessories';
      copyButton.onclick=()=>{const gear=player.accessories?.[uniformIndex];if(!gear)return;const destination=copyDestination.value,targets=destination==='all'?(player.accessories||[]).map((_,index)=>index).filter(index=>index!==uniformIndex):[Number(destination)].filter(index=>Number.isInteger(index)&&index!==uniformIndex);
