@@ -105,23 +105,32 @@
      editor.append(node('h3','','Appearance'),appearance);
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
-      const control=node('input');control.type='color';control.value='#'+String(player.appearance[key]||'262539').replace('#','');
-      control.setAttribute('aria-label',title);control.oninput=()=>update(key,control.value.slice(1).toUpperCase());row(fields,title,control)
+      const control=node('input');control.type='color';control.value='#'+String(player.appearance[key]||'262539').replace('#','');control.className='roster-appearance-color';
+      control.setAttribute('aria-label',title);control.oninput=()=>update(key,control.value.slice(1).toUpperCase());row(fields,title,control).classList.add('roster-compact-field')
      }
      for(const [key,title,max,empty]of [['hair','Hair style',170,'Bald'],['fHair','Facial hair',31,'None']])if(key in player.appearance){
       const options=Array.from({length:max+1},(_,index)=>[String(index).padStart(4,'0'),index?`Style ${index}`:empty]);
-      select(fields,title,player.appearance[key],options,value=>update(key,value))
+      const control=select(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.classList.add('roster-compact-field')
      }
      if('unibrow'in player.appearance){const label=node('label','roster-check'),check=node('input');check.type='checkbox';check.checked=!!player.appearance.unibrow;check.onchange=()=>update('unibrow',check.checked);label.append(check,' Unibrow');fields.append(label)}
-     const accessories=node('details','roster-accessories'),accessorySummary=node('summary'),accessoryFields=node('div','roster-appearance-fields');
-     accessories.append(accessorySummary,accessoryFields);editor.append(accessories);
-     const drawAccessories=()=>{accessorySummary.textContent=`${outfits[uniformIndex]?.[1]||`Uniform ${uniformIndex+1}`} accessories`;accessoryFields.replaceChildren();const gear=player.accessories?.[uniformIndex];if(!gear)return;
-      for(const [key,title,empty]of [['headAcc','Head accessory','none'],['headAcc2','Second head accessory','0000']])if(key in gear){
-       const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
-       select(accessoryFields,title,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()})
+     const accessories=node('details','roster-accessories'),accessorySummary=node('summary'),accessoryGroups=node('div','roster-accessory-groups');
+     accessories.append(accessorySummary,accessoryGroups);editor.append(accessories);
+     const drawAccessories=()=>{accessorySummary.textContent=`${outfits[uniformIndex]?.[1]||`Uniform ${uniformIndex+1}`} accessories`;accessoryGroups.replaceChildren();const gear=player.accessories?.[uniformIndex];if(!gear)return;
+      const groups=[
+       ['Head',[['headAcc','Head accessory','none'],['headAcc2','Second head accessory','0000']],[['headAccC','Head accessory color'],['headAcc2C','Second head accessory color']]],
+       ['Arms',[],[['L_Shoulder','Left shoulder'],['R_Shoulder','Right shoulder'],['L_Elbow','Left elbow'],['R_Elbow','Right elbow'],['L_Wrist','Left wrist'],['R_Wrist','Right wrist']]],
+       ['Legs',[],[['L_Knee','Left knee'],['R_Knee','Right knee'],['L_Shin','Left shin'],['R_Shin','Right shin']]],
+       ['Shoes',[],[['sockC','Socks'],['shoeC','Shoes'],['laceC','Laces'],['soleC','Soles']]]
+      ];
+      for(const [title,styles,colors]of groups){
+       if(!styles.some(([key])=>key in gear)&&!colors.some(([key])=>key in gear))continue;
+       const section=node('details','roster-accessory-group'),summary=node('summary','',title),groupFields=node('div','roster-appearance-fields');section.append(summary,groupFields);accessoryGroups.append(section);
+       for(const [key,label,empty]of styles)if(key in gear){
+        const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
+        const control=select(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
+       }
+       for(const [key,label]of colors)if(key in gear)colorInput(groupFields,label,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team)
       }
-      const names={headAccC:'Head accessory color',headAcc2C:'Second head accessory color',L_Shoulder:'Left shoulder',R_Shoulder:'Right shoulder',L_Elbow:'Left elbow',R_Elbow:'Right elbow',L_Wrist:'Left wrist',R_Wrist:'Right wrist',L_Knee:'Left knee',R_Knee:'Right knee',L_Shin:'Left shin',R_Shin:'Right shin',sockC:'Socks',shoeC:'Shoes',laceC:'Laces',soleC:'Soles'};
-      for(const [key,title]of Object.entries(names))if(key in gear)colorInput(accessoryFields,title,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team)
      };drawAccessories();
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
     }
