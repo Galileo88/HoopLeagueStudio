@@ -43,5 +43,12 @@
   };
   if(letters.complete)draw();else letters.addEventListener('load',draw,{once:true})
  }
- window.HLSTeamLogo={create};
+ async function letterCanvas(team){
+  await letters.decode();
+  const icon=create({...team,logoURL:''}),sprite=icon.querySelector('canvas');
+  if(sprite)return sprite;
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=32;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.font='bold 28px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icon.textContent,16,16,32);return canvas;
+ }
+ window.HLSTeamLogo={create,letterCanvas};
 })();

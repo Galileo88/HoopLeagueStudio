@@ -74,8 +74,11 @@
    const width=BASE_WIDTH*scale,height=BASE_HEIGHT*scale;
    wrapper.style.setProperty('--court-preview-width',`${width}px`);wrapper.style.setProperty('--court-preview-height',`${height}px`);
    viewport.setAttribute('aria-label',`Court preview, ${width} by ${height} pixels.`);
-   if(canvas.width===width&&canvas.height===height)return false;
-   canvas.width=width;canvas.height=height;return true;
+   // Keep the source court detail and enough pixels for high-density screens.
+   const density=Math.max(window.devicePixelRatio||1,LOGICAL_WIDTH/width);
+   const pixelWidth=Math.ceil(width*density),pixelHeight=Math.ceil(height*density);
+   if(canvas.width===pixelWidth&&canvas.height===pixelHeight)return false;
+   canvas.width=pixelWidth;canvas.height=pixelHeight;return true;
   }
   wrapper.syncCourtPreview=async()=>{
    fitPreview();
@@ -90,6 +93,7 @@
    try{
     const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png',...hoopFiles].map(file=>load('./court/'+file)));
     const custom=await Promise.allSettled([court.overlayURL,team.logoURL].map(url=>validURL(url)?load(url):Promise.resolve(null)));
+    const logo=(custom[1].status==='fulfilled'&&custom[1].value)||await window.HLSTeamLogo.letterCanvas(team);
     if(current!==revision||!wrapper.isConnected)return;
     const ctx=canvas.getContext('2d');
     ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -98,7 +102,7 @@
     ctx.drawImage(recolor(textures[0],null,palette(outerColors,court,team)),0,0);
     surfaces.forEach((key,i)=>ctx.drawImage(recolor(textures[i+1],rgb(court[key+'C'],team)),191,95));
     const drawCustom=layer=>{
-     const overlay=custom[0].status==='fulfilled'?custom[0].value:null,logo=custom[1].status==='fulfilled'?custom[1].value:null;
+     const overlay=custom[0].status==='fulfilled'?custom[0].value:null;
      if(overlay&&Number(court.overlayLayer)===layer)ctx.drawImage(overlay,0,0,LOGICAL_WIDTH,LOGICAL_HEIGHT);
      const scale=[0,.5,1,1.5,2][Number(court.logoSize)]??0;
      if(logo&&scale&&Number(court.logoLayer)===layer){const size=128*scale,ratio=Math.min(size/logo.width,size/logo.height);ctx.drawImage(logo,512-logo.width*ratio/2,256-logo.height*ratio/2,logo.width*ratio,logo.height*ratio)}
@@ -111,7 +115,7 @@
     text('baseline1',176,256,-Math.PI/2,280);text('baseline2',848,256,Math.PI/2,280);text('sideline1',512,80,0,580);text('sideline2',512,432,Math.PI,580);
     drawHoops(ctx,textures.slice(9),court,team);
     ctx.setTransform(1,0,0,1,0,0);
-    note.textContent='Court preview · Text and custom-image sizing are approximate.'+(team.logoURL&&!validURL(team.logoURL)?' Built-in team logos are not shown.':'')+(custom.some(r=>r.status==='rejected')?' A custom image could not be loaded.':'');
+    note.textContent='Court preview · Text and custom-image sizing are approximate.'+(custom.some(r=>r.status==='rejected')?' A custom image could not be loaded.':'');
    }catch{if(current===revision){const ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);note.textContent='Court preview unavailable. Check that the court image files are present, then change a court setting to retry.'}}
   };
   const resize=()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(!wrapper.isConnected)return;if(fitPreview())wrapper.syncCourtPreview()})};

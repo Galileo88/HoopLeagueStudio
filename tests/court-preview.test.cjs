@@ -28,6 +28,14 @@ test('court preview renders extracted layers and updates colors, patterns and li
   },team);
   await page.waitForFunction(()=>document.querySelector('#test-preview p').textContent.startsWith('Court preview'));
   const canvasImage=()=>page.locator('#test-preview canvas').evaluate(canvas=>canvas.toDataURL());
+  assert(await page.locator('#test-preview canvas').evaluate(canvas=>canvas.width>=1024),'Builder should preserve source resolution');
+  await page.evaluate(async()=>{previewTeam.name='Warriors';previewTeam.court.logoSize=2;previewTeam.court.logoLayer=1;await preview.syncCourtPreview()});
+  const withLetter=await canvasImage();
+  await page.evaluate(async()=>{previewTeam.court.logoSize=0;await preview.syncCourtPreview()});
+  assert.notEqual(await canvasImage(),withLetter,'Generated letter should appear at center court');
+  await page.evaluate(async()=>{previewTeam.court.logoSize=2;previewTeam.teamColors=['FF0000','00FF00','0000FF'];await preview.syncCourtPreview()});
+  assert.notEqual(await canvasImage(),withLetter,'Generated court logo should update with team colors');
+  await page.evaluate(async team=>{window.previewTeam=team;await preview.syncCourtPreview()},team);
   const before=await canvasImage();
   await page.evaluate(async()=>{previewTeam.court.outerWood='flat';previewTeam.court.outerWoodC='FF0000';await preview.syncCourtPreview()});
   const after=await canvasImage();assert.notEqual(before,after);

@@ -65,3 +65,9 @@
 .roster-field>.number-control input{padding-inline:2px;min-width:60px}
 .roster-field>.number-control{grid-template-columns:42px minmax(60px,1fr) 42px}
 .roster-free-agents .roster-free-agent .roster-player-panel{padding:0}
+.roster-appearance-settings .roster-appearance-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.roster-appearance-settings .roster-color-field{grid-column:auto}
+.roster-color-stepper{display:grid;grid-template-columns:28px minmax(20px,1fr) 28px;gap:3px;max-width:160px}
+.roster-color-stepper button{width:28px;min-width:28px;min-height:44px;padding:3px;font-size:12px}
+.roster-appearance-settings .roster-color-stepper .roster-appearance-color{width:100%;min-width:0;height:44px;padding:2px}
+.roster-appearance-settings .roster-unibrow-field{white-space:normal}
