@@ -1,0 +1,1262 @@
+[
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Custom Overlay",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 10,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Custom Overlay",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 10,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Wood",
+    "sprite": "lines",
+    "texture": 353,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 2,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line",
+    "sprite": "3_point_line_pro",
+    "texture": 502,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner FT",
+    "sprite": "lines",
+    "texture": 504,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 6,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Custom Overlay",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 10,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Court Lines",
+    "sprite": "court_lines",
+    "texture": 333,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Wood",
+    "sprite": "lines",
+    "texture": 441,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 3,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Key",
+    "sprite": "lines",
+    "texture": 650,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Inner Key",
+    "sprite": "lines",
+    "texture": 627,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 5,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer FT",
+    "sprite": "lines",
+    "texture": 969,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 4,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "Outer Court",
+    "sprite": "outer_court",
+    "texture": 188,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 1,
+    "parent": "Court Layers"
+  },
+  {
+    "name": "3 Point Line College",
+    "sprite": "3_point_line_college",
+    "texture": 271,
+    "position": "Vector3f(0.0, 0.0, 0.0)",
+    "scale": "Vector3f(1.0, 1.0, 1.0)",
+    "color": "ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)",
+    "order": 9,
+    "parent": "Court Layers"
+  }
+]

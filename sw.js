@@ -1,7 +1,8 @@
-const CACHE_NAME='hls-pwa-v108';
+const CACHE_NAME='hls-pwa-v109';
 const CORE=[
   './',
   './index.html',
+  './court-preview.js',
   './manifest.webmanifest',
   './icons/favicon.png',
   './images/hls_logo.png',
