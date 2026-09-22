@@ -45,9 +45,6 @@
   const uniform=team?.uniforms?.[uniformIndex]||team?.uniforms?.[0]||{};
   const gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
   const jersey=rgb(color(uniform.jersey,team,'#147dff')),shorts=rgb(color(uniform.shorts,team,'#147dff'));
-  const jerseyStripe=rgb(color(uniform.jerseyStripe,team,color(uniform.jersey,team,'#147dff')));
-  const shortsStripe=rgb(color(uniform.shortsStripe,team,color(uniform.shorts,team,'#147dff')));
-  const collar=rgb(color(uniform.jerseyCollar,team,color(uniform.jerseyStripe,team,'#ffffff')));
   const shortsStart=shortsStarts[frame]??22;
   const gearRgb=(key,fallback)=>rgb(color(gear[key],team,fallback));
   const accessory={
@@ -58,20 +55,13 @@
    L_Shin:gearRgb('L_Shin',skinColor),R_Shin:gearRgb('R_Shin',skinColor),
    sockC:gearRgb('sockC','#ffffff'),shoeC:gearRgb('shoeC','#ffffff'),soleC:gearRgb('soleC','#202020')
   };
-  const at=(x,y)=>{if(x<0||x>=32||y<0||y>=32)return null;const i=(y*32+x)*4;return [source[i],source[i+1],source[i+2],source[i+3]]};
-  const isBlue=(x,y)=>{const p=at(x,y);return !!p&&p[3]&&p[2]===255&&p[0]<=40};
-  const isSkin=(x,y)=>{const p=at(x,y);return !!p&&skinShades[`${p[0]},${p[1]},${p[2]}`]!==undefined};
-  const nearSkin=(x,y)=>{for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++)if((ox||oy)&&isSkin(x+ox,y+oy))return true;return false};
   for(let i=0;i<pixels.data.length;i+=4){if(!pixels.data[i+3])continue;
    const r=source[i],g=source[i+1],b=source[i+2],pixel=Math.floor(i/4),x=pixel%32,y=Math.floor(pixel/32);
    let next;
    const skinScale=skinShades[`${r},${g},${b}`];
    if(skinScale!==undefined)next=shade(skin,skinScale);
    else if(b===255&&r<=40){
-    const isShorts=y>=shortsStart;
-    let target=isShorts?shorts:jersey;
-    if(!isShorts&&nearSkin(x,y))target=collar;
-    else if(!isBlue(x-1,y)||!isBlue(x+1,y))target=isShorts?shortsStripe:jerseyStripe;
+    const target=y>=shortsStart?shorts:jersey;
     next=shade(target,Math.max(.55,Math.min(1.3,g/150)));
    }else if(b===0&&g>=120){
     const key=r<75?'L_Shoulder':r<120?'R_Shoulder':r<150?'L_Knee':'R_Knee';
