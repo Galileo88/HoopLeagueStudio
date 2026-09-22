@@ -45,6 +45,21 @@
 .roster-skill-name{grid-column:1/-1}
 .roster-check{display:flex;align-items:center;gap:6px}
 .roster-check input{width:auto}
+.roster-free-agents{grid-template-columns:minmax(0,1fr)}
+.roster-free-agents .roster-list{max-height:none;overflow:visible}
+.roster-free-agent>summary{cursor:pointer;overflow-wrap:anywhere}
+.roster-free-agent>summary>.star-rating{display:inline-flex;margin-left:10px}
+.roster-free-agent .roster-player-panel{margin-top:12px;box-shadow:none}
+.roster-player-panel[hidden]{display:none}
+.roster-appearance-settings .roster-color-field{grid-column:span 2}
+.roster-color-stepper{display:flex;align-items:center;gap:6px}
+.roster-color-stepper button{width:36px;min-width:36px;min-height:44px;padding:4px}
 .roster-skill>button{grid-column:1/-1;justify-self:start}
 @media(max-width:900px){.roster-manager{grid-template-columns:1fr}.roster-list{max-height:220px}}
 @media(max-width:620px){.roster-fields,.roster-attributes,.roster-accessory-group .roster-appearance-fields,.roster-accessory-groups{grid-template-columns:1fr}.roster-appearance-settings .roster-appearance-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px}.roster-appearance-settings .roster-style-field{grid-column:1/-1}.roster-accessory-copy{display:grid;grid-template-columns:minmax(0,1fr) auto}.roster-accessory-copy select{min-width:0;max-width:none}.roster-skill{grid-template-columns:repeat(2,minmax(0,1fr))}.roster-uniform-tabs{gap:4px}.roster-uniform-tab{font-size:11px;padding-inline:2px}}
+
+@media(max-width:620px){.roster-appearance-settings .roster-color-field{grid-column:1/-1}.roster-attribute,.roster-skill{grid-template-columns:minmax(0,1fr)}.roster-field>.number-control input{padding:8px 2px;min-width:60px}.roster-field>.number-control{grid-template-columns:42px minmax(60px,1fr) 42px}.roster-free-agent .roster-player-panel{padding:10px}.roster-free-agent{padding:8px}}
+/* Nested league/free-agent panels can be narrow even on desktop. */
+.roster-attributes{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))}
+.roster-field>.number-control input{padding-inline:2px;min-width:60px}
+.roster-field>.number-control{grid-template-columns:42px minmax(60px,1fr) 42px}

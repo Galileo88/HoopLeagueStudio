@@ -21,3 +21,5 @@ Read-only inspection of the installed IL2CPP metadata and GameAssembly.dll ident
 The synthetic fixtures in `tests/fixtures/native-ratings.json` were evaluated against the actual machine-code methods using Unicorn, with IL2CPP initialization and list indexing stubbed and the game mode set outside franchise mode. No game process or save was modified. Forty player cases and twelve team cases match within 0.000001 stars. Calculations retain single-precision operation order. Fixtures contain synthetic attributes and numeric results, not game code.
 
 Browser checks cover narrow/mobile layouts, live updates, team navigation, and preserving the original export fields. A native iOS visual comparison has not been performed.
+
+Player displays limit the visible star track to the stored overall potential (pot / 2), including half-star caps. Current fill is clipped to that cap; team displays retain their five-star scale.

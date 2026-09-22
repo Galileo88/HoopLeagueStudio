@@ -58,11 +58,11 @@
   root.syncRating=()=>{const teams=getTeams(),ranks=rankings(teams,t);for(const field of fields){field.rating.syncRating();field.rank.textContent=ranks?ordinal(ranks[field.key]):'—';field.rank.title=ranks?`${ordinal(ranks[field.key])} of ${teams.length} league teams · Saved lineup`:teams.includes(t)?'Rank unavailable':'Not league-ranked'}};
   root.syncRating();return root;
  }
- function create(getRating,label='Rating'){
+ function create(getRating,label='Rating',getMaximum=()=>5){
   const root=document.createElement('span');root.className='star-rating';root.dataset.starRating='true';root.setAttribute('role','img');
   const track=document.createElement('span');track.className='star-rating-track';track.textContent='★★★★★';track.setAttribute('aria-hidden','true');
   const fill=document.createElement('span');fill.className='star-rating-fill';fill.textContent='★★★★★';track.append(fill);root.append(track);
-  root.syncRating=()=>{const rating=getRating(),known=Number.isFinite(rating);root.hidden=!known;fill.style.width=(known?clamp(rating,0,5)*20:0)+'%';const text=`${label}: ${known?Number(rating.toFixed(2))+' out of 5':'unavailable'}`;root.setAttribute('aria-label',text);root.title=text+(label==='Team rating'?' · Saved lineup':'')};
+  root.syncRating=()=>{const rating=getRating(),maximum=getMaximum(),known=Number.isFinite(rating)&&Number.isFinite(maximum),cap=known?clamp(maximum,0,5):5,count=Math.ceil(cap);root.hidden=!known;track.firstChild.nodeValue=fill.textContent='★'.repeat(count);track.style.clipPath=`inset(0 ${count?(1-cap/count)*100:0}% 0 0)`;fill.style.width=(known&&count?clamp(rating,0,cap)/count*100:0)+'%';const text=`${label}: ${known?Number(Math.min(rating,cap).toFixed(2))+' out of '+cap:'unavailable'}`;root.setAttribute('aria-label',text);root.title=text+(label==='Team rating'?' · Saved lineup':'')};
   root.syncRating();return root;
  }
  const api={player,team,teamDetails,rankings,create,createTeamSummary};
