@@ -90,19 +90,12 @@
   layer.putImageData(pixels,0,0);ctx.drawImage(off,0,0);
   return {uniform,shortsStart}
  }
- function alphaBounds(canvas){
-  const context=canvas.getContext('2d',{willReadFrequently:true}),data=context.getImageData(0,0,canvas.width,canvas.height).data;
-  let minX=canvas.width,minY=canvas.height,maxX=-1,maxY=-1;
-  for(let i=0;i<data.length;i+=4){if(!data[i+3])continue;const pixel=i/4,x=pixel%canvas.width,y=Math.floor(pixel/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
-  return maxX<0?{minX:0,minY:0,width:canvas.width,height:canvas.height}:{minX,minY,width:maxX-minX+1,height:maxY-minY+1}
- }
- function jerseyNumber(ctx,player,team,uniform,shortsStart,fit){
+ function jerseyNumber(ctx,player,team,uniform,shortsStart,scale,offsetY){
   const value=Number(player.num);if(!Number.isInteger(value)||value<0)return;
   const text=String(value).slice(-2),width=text.length*3+(text.length-1);
-  // Fit the whole player first, then keep the digits on the high-resolution
-  // preview canvas so the chest number remains compact and sharp.
-  const centerX=fit.dx+(fit.originX+16-fit.minX)*fit.scale;
-  const startX=Math.round(centerX-width/2),startY=Math.round(fit.dy+(fit.originY+shortsStart-4-fit.minY)*fit.scale);
+  // Keep the compact high-resolution digits at the same scale as before; the
+  // taller preview only adds vertical room for hair and accessories.
+  const startX=Math.floor((ctx.canvas.width-width)/2),startY=(offsetY+shortsStart)*scale-8;
   ctx.fillStyle=color(uniform?.jerseyNumber,team,color(uniform?.jerseyStripe,team,'#ffffff'));
   for(const [index,digit]of [...text].entries()){
    const glyph=numberGlyphs[digit];if(!glyph)continue;
@@ -110,14 +103,14 @@
   }
  }
  function draw(canvas,player,team,uniformIndex,frame){
-  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=scene.height=48;
+  const ctx=canvas.getContext('2d'),scene=document.createElement('canvas');scene.width=32;scene.height=40;
   const sceneCtx=scene.getContext('2d'),appearance=player.appearance||{},gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
-  const originX=8,originY=12;
-  sceneCtx.save();sceneCtx.translate(originX,originY);
+  const offsetY=8;
+  sceneCtx.save();sceneCtx.translate(0,offsetY);
   const bodyState=body(sceneCtx,frame,player,team,uniformIndex);sceneCtx.restore();
-  // Render head/hair in a larger staging canvas so tall styles have room above
-  // the body, then fit the complete opaque player bounds inside the preview.
-  sceneCtx.save();sceneCtx.translate(originX,originY+[-8,-7,-6,-7][frame]);
+  // The taller staging area adds eight logical pixels above the body. The
+  // player stays at the original 2x preview scale instead of being shrunk.
+  sceneCtx.save();sceneCtx.translate(0,offsetY+[-8,-7,-6,-7][frame]);
   paint(sceneCtx,images.head,0,0,hex(appearance.skinC,'#dc8158'));
   paint(sceneCtx,images['eye-white'],0,0);
   paint(sceneCtx,images['eye-color'],0,0,hex(appearance.eyeC,'#472d3c'));
@@ -128,13 +121,10 @@
   if(gear.headAcc!=='none')atlas(sceneCtx,images['head-accessories'],gear.headAcc,8,color(gear.headAccC,team,'#ffffff'),0);
   atlas(sceneCtx,images['head-accessories'],gear.headAcc2,8,color(gear.headAcc2C,team,'#ffffff'),0);
   sceneCtx.restore();
-  const bounds=alphaBounds(scene),padding=2,available=canvas.width-padding*2;
-  const scale=Math.min(available/bounds.width,available/bounds.height,1.75);
-  const width=bounds.width*scale,height=bounds.height*scale;
-  const dx=Math.round((canvas.width-width)/2),dy=Math.round((canvas.height-height)/2);
+  const scale=canvas.width/32;
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(scene,bounds.minX,bounds.minY,bounds.width,bounds.height,dx,dy,width,height);
-  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,{scale,dx,dy,minX:bounds.minX,minY:bounds.minY,originX,originY})
+  ctx.drawImage(scene,0,0,scene.width,scene.height,0,0,canvas.width,canvas.height);
+  if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,scale,offsetY)
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
