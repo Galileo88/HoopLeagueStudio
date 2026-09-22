@@ -34,6 +34,11 @@ test('roster editor changes player data and moves the player without changing th
   await appearanceSettings.locator('summary').click();
   assert.equal(await appearanceSettings.evaluate(details=>details.open),true);
   assert(await page.getByLabel('Skin',{exact:true}).isVisible());
+  const attributesSection=page.locator('.roster-attributes-section'),skillsSection=page.locator('.roster-skills-section');
+  assert.equal(await attributesSection.locator('summary').textContent(),'Attributes');
+  assert.equal(await skillsSection.locator('summary').textContent(),'Skills');
+  assert.equal(await attributesSection.evaluate(details=>details.open),false);
+  assert.equal(await skillsSection.evaluate(details=>details.open),false);
   const teamTitle=await page.locator('#subtitle').textContent();
   const teamIndex=template.teams.findIndex(team=>teamTitle.includes(team.name)&&teamTitle.includes(team.city));
   assert(teamIndex>=0,`Team not found: ${teamTitle}`);
@@ -48,7 +53,7 @@ test('roster editor changes player data and moves the player without changing th
   const faceFrames=await page.locator('.roster-appearance canvas').evaluate(async canvas=>{
    const samples=[];
    for(let frame=0;frame<5;frame++){
-    const pixels=canvas.getContext('2d').getImageData(20,10,26,18).data;
+    const pixels=canvas.getContext('2d').getImageData(20,28,26,18).data;
     let eyeWhite=0;
     for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]&&pixels[i]>215&&pixels[i+1]>215&&pixels[i+2]>215)eyeWhite++;
     samples.push(eyeWhite);
@@ -62,23 +67,24 @@ test('roster editor changes player data and moves the player without changing th
   });
   assert.equal(fastAnimation,true,'Player preview should advance within about 135ms');
   const previewColors=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
-   const pixels=canvas.getContext('2d').getImageData(0,28,64,32).data;
+   const pixels=canvas.getContext('2d').getImageData(0,46,64,32).data;
    let jerseyNumber=0,jerseyStripe=0,shortsStripe=0,rawPalette=0,minX=64,maxX=-1,minY=64,maxY=-1;
    let jerseyStripeLeftLower=0,jerseyStripeRight=0,shortsStripeLeft=0,shortsStripeRight=0;
    for(let i=0;i<pixels.length;i+=4){
     const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];if(!a)continue;
-    const p=i/4,x=p%64,y=Math.floor(p/64)+28;
+    const p=i/4,x=p%64,y=Math.floor(p/64)+46;
     if(r===1&&g===254&&b===122){jerseyNumber++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
-    if(r===254&&g===1&&b===169){jerseyStripe++;if(x>=32)jerseyStripeRight++;else if(y>=38)jerseyStripeLeftLower++}
+    if(r===254&&g===1&&b===169){jerseyStripe++;if(x>=32)jerseyStripeRight++;else if(y>=56)jerseyStripeLeftLower++}
     if(r===122&&g===1&&b===254){shortsStripe++;if(x>=32)shortsStripeRight++;else shortsStripeLeft++}
     if((g===0&&b>=100)||(b===150&&(g===100||g===150))||(r===200&&g===255&&b===255))rawPalette++;
    }
-   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,jerseyStripeLeftLower,jerseyStripeRight,shortsStripeLeft,shortsStripeRight,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<64?minY:null,canvasWidth:canvas.width};
+   return {jerseyNumber,jerseyStripe,shortsStripe,rawPalette,jerseyStripeLeftLower,jerseyStripeRight,shortsStripeLeft,shortsStripeRight,numberWidth:maxX>=minX?maxX-minX+1:0,numberHeight:maxY>=minY?maxY-minY+1:0,numberTop:minY<84?minY:null,canvasWidth:canvas.width,canvasHeight:canvas.height};
   });
   assert.equal(previewColors.canvasWidth,64);
+  assert.equal(previewColors.canvasHeight,84);
   assert(previewColors.jerseyNumber>0,`Jersey number color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.numberWidth<=7&&previewColors.numberHeight<=5,`High-resolution jersey number should stay compact: ${JSON.stringify(previewColors)}`);
-  assert(previewColors.numberTop===null||previewColors.numberTop>=34,`Jersey number should sit below the collar area: ${JSON.stringify(previewColors)}`);
+  assert(previewColors.numberTop===null||previewColors.numberTop>=52,`Jersey number should sit below the collar area: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripe>0,`Jersey stripe color should be visible in preview: ${JSON.stringify(previewColors)}`);
   assert(previewColors.jerseyStripeRight>0,`Right jersey stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.jerseyStripeLeftLower,0,`Left jersey body stripe should match the jersey color: ${JSON.stringify(previewColors)}`);
@@ -86,6 +92,12 @@ test('roster editor changes player data and moves the player without changing th
   assert(previewColors.shortsStripeRight>0,`Right shorts stripe should use the stripe color: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.shortsStripeLeft,0,`Left shorts stripe should match the shorts color: ${JSON.stringify(previewColors)}`);
   assert.equal(previewColors.rawPalette,0,`Untinted sprite palette colors should not leak into uniform preview: ${JSON.stringify(previewColors)}`);
+  const previewEdges=await page.locator('.roster-appearance canvas').evaluate(canvas=>{
+   const context=canvas.getContext('2d'),top=context.getImageData(0,0,canvas.width,2).data,bottom=context.getImageData(0,canvas.height-2,canvas.width,2).data;
+   const alpha=data=>{let count=0;for(let i=3;i<data.length;i+=4)if(data[i])count++;return count};
+   return {top:alpha(top),bottom:alpha(bottom)};
+  });
+  assert.deepEqual(previewEdges,{top:0,bottom:0},`Player art should fit inside the taller preview without clipping: ${JSON.stringify(previewEdges)}`);
   const uniformCanvas=page.locator('.roster-appearance canvas');
   const homePreview=await uniformCanvas.evaluate(canvas=>canvas.toDataURL());
   await page.locator('.roster-uniform-tabs').getByRole('button',{name:'Road'}).click();
@@ -94,9 +106,15 @@ test('roster editor changes player data and moves the player without changing th
   await page.screenshot({path:path.join(root,'artifacts/roster-manager.png'),fullPage:true});
   await page.getByLabel('First name',{exact:true}).fill('Roster');
   await page.getByLabel('First name',{exact:true}).dispatchEvent('change');
+  await attributesSection.locator('summary').click();
+  assert.equal(await attributesSection.evaluate(details=>details.open),true);
+  const jerseyNumberStepper=page.getByLabel('Jersey number').locator('..');
+  assert.equal(await jerseyNumberStepper.locator('button').count(),2);
   await page.locator('.roster-attributes input[aria-label="Current"]').first().fill('15');
   await page.locator('.roster-attributes input[aria-label="Current"]').first().dispatchEvent('change');
   await page.getByLabel('Primary archetype').selectOption('2');
+  await skillsSection.locator('summary').click();
+  assert.equal(await skillsSection.evaluate(details=>details.open),true);
   await page.getByLabel('Level',{exact:true}).first().fill('2');
   await page.getByLabel('Level',{exact:true}).first().dispatchEvent('change');
   await page.getByRole('button',{name:'Add skill'}).click();
