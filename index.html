@@ -1261,6 +1261,8 @@ body.workspace-home header>.actions>:not(.mobile-menu-toggle){
 .page-nav{
   display:none;
 }
+.page-nav.team-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.page-nav.team-actions button{width:100%;min-height:44px}
 .page-nav[hidden]{
   display:none!important;
 }
@@ -1736,7 +1738,7 @@ img,canvas,.uniform-preview-stage{
   textarea,
   select{font-size:16px!important}
 }
-</style><style>.court-preview{margin:18px 0 26px;padding:16px;background:#071b2e;border:1px solid #299bd7}.court-preview h3{margin:0 0 12px}.court-preview-viewport{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}.court-preview canvas{display:block;width:var(--court-preview-width,321px);height:var(--court-preview-height,161px);max-width:none;margin:0 auto;image-rendering:auto}.court-preview-note{font-size:12px;margin:10px 0 0}</style><script src="./court-preview.js"></script></head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
+</style><style>.court-preview{margin:18px 0 26px;padding:16px;background:#071b2e;border:1px solid #299bd7}.court-preview h3{margin:0 0 12px}.court-preview-viewport{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}.court-preview canvas{display:block;width:var(--court-preview-width,321px);height:var(--court-preview-height,161px);max-width:none;margin:0 auto;image-rendering:auto}.court-preview-note{font-size:12px;margin:10px 0 0}</style><link rel="stylesheet" href="./roster-manager.css"><script src="./court-preview.js"></script><script src="./roster-manager.js"></script></head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
     <div class="pwa-install-copy">
       <strong id="pwaInstallTitle">Install Hoop League Studio</strong>
@@ -3428,6 +3430,7 @@ function renderPageNav(){
  if(!nav)return;
  nav.replaceChildren();
  nav.classList.remove('single');
+ nav.classList.toggle('team-actions',view==='team'||view==='roster');
  nav.hidden=true;
 
  function add(label,target,before){
@@ -3451,6 +3454,10 @@ function renderPageNav(){
   add('← League Configuration','league');
  }else if(view==='team'&&league){
   add('← Team Selection','teamSelect');
+  if(teamList==='teams')add('Manage Roster','roster');
+ }else if(view==='roster'&&league){
+  add('← Team Configuration','team');
+  add('Team Selection','teamSelect');
  }
 
  if(nav.children.length){
@@ -3510,6 +3517,16 @@ function renderLeagueStudioEmpty(){
  create.onclick=()=>$('#new').click();upload.onclick=()=>$('#import').click();loadLeague.onclick=()=>$('#restoreProgress').click();
  actions.append(create,upload,loadLeague);card.append(actions);content.append(card);
 }
+function moveRosterPlayer(sourceIndex,targetIndex,playerId){
+ const source=league.teams[sourceIndex],target=league.teams[targetIndex];if(!source||!target||source===target)return;
+ const roster=Array.isArray(source.roster)?source.roster:[],player=roster.find(item=>Number(item.id)===Number(playerId));if(!player)return;
+ const moved={...player,tid:target.id};
+ if(player.contract&&Number(player.contract.tid)===Number(source.id))moved.contract={...player.contract,tid:target.id};
+ set(['teams',sourceIndex,'roster'],roster.filter(item=>item!==player));
+ set(['teams',targetIndex,'roster'],[...(target.roster||[]),moved]);
+ if(Array.isArray(source.startingLineup)&&source.startingLineup.some(item=>Number(item?.id??item)===Number(playerId)))set(['teams',sourceIndex,'startingLineup'],source.startingLineup.filter(item=>Number(item?.id??item)!==Number(playerId)));
+ selected=targetIndex;teamList='teams';window.HLSRosterManager.focusId=playerId;render();
+}
 function render(){
  if(view!=='images')$('#status').hidden=false;
  if(view==='home'){renderWelcome();return}
@@ -3519,7 +3536,7 @@ function render(){
  $('#teamSearch').disabled=!league;$('#saveProgress').disabled=!league;$('#export').disabled=!league;
  if(league&&view!=='images')listTeams();
  $('#gettingStartedNav').classList.toggle('active',view==='home');
- $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team');
+ $('#leagueNav').classList.toggle('active',view==='league'||view==='teamSelect'||view==='team'||view==='roster');
  $('#imagesNav').classList.toggle('active',view==='images');
  const content=$('#content');content.replaceChildren();
  if(view==='images'){renderArchive();return}
@@ -3533,7 +3550,11 @@ function render(){
   return;
  }
  const t=league[teamList]?.[selected];
- if(!t&&view==='team'){view='teamSelect';render();return}
+ if(!t&&(view==='team'||view==='roster')){view='teamSelect';render();return}
+ if(view==='roster'){
+  $('#title').textContent='Manage Roster';$('#breadcrumb').textContent='TEAMS / ROSTER';$('#subtitle').textContent=teamDisplayName(t);
+  window.HLSRosterManager.render(content,{league,teamIndex:selected,change:set,move:moveRosterPlayer});return;
+ }
  $('#title').textContent=view==='league'?league.leagueName:teamDisplayName(t);
  $('#breadcrumb').textContent=view==='league'?'LEAGUE / SETTINGS':'TEAMS / '+(t.shortName||'DETAILS');
  $('#subtitle').textContent=view==='league'?(league.leagueType===1?`${league.teams.length} teams · ${league.divisions.length} conferences`:`${league.teams.length} teams · ${league.conferences.length} conferences · ${league.divisions.length} divisions`):'Identity, uniforms, court and team settings';

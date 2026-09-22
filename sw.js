@@ -1,8 +1,10 @@
-const CACHE_NAME='hls-pwa-v114';
+const CACHE_NAME='hls-pwa-v115';
 const CORE=[
   './',
   './index.html',
   './court-preview.js',
+  './roster-manager.js',
+  './roster-manager.css',
   './manifest.webmanifest',
   './icons/favicon.png',
   './images/hls_logo.png',

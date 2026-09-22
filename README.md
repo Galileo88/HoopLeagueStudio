@@ -33,9 +33,9 @@ League Name/
 
 ## Players and Staff
 
-New leagues and added teams come with rosters and staff. Hoop League Studio does not edit individual players, coaches, or staff members.
+New leagues and added teams come with rosters and staff. Use Manage Roster in Team Configuration to edit players, their stored attributes and skills, or move them between teams. Hoop League Studio does not edit coaches or staff members.
 
-For those changes, edit them directly in Hoop Land after loading the league in game.
+For coaches and staff changes, edit them directly in Hoop Land after loading the league in game.
 
 ## Web App
 
