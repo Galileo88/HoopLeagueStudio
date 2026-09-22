@@ -46,10 +46,13 @@
   const gear=player.accessories?.[uniformIndex]||player.accessories?.[0]||{};
   const jersey=rgb(color(uniform.jersey,team,'#147dff')),shorts=rgb(color(uniform.shorts,team,'#147dff'));
   const jerseyStripe=rgb(color(uniform.jerseyStripe,team,color(uniform.jersey,team,'#147dff')));
+  const jerseyCollar=rgb(color(uniform.jerseyCollar,team,color(uniform.jerseyStripe,team,color(uniform.jersey,team,'#147dff'))));
   const shortsStripe=rgb(color(uniform.shortsStripe,team,color(uniform.shorts,team,'#147dff')));
   const shortsStart=shortsStarts[frame]??22;
   const uniformRows=Array.from({length:32},()=>({min:32,max:-1}));
   for(let i=0;i<source.length;i+=4){const r=source[i],b=source[i+2],a=source[i+3];if(!a||b!==255||r>40)continue;const pixel=Math.floor(i/4),x=pixel%32,y=Math.floor(pixel/32),row=uniformRows[y];row.min=Math.min(row.min,x);row.max=Math.max(row.max,x)}
+  const isSkin=(x,y)=>{if(x<0||x>=32||y<0||y>=32)return false;const i=(y*32+x)*4;return source[i+3]&&skinShades[`${source[i]},${source[i+1]},${source[i+2]}`]!==undefined};
+  const nearSkin=(x,y)=>{for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++)if((ox||oy)&&isSkin(x+ox,y+oy))return true;return false};
   const gearRgb=(key,fallback)=>rgb(color(gear[key],team,fallback));
   const accessory={
    L_Shoulder:gearRgb('L_Shoulder',skinColor),R_Shoulder:gearRgb('R_Shoulder',skinColor),
@@ -68,12 +71,18 @@
     const isShorts=y>=shortsStart,row=uniformRows[y],width=row.max-row.min+1;
     const leftEdge=x===row.min,rightEdge=x===row.max;
     // Hoop Land's front-facing uniform is asymmetric: the viewer-left torso and
-    // shorts edge stay in the base uniform color. Only the upper left shoulder
-    // accent and the full viewer-right edge use the configured stripe colors.
+    // shorts edge stay in the base uniform color. The upper-left shoulder and
+    // viewer-right edges use the configured stripe colors. The first hip row
+    // can sit one sprite row above shortsStart, so treat it as shorts stripe.
     const leftShoulder=!isShorts&&y<=shortsStart-5;
-    const stripe=width>=4&&(rightEdge||(leftEdge&&leftShoulder));
-    const base=isShorts?shorts:jersey,target=stripe?(isShorts?shortsStripe:jerseyStripe):base;
-    next=stripe?target:shade(target,Math.max(.55,Math.min(1.3,g/150)));
+    const collar=!isShorts&&y<=shortsStart-4&&!leftEdge&&!rightEdge&&nearSkin(x,y);
+    const rightHip=rightEdge&&y>=shortsStart-1;
+    const base=isShorts?shorts:jersey;
+    let target=base,direct=false;
+    if(collar){target=jerseyCollar;direct=true}
+    else if(width>=4&&rightEdge){target=rightHip?shortsStripe:jerseyStripe;direct=true}
+    else if(width>=4&&leftEdge&&leftShoulder){target=jerseyStripe;direct=true}
+    next=direct?target:shade(base,Math.max(.55,Math.min(1.3,g/150)));
    }else if(b===0&&g>=120){
     const key=r<75?'L_Shoulder':r<120?'R_Shoulder':r<150?'L_Knee':'R_Knee';
     next=shade(accessory[key],Math.max(.6,Math.min(1.2,g/175)));
