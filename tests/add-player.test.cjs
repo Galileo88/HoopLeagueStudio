@@ -49,6 +49,13 @@ test('Add Player creates an editable free agent that survives export',async()=>{
   assert(skinBox&&skinBox.width<=64,`Skin color picker should be compact: ${JSON.stringify(skinBox)}`);
   assert(hairStyleBox&&hairStyleBox.width<=280,`Hair style selector should be compact: ${JSON.stringify(hairStyleBox)}`);
   assert.equal(await page.getByLabel('Hair style').locator('..').locator('button').count(),2);
+  const hairStepperLayout=await page.getByLabel('Hair style').locator('..').evaluate(wrap=>{
+   const [previous,select,next]=wrap.children,p=previous.getBoundingClientRect(),s=select.getBoundingClientRect(),n=next.getBoundingClientRect(),w=wrap.getBoundingClientRect();
+   return {width:w.width,buttonWidth:p.width,leftGap:s.left-p.right,rightGap:n.left-s.right};
+  });
+  assert(hairStepperLayout.width<=280,`Option stepper should stay compact: ${JSON.stringify(hairStepperLayout)}`);
+  assert(hairStepperLayout.buttonWidth<=34,`Option stepper arrows should be narrow: ${JSON.stringify(hairStepperLayout)}`);
+  assert(hairStepperLayout.leftGap<=6&&hairStepperLayout.rightGap<=6,`Arrow buttons should sit close to the selector: ${JSON.stringify(hairStepperLayout)}`);
   assert.equal(await page.getByLabel('Facial hair').locator('..').locator('button').count(),2);
   assert.equal(await page.getByLabel('Primary archetype').locator('..').locator('button').count(),2);
   assert.equal(await page.getByLabel('Secondary archetype').locator('..').locator('button').count(),2);
