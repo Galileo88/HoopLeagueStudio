@@ -77,7 +77,7 @@
    if(!team){parent.append(node('p','','Choose a team to manage its roster.'));return}
    const shell=node('div','roster-manager'),listPanel=node('section','card roster-list-panel'),editor=node('section','card roster-player-panel');
    const search=node('input');search.type='search';search.placeholder='Search roster';search.setAttribute('aria-label','Search roster');
-   const list=node('div','roster-list');if(!freeAgents)listPanel.append(node('h2','',`${team.city?team.city+' ':''}${team.name} Roster`),node('p','',`${roster.length} players`));listPanel.append(search,list);
+   const list=node('div','roster-list');if(!freeAgents)listPanel.append(node('h2','',`${team.city?team.city+' ':''}${team.name} Depth Chart`),node('p','',`${roster.length} players`));listPanel.append(search,list);
    if(onAddPlayer){const add=node('button','primary roster-add-player','Add Player');add.type='button';add.onclick=async()=>{
     if(draftPlayer){active=draftPlayer;drawList();drawEditor();return}
     add.disabled=true;try{await onAddPlayer()}finally{add.disabled=false}
@@ -88,14 +88,25 @@
    let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||roster[0])||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
-   const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();for(const player of roster.filter(player=>name(player).toLocaleLowerCase().includes(query)||String(player.num??'').includes(query))){
+   const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
+   const isStarter=p=>Number.isInteger(p.linePos)&&p.linePos>=0&&p.linePos<5;
+   const groups=freeAgents?[{players:roster}]:['PG · Point Guard','SG · Shooting Guard','SF · Small Forward','PF · Power Forward','C · Center','Unassigned'].map(title=>({title,players:[]}));
+   if(!freeAgents)for(const player of roster){const position=[0,2,4,6,8].includes(player.teamPos)?player.teamPos:player.pos;const slot=isStarter(player)?player.linePos:Number.isInteger(position)&&position>=0&&position<=8?Math.floor(position/2):5;groups[slot].players.push(player)}
+   for(const group of groups){
+    if(group.title==='Unassigned'&&!group.players.length)continue;
+    if(!freeAgents)group.players.sort((a,b)=>(Number.isInteger(a.linePos)&&a.linePos>=0?a.linePos:Infinity)-(Number.isInteger(b.linePos)&&b.linePos>=0?b.linePos:Infinity));
+    const matches=group.players.filter(player=>name(player).toLocaleLowerCase().includes(query)||String(player.num??'').includes(query));if(query&&!matches.length)continue;
+    let target=list;
+    if(!freeAgents){target=node('section','roster-depth-position');target.append(node('h3','roster-depth-heading',group.title));list.append(target);if(!query&&!group.players.some(isStarter))target.append(node('p','roster-depth-empty','No starter assigned'))}
+    for(const player of matches){
     if(freeAgents){
      const entry=node('details','roster-free-agent'),summary=node('summary','',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);entry.open=player===active;
      summary.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));
      summary.onclick=event=>{event.preventDefault();active=active===player?null:player;selectedUniformIndex=0;drawList();drawEditor()};entry.append(summary);list.append(entry);if(entry.open){entry.append(editor);editor.hidden=false}continue;
     }
     const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));list.append(button)
-   }if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
+    if(!freeAgents){const button=list.lastElementChild;button.prepend(node('span','roster-depth-role',isStarter(player)?'Starter':`Backup ${group.players.filter(p=>!isStarter(p)).indexOf(player)+1}`));target.append(button)}
+   }}if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
    const drawEditor=()=>{
     editor.replaceChildren();if(!active){editor.append(node('h2','',freeAgents?'No free agents yet':'No players on this team'));return}
     const player=active,base=path(player),creating=player===draftPlayer;

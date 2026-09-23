@@ -71,3 +71,4 @@
 .roster-color-stepper button{width:28px;min-width:28px;min-height:44px;padding:3px;font-size:12px}
 .roster-appearance-settings .roster-color-stepper .roster-appearance-color{width:100%;min-width:0;height:44px;padding:2px}
 .roster-appearance-settings .roster-unibrow-field{white-space:normal}
+.roster-depth-position{margin:0 0 18px}.roster-depth-heading{margin:0 0 8px;font-size:14px;color:var(--lime)}.roster-depth-role{display:block;margin-bottom:5px;font-size:11px;font-weight:700;text-transform:uppercase;color:#c6d0c9}.roster-depth-empty{margin:0 0 8px;font-size:12px;color:#c6d0c9}
