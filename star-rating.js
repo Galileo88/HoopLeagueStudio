@@ -62,7 +62,7 @@
  function rebuildLineups(data,force=false){
   let changed=0;
   for(const t of [...(data?.teams||[]),...(data?.starTeams||[])]){
-   const prepared=prepareDepthChart(t,force);if(prepared===t)continue;
+   const prepared=prepareDepthChart(t,true);if(prepared===t)continue;
    const before=JSON.stringify([t.roster,t.startingLineup]);
    const previous=new Map((t.startingLineup||[]).map(slot=>[slot.pid,slot]));
    t.roster=prepared.roster.map(p=>({...p,rating:0}));
