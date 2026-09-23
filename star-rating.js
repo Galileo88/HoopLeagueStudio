@@ -20,11 +20,11 @@
   return a;
  }
  const fits=(p,slot)=>slot>4||Math.abs(p.pos-slot*2)<=1;
- function prepareTeam(t){
+ function prepareTeam(t,force=false){
   if(!Array.isArray(t?.roster)||t.roster.length<5)return t;
   const roster=t.roster.map(p=>({...p}));lineupSort(roster,(a,b)=>a.linePos-b.linePos);
   const seen=new Set();const repair=roster.some((p,i)=>{const duplicate=seen.has(p.linePos);seen.add(p.linePos);return !Number.isInteger(p.linePos)||p.linePos<0||duplicate||(i<5&&p.linePos!==i)});
-  if(!repair)return {...t,roster};
+  if(!repair&&!force)return {...t,roster};
   // Only custom-league exhibition data is supported by this preparation path.
   if(roster.length>15||roster.some(p=>!valid(p,0)||!Number.isInteger(p.pos)||p.pos<0||p.pos>8||!Number.isFinite(p.pot)||!Number.isFinite(p.ht)))return t;
   for(const p of roster){p.rating=f(f(f(player(p)*2)*1.5)+f(p.pot*2));p.linePos=-1}
@@ -56,6 +56,19 @@
   roster.forEach((p,i)=>p.linePos=i);
   return {...t,roster};
  }
+
+ function rebuildLineups(data,force=false){
+  let changed=0;
+  for(const t of [...(data?.teams||[]),...(data?.starTeams||[])]){
+   const prepared=prepareTeam(t,force);if(prepared===t)continue;
+   const before=JSON.stringify([t.roster,t.startingLineup]);
+   const previous=new Map((t.startingLineup||[]).map(slot=>[slot.pid,slot]));
+   t.roster=prepared.roster.map(p=>({...p,rating:0}));
+   t.startingLineup=t.roster.map(p=>({...previous.get(p.id),linePos:p.linePos,pid:p.id,minutes:[...(p.minutes||previous.get(p.id)?.minutes||[0,0])]}));
+   if(JSON.stringify([t.roster,t.startingLineup])!==before)changed++;
+  }
+  return changed;
+ }
  function component(p,index,weights){
   let total=0;
   for(const [key,weight]of weights)total=f(total+f(f(value(p,key,index)/20)*weight));
@@ -86,7 +99,7 @@
  const team=(t,index=0)=>stars(exhibitionDetails(t,index)?.overall);
  function rankings(teams,t){
   if(!teams.includes(t))return null;
-  const entries=teams.map((team,index)=>({team,index,ratings:team===t?exhibitionDetails(team):teamDetails(team)}));
+  const entries=teams.map((team,index)=>({team,index,ratings:exhibitionDetails(team)}));
   if(entries.some(entry=>!entry.ratings))return null;
   return Object.fromEntries(['offense','defense','overall'].map(key=>{
    const sorted=[...entries].sort((a,b)=>b.ratings[key]-a.ratings[key]||a.index-b.index);
@@ -103,7 +116,7 @@
    const rank=document.createElement('span');rank.className='team-rating-rank';card.append(label,rating,rank);root.append(card);
    return {key,rating,rank};
   });
-  root.syncRating=()=>{const teams=getTeams(),ranks=rankings(teams,t);for(const field of fields){field.rating.syncRating();field.rank.textContent=ranks?ordinal(ranks[field.key]):'—';field.rank.title=ranks?`${ordinal(ranks[field.key])} of ${teams.length} league teams · Exhibition preview; other teams use saved lineups`:teams.includes(t)?'Rank unavailable':'Not league-ranked'}};
+  root.syncRating=()=>{const teams=getTeams(),ranks=rankings(teams,t);for(const field of fields){field.rating.syncRating();field.rank.textContent=ranks?ordinal(ranks[field.key]):'—';field.rank.title=ranks?`${ordinal(ranks[field.key])} of ${teams.length} league teams · Prepared league lineups`:teams.includes(t)?'Rank unavailable':'Not league-ranked'}};
   root.syncRating();return root;
  }
  function create(getRating,label='Rating',getMaximum=()=>5){
@@ -113,7 +126,7 @@
   root.syncRating=()=>{const rating=getRating(),maximum=getMaximum(),known=Number.isFinite(rating)&&Number.isFinite(maximum),cap=known?clamp(maximum,0,5):5,count=Math.ceil(cap);root.hidden=!known;track.firstChild.nodeValue=fill.textContent='★'.repeat(count);track.style.clipPath=`inset(0 ${count?(1-cap/count)*100:0}% 0 0)`;fill.style.width=(known&&count?clamp(rating,0,cap)/count*100:0)+'%';const text=`${label}: ${known?Number(Math.min(rating,cap).toFixed(2))+' out of '+cap:'unavailable'}`;root.setAttribute('aria-label',text);root.title=text+(label==='Team rating'?' · Exhibition lineup':'')};
   root.syncRating();return root;
  }
- const api={player,team,teamDetails,rankings,create,createTeamSummary,prepareTeam,exhibitionDetails};
+ const api={player,team,teamDetails,rankings,create,createTeamSummary,prepareTeam,exhibitionDetails,rebuildLineups};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
  if(typeof window!=='undefined')window.HLSRatings=api;
 })();

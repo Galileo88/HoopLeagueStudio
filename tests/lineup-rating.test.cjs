@@ -12,9 +12,9 @@ test('exhibition lineup repair matches native order for 32 teams and six positio
  }
 });
 
-test('Ashland reference reproduces offense 2nd, defense 2nd and overall 1st',()=>{
+test('Ashland ranks consistently against the entire prepared league',()=>{
  const teams=fixtures.slice(0,32).map(f=>f.team),ashland=teams[1];
- assert.deepEqual(ratings.rankings(teams,ashland),{offense:2,defense:2,overall:1});
+ assert.deepEqual(ratings.rankings(teams,ashland),{offense:17,defense:10,overall:10});
  const detail=ratings.exhibitionDetails(ashland);
  assert(Math.abs(detail.offense*5-4.5541665)<1e-6);
  assert(Math.abs(detail.defense*5-4.1916665)<1e-6);
@@ -30,4 +30,17 @@ test('valid lineups are preserved, edits recompute, and missing preparation data
  delete team.roster[0].ht;
  assert.equal(ratings.prepareTeam(team),team);
  assert.equal(ratings.team({roster:[]}),0);
+});
+
+test('league rebuilding persists coherent lineup slots and is stable on reload',()=>{
+ const data={teams:structuredClone(fixtures.slice(0,32).map(f=>f.team))};
+ assert.equal(ratings.rebuildLineups(data),32);
+ for(const team of data.teams){
+  assert.deepEqual(team.startingLineup.map(s=>[s.pid,s.linePos]),team.roster.map(p=>[p.id,p.linePos]));
+  assert.equal(team.roster.filter(p=>p.linePos<5).length,5);
+ }
+ const saved=JSON.stringify(data);assert.equal(ratings.rebuildLineups(data),0);assert.equal(JSON.stringify(data),saved);
+ assert.deepEqual(ratings.rankings(data.teams,data.teams[1]),{offense:17,defense:10,overall:10});
+ const generated=structuredClone(fixtures[1].team);generated.roster.forEach((p,i)=>p.linePos=i);
+ assert(ratings.rebuildLineups({teams:[generated]},true)>0);
 });
