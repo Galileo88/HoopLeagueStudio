@@ -77,7 +77,8 @@
    if(!team){parent.append(node('p','','Choose a team to manage its roster.'));return}
    const shell=node('div','roster-manager'),listPanel=node('section','card roster-list-panel'),editor=node('section','card roster-player-panel');
    const search=node('input');search.type='search';search.placeholder='Search roster';search.setAttribute('aria-label','Search roster');
-   const list=node('div','roster-list');if(!freeAgents)listPanel.append(node('h2','',`${team.city?team.city+' ':''}${team.name} Depth Chart`),node('p','',`${roster.length} players`));listPanel.append(search,list);
+   const list=node('div','roster-list'),scrollHint=freeAgents?null:node('div','roster-scroll-hint','↓ Swipe or scroll for more players');
+   if(!freeAgents)listPanel.append(node('h2','',`${team.city?team.city+' ':''}${team.name} Depth Chart`),node('p','',`${roster.length} players`));listPanel.append(search,list);if(scrollHint)listPanel.append(scrollHint);
    if(onAddPlayer){const add=node('button','primary roster-add-player','Add Player');add.type='button';add.onclick=async()=>{
     if(draftPlayer){active=draftPlayer;drawList();drawEditor();return}
     add.disabled=true;try{await onAddPlayer()}finally{add.disabled=false}
@@ -87,6 +88,8 @@
    shell.append(listPanel,editor);parent.append(shell);
    let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||roster[0])||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
+   const updateScrollHint=()=>{if(!scrollHint)return;const overflow=list.scrollHeight>list.clientHeight+4,atBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-4;scrollHint.hidden=!overflow;list.classList.toggle('is-scrollable',overflow);scrollHint.textContent=atBottom?'↑ Scroll up for earlier players':'↓ Swipe or scroll for more players'};
+   if(scrollHint)list.addEventListener('scroll',updateScrollHint,{passive:true});
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
    const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
    const isStarter=p=>Number.isInteger(p.linePos)&&p.linePos>=0&&p.linePos<5;
@@ -106,7 +109,7 @@
     }
     const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));list.append(button)
     if(!freeAgents){const button=list.lastElementChild;button.prepend(node('span','roster-depth-role',isStarter(player)?'Starter':`Backup ${group.players.filter(p=>!isStarter(p)).indexOf(player)+1}`));target.append(button)}
-   }}if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
+   }}if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'));if(scrollHint)requestAnimationFrame(updateScrollHint)};
    const drawEditor=()=>{
     editor.replaceChildren();if(!active){editor.append(node('h2','',freeAgents?'No free agents yet':'No players on this team'));return}
     const player=active,base=path(player),creating=player===draftPlayer;
