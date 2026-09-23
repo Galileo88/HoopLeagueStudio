@@ -20,14 +20,14 @@
   return a;
  }
  const fits=(p,slot)=>slot>4||Math.abs(p.pos-slot*2)<=1;
- function prepareTeam(t,force=false){
+ function prepareLineup(t,force=false,usePotential=true){
   if(!Array.isArray(t?.roster)||t.roster.length<5)return t;
   const roster=t.roster.map(p=>({...p}));lineupSort(roster,(a,b)=>a.linePos-b.linePos);
   const seen=new Set();const repair=roster.some((p,i)=>{const duplicate=seen.has(p.linePos);seen.add(p.linePos);return !Number.isInteger(p.linePos)||p.linePos<0||duplicate||(i<5&&p.linePos!==i)});
   if(!repair&&!force)return {...t,roster};
   // Only custom-league exhibition data is supported by this preparation path.
-  if(roster.length>15||roster.some(p=>!valid(p,0)||!Number.isInteger(p.pos)||p.pos<0||p.pos>8||!Number.isFinite(p.pot)||!Number.isFinite(p.ht)))return t;
-  for(const p of roster){p.rating=f(f(f(player(p)*2)*1.5)+f(p.pot*2));p.linePos=-1}
+  if(roster.length>15||roster.some(p=>!valid(p,0)||!Number.isInteger(p.pos)||p.pos<0||p.pos>8||(usePotential&&!Number.isFinite(p.pot))||!Number.isFinite(p.ht)))return t;
+  for(const p of roster){const current=player(p);p.rating=usePotential?f(f(f(current*2)*1.5)+f(p.pot*2)):current;p.linePos=-1}
   const byRating=(a,b)=>b.rating-a.rating;
   const ranked=lineupSort([...roster],byRating),groups=Array.from({length:5},()=>[]),hybrids=Array.from({length:4},()=>[]);
   for(const p of ranked.slice(0,5)){if(p.pos%2)hybrids[(p.pos-1)/2].push(p);else groups[p.pos/2].push(p)}
@@ -56,11 +56,13 @@
   roster.forEach((p,i)=>p.linePos=i);
   return {...t,roster};
  }
+ const prepareTeam=(t,force=false)=>prepareLineup(t,force,true);
+ const prepareDepthChart=(t,force=false)=>prepareLineup(t,force,false);
 
  function rebuildLineups(data,force=false){
   let changed=0;
   for(const t of [...(data?.teams||[]),...(data?.starTeams||[])]){
-   const prepared=prepareTeam(t,force);if(prepared===t)continue;
+   const prepared=prepareDepthChart(t,force);if(prepared===t)continue;
    const before=JSON.stringify([t.roster,t.startingLineup]);
    const previous=new Map((t.startingLineup||[]).map(slot=>[slot.pid,slot]));
    t.roster=prepared.roster.map(p=>({...p,rating:0}));
@@ -126,7 +128,7 @@
   root.syncRating=()=>{const rating=getRating(),maximum=getMaximum(),known=Number.isFinite(rating)&&Number.isFinite(maximum),cap=known?clamp(maximum,0,5):5,count=Math.ceil(cap);root.hidden=!known;track.firstChild.nodeValue=fill.textContent='★'.repeat(count);track.style.clipPath=`inset(0 ${count?(1-cap/count)*100:0}% 0 0)`;fill.style.width=(known&&count?clamp(rating,0,cap)/count*100:0)+'%';const text=`${label}: ${known?Number(Math.min(rating,cap).toFixed(2))+' out of '+cap:'unavailable'}`;root.setAttribute('aria-label',text);root.title=text+(label==='Team rating'?' · Exhibition lineup':'')};
   root.syncRating();return root;
  }
- const api={player,team,teamDetails,rankings,create,createTeamSummary,prepareTeam,exhibitionDetails,rebuildLineups};
+ const api={player,team,teamDetails,rankings,create,createTeamSummary,prepareTeam,prepareDepthChart,exhibitionDetails,rebuildLineups};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
  if(typeof window!=='undefined')window.HLSRatings=api;
 })();
