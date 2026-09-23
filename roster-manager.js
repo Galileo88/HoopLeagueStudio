@@ -140,7 +140,7 @@
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
       const control=node('input');control.type='color';control.value='#'+String(player.appearance[key]||'262539').replace('#','');control.className='roster-appearance-color';
-      const palette=key==='skinC'?['F6DFC6','EAC39D','D5A779','BE8A60','A66D45','855337','623C29','40271D']:key==='eyeC'?['3B2417','654321','967443','6B7545','47734B','477FA3','829BA8','777777']:['171717','382820','65432D','916544','B68B55','D9BD79','A24D32','D0D0D0'];
+      const palette=key==='skinC'?['F6DFC6','EAC39D','D5A779','BE8A60','A66D45','855337','623C29','40271D']:key==='eyeC'?['151515','3B2417','654321','967443','6B7545','47734B','477FA3','829BA8','777777']:['151515','382820','65432D','916544','B68B55','D9BD79','A24D32','D0D0D0'];
       const wrap=node('div','roster-color-stepper'),previous=node('button','','◀'),next=node('button','','▶');previous.type=next.type='button';previous.setAttribute('aria-label','Previous '+title+' color');next.setAttribute('aria-label','Next '+title+' color');
       const cycle=direction=>{const current=palette.indexOf(control.value.slice(1).toUpperCase()),index=current<0?(direction>0?0:palette.length-1):(current+direction+palette.length)%palette.length;control.value='#'+palette[index];update(key,palette[index])};previous.onclick=()=>cycle(-1);next.onclick=()=>cycle(1);
       control.setAttribute('aria-label',title);control.oninput=()=>update(key,control.value.slice(1).toUpperCase());wrap.append(previous,control,next);row(fields,title,wrap).classList.add('roster-color-field')
