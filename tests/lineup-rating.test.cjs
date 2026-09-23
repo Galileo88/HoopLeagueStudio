@@ -62,3 +62,20 @@ test('league rebuilding persists coherent lineup slots and is stable on reload',
  const generated=structuredClone(fixtures[1].team);generated.roster.forEach((p,i)=>p.linePos=i);
  assert(ratings.rebuildLineups({teams:[generated]},true)>0);
 });
+
+test('current-overall rebuild ignores previous roster order and keeps ratings stable',()=>{
+ for(const fixture of fixtures){
+  const original=structuredClone(fixture.team),reordered=structuredClone(fixture.team);
+  reordered.roster.reverse().forEach((p,i)=>p.linePos=i);
+  ratings.rebuildLineups({teams:[original]});
+  ratings.rebuildLineups({teams:[reordered]});
+  const slots=team=>team.roster.map(p=>[p.id,p.linePos,p.teamPos,p.posRnk]);
+  assert.deepEqual(slots(reordered),slots(original),'input lineup must not break current-overall ties');
+  const saved=JSON.stringify(original),detail=ratings.teamDetails(original);
+  for(let i=0;i<3;i++){
+   assert.equal(ratings.rebuildLineups({teams:[original]}),0);
+   assert.equal(JSON.stringify(original),saved);
+   assert.deepEqual(ratings.teamDetails(original),detail);
+  }
+ }
+});

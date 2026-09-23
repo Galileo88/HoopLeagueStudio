@@ -27,6 +27,11 @@
   if(!repair&&!force)return {...t,roster};
   // Only custom-league exhibition data is supported by this preparation path.
   if(roster.length>15||roster.some(p=>!valid(p,0)||!Number.isInteger(p.pos)||p.pos<0||p.pos>8||(usePotential&&!Number.isFinite(p.pot))||!Number.isFinite(p.ht)))return t;
+  // Saved lineup order is an output, not a tie-breaker for the next rebuild.
+  // Start current-overall depth charts from stable player IDs so equal ratings
+  // and hybrid-position assignment cannot feed the previous result back in.
+  // Keep the native exhibition repair path's original ordering unchanged.
+  if(!usePotential)lineupSort(roster,(a,b)=>Number(a.id)-Number(b.id));
   for(const p of roster){const current=player(p);p.rating=usePotential?f(f(f(current*2)*1.5)+f(p.pot*2)):current;p.linePos=-1}
   const byRating=(a,b)=>b.rating-a.rating;
   const ranked=lineupSort([...roster],byRating),groups=Array.from({length:5},()=>[]),hybrids=Array.from({length:4},()=>[]);
