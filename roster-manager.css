@@ -5,7 +5,12 @@
 .roster-draft-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
 .roster-list-panel h2,.roster-player-panel h2{margin-top:0}
 .roster-list-panel>p,.roster-player-id{margin:0 0 14px;font-size:13px}
-.roster-list{max-height:680px;overflow-y:auto;overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y;margin-top:12px}
+.roster-list{max-height:680px;overflow-y:auto;overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y;margin-top:12px;scrollbar-width:auto;scrollbar-color:#4cf5ed #071a2b}
+.roster-list::-webkit-scrollbar{width:12px}
+.roster-list::-webkit-scrollbar-track{background:#071a2b;border-left:1px solid #1f6ea5}
+.roster-list::-webkit-scrollbar-thumb{background:#4cf5ed;border:3px solid #071a2b;border-radius:8px}
+.roster-scroll-hint{margin:8px 0 0;padding:7px 9px;text-align:center;font-size:12px;font-weight:700;letter-spacing:.2px;color:#8ffcf5;background:#082b52;border:1px solid #237db7}
+.roster-scroll-hint[hidden]{display:none}
 .roster-player{display:block;width:100%;max-width:100%;min-width:0;margin:0 0 5px;padding:10px;text-align:left;white-space:normal;overflow-wrap:anywhere;touch-action:pan-y;-webkit-user-drag:none}
 .roster-player.active{border-color:var(--lime);color:var(--lime)}
 .roster-player-panel h3{margin:24px 0 12px;font-size:18px}
