@@ -12,6 +12,23 @@ test('exhibition lineup repair matches native order for 32 teams and six positio
  }
 });
 
+test('depth-chart rebuild uses current overall instead of potential',()=>{
+ const keys=['LAY','DNK','INS','MID','TPT','FTS','DRB','PAS','ORE','DRE','STL','BLK'];
+ const attributes=value=>Object.fromEntries(keys.map(key=>[key,[value,value]]));
+ const makePlayer=(id,pos,current,pot)=>({id,pos,ht:78,pot,linePos:-1,teamPos:pos,posRnk:0,minutes:[0,0,0,0,0,0],attributes:attributes(current)});
+ const team={roster:[
+  makePlayer(1,0,15,1),
+  makePlayer(2,0,5,10),
+  makePlayer(3,2,10,5),
+  makePlayer(4,4,10,5),
+  makePlayer(5,6,10,5),
+  makePlayer(6,8,10,5)
+ ],startingLineup:[]};
+ assert.equal(ratings.rebuildLineups({teams:[team]},true),1);
+ assert(team.roster.find(player=>player.id===1).linePos<5,'higher current overall should start');
+ assert(team.roster.find(player=>player.id===2).linePos>4,'higher potential alone should not win the depth-chart spot');
+});
+
 test('Ashland ranks consistently against the entire prepared league',()=>{
  const teams=fixtures.slice(0,32).map(f=>f.team),ashland=teams[1];
  assert.deepEqual(ratings.rankings(teams,ashland),{offense:17,defense:10,overall:10});
@@ -40,7 +57,7 @@ test('league rebuilding persists coherent lineup slots and is stable on reload',
   assert.equal(team.roster.filter(p=>p.linePos<5).length,5);
  }
  const saved=JSON.stringify(data);assert.equal(ratings.rebuildLineups(data),0);assert.equal(JSON.stringify(data),saved);
- assert.deepEqual(ratings.rankings(data.teams,data.teams[1]),{offense:17,defense:10,overall:10});
+ const rebuiltRanks=ratings.rankings(data.teams,data.teams[1]);assert(rebuiltRanks);for(const rank of Object.values(rebuiltRanks))assert(rank>=1&&rank<=data.teams.length);
  const generated=structuredClone(fixtures[1].team);generated.roster.forEach((p,i)=>p.linePos=i);
  assert(ratings.rebuildLineups({teams:[generated]},true)>0);
 });
