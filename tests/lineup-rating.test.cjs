@@ -12,21 +12,22 @@ test('exhibition lineup repair matches native order for 32 teams and six positio
  }
 });
 
-test('depth-chart rebuild uses current overall instead of potential',()=>{
+test('depth-chart rebuild uses current overall for existing valid lineups',()=>{
  const keys=['LAY','DNK','INS','MID','TPT','FTS','DRB','PAS','ORE','DRE','STL','BLK'];
  const attributes=value=>Object.fromEntries(keys.map(key=>[key,[value,value]]));
- const makePlayer=(id,pos,current,pot)=>({id,pos,ht:78,pot,linePos:-1,teamPos:pos,posRnk:0,minutes:[0,0,0,0,0,0],attributes:attributes(current)});
+ const makePlayer=(id,pos,current,pot,linePos)=>({id,pos,ht:78,pot,linePos,teamPos:pos,posRnk:0,minutes:[0,0,0,0,0,0],attributes:attributes(current)});
  const team={roster:[
-  makePlayer(1,0,15,1),
-  makePlayer(2,0,5,10),
-  makePlayer(3,2,10,5),
-  makePlayer(4,4,10,5),
-  makePlayer(5,6,10,5),
-  makePlayer(6,8,10,5)
+  makePlayer(2,0,5,10,0),
+  makePlayer(3,2,10,5,1),
+  makePlayer(4,4,10,5,2),
+  makePlayer(5,6,10,5,3),
+  makePlayer(6,8,10,5,4),
+  makePlayer(1,0,15,1,5)
  ],startingLineup:[]};
- assert.equal(ratings.rebuildLineups({teams:[team]},true),1);
- assert(team.roster.find(player=>player.id===1).linePos<5,'higher current overall should start');
- assert(team.roster.find(player=>player.id===2).linePos>4,'higher potential alone should not win the depth-chart spot');
+ assert.equal(ratings.rebuildLineups({teams:[team]}),1);
+ assert(team.roster.find(player=>player.id===1).linePos<5,'higher current overall should replace a weaker valid starter');
+ assert(team.roster.find(player=>player.id===2).linePos>4,'higher potential alone should not keep a valid starting spot');
+ const saved=JSON.stringify(team);assert.equal(ratings.rebuildLineups({teams:[team]}),0);assert.equal(JSON.stringify(team),saved);
 });
 
 test('Ashland ranks consistently against the entire prepared league',()=>{
