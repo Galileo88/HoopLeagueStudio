@@ -137,11 +137,25 @@
   ctx.drawImage(scene,0,0,scene.width,scene.height,0,0,canvas.width,canvas.height);
   if(bodyState)jerseyNumber(ctx,player,team,bodyState.uniform,bodyState.shortsStart,scale,offsetY)
  }
+ function drawPortrait(canvas,player,team,uniformIndex){
+  const source=document.createElement('canvas');source.width=128;source.height=168;
+  draw(source,player,team,uniformIndex,0);
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
+  // Crop the fixed first frame to the top 24 logical pixels: head, shoulders,
+  // and the upper jersey only.
+  ctx.drawImage(source,0,0,128,96,0,0,canvas.width,canvas.height)
+ }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
    const redraw=()=>{if(canvas.isConnected){const {player,team,uniformIndex}=state();draw(canvas,player,team,uniformIndex,frame)}};
    const tick=()=>{if(!canvas.isConnected)return;redraw();frame=(frame+1)%4;setTimeout(tick,110)};
    tick();return redraw
+  },
+  portrait(canvas,state){
+   const redraw=()=>{if(canvas.isConnected){const {player,team,uniformIndex=0}=state();drawPortrait(canvas,player,team,uniformIndex)}};
+   redraw();
+   for(const image of Object.values(images))if(!image.complete)image.addEventListener('load',redraw,{once:true});
+   return redraw
   }
  };
 })();
