@@ -25,3 +25,6 @@
 
 /* Keep the separately-rendered League Gender row aligned with the Season Settings grid. */
 .season-gender-fields{margin-top:20px}
+
+/* Match the Optimization Settings accordion spacing to the General settings grid. */
+.season-gender-fields + details{margin-top:20px}
