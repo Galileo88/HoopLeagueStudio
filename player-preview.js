@@ -141,9 +141,13 @@
   const source=document.createElement('canvas');source.width=128;source.height=168;
   draw(source,player,team,uniformIndex,0);
   const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
-  // Crop the fixed first frame to the top 26 logical pixels so the portrait
-  // keeps the head and shoulders while trimming the lower arms.
-  ctx.drawImage(source,0,0,128,104,0,0,canvas.width,canvas.height)
+  // Keep the current shoulder crop, but crop in horizontally so the player
+  // fills more of the portrait. Flip the portrait to face the opposite way.
+  ctx.save();
+  ctx.translate(canvas.width,0);
+  ctx.scale(-1,1);
+  ctx.drawImage(source,14,0,100,104,0,0,canvas.width,canvas.height);
+  ctx.restore()
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
