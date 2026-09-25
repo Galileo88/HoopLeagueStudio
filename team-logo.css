@@ -22,3 +22,6 @@
 
 /* League Studio is a sitemap entry; creation/import/load actions live in the top toolbar. */
 .workspace-league-actions{display:none!important}
+
+/* Keep the separately-rendered League Gender row aligned with the Season Settings grid. */
+.season-gender-fields{margin-top:20px}
