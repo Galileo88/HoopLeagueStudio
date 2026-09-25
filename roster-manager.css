@@ -106,3 +106,5 @@
 .roster-player-workspace>.roster-appearance-preview .roster-uniform-tabs{grid-template-columns:repeat(2,minmax(0,1fr));align-self:center}
 @container(min-width:780px){.roster-player-workspace>.roster-appearance-preview .roster-uniform-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(min-width:1200px){.roster-manager{grid-template-columns:240px minmax(0,1fr)}}
+
+.roster-player-controls>.roster-accessories{margin-bottom:0}

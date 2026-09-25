@@ -48,6 +48,14 @@ test('player preview follows scrolling and accessory boxes retain independent he
   assert(mobile.y>=header.y+header.height-1);assert(mobile.y+mobile.height<844);
   assert(await page.getByRole('button',{name:'Home',exact:true}).isVisible());
   await page.screenshot({path:path.join(root,'artifacts/player-editor-mobile.png')});
+  await page.locator('.roster-attributes-section > summary').click();
+  for(const width of [1900,390]){
+   await page.setViewportSize({width,height:1000});
+   await page.locator('.roster-attributes-section').evaluate(section=>window.scrollTo(0,section.getBoundingClientRect().top+window.scrollY+350));
+   const bounds=await preview.boundingBox(),accessories=await page.locator('.roster-accessories').boundingBox();
+   assert(bounds.y+bounds.height<=accessories.y+accessories.height+1,'Preview must stop at the end of Accessories');
+   assert(bounds.y<0,'Preview must scroll away when editing Attributes');
+  }
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
 });

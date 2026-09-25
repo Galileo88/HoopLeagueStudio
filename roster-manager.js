@@ -195,7 +195,7 @@
     if(creating){const actions=node('div','roster-draft-actions'),create=node('button','primary','Create Free Agent'),cancel=node('button','','Cancel');
      create.type=cancel.type='button';create.onclick=()=>onCreatePlayer?.(player);cancel.onclick=()=>onCancelPlayer?.();actions.append(create,cancel);editor.append(actions)}
     const playerPreview=editor.querySelector('.roster-appearance-preview');
-    if(playerPreview){const workspace=node('div','roster-player-workspace'),controls=node('div','roster-player-controls');playerPreview.remove();controls.append(...editor.childNodes);workspace.append(playerPreview,controls);editor.append(workspace)}
+    if(playerPreview){const workspace=node('div','roster-player-workspace'),controls=node('div','roster-player-controls');playerPreview.remove();while(editor.firstChild&&editor.firstChild!==attributeSection)controls.append(editor.firstChild);workspace.append(playerPreview,controls);editor.insertBefore(workspace,attributeSection)}
    };
    search.oninput=drawList;drawList();drawEditor();
   }
