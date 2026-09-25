@@ -28,3 +28,6 @@
 
 /* Match the Optimization Settings accordion spacing to the General settings grid. */
 .season-gender-fields + details{margin-top:20px}
+
+/* Season Settings no longer shows the redundant team/award count footer. */
+[data-team-count-status]{display:none!important}
