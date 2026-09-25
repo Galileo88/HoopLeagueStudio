@@ -11,6 +11,10 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   const data=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));data.leagueType=1;data.logoURL='';data.teams[0].logoURL='';data.teams[0].court.overlayURL='';
   await page.locator('#import').setInputFiles({name:'college.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(data))});
+  const disclosure=page.locator('.tournament-courts-disclosure');await disclosure.waitFor();
+  assert.equal(await disclosure.evaluate(el=>el.open),false);
+  assert.match(await disclosure.evaluate(el=>el.previousElementSibling.textContent),/Free Agents/);
+  await disclosure.locator(':scope > summary').click();
   const cards=page.locator('.tournament-court-card');await cards.first().waitFor({timeout:5000}).catch(async e=>{throw Error(JSON.stringify({errors,content:await page.locator('#content').innerText(),toast:await page.locator('#toast').innerText()})+e.message)});
   assert.deepEqual(await page.locator('.tournament-court-label').allTextContents(),['First Round','Second Round','Top 16','Top 8','Top 4','Championship']);
   for(const [width,columns]of [[1440,3],[900,2],[390,1]]){
@@ -36,7 +40,7 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
   await page.evaluate(()=>{window.__test.set(['leagueType'],0);window.__test.render()});assert.equal(await cards.count(),0);
   await page.evaluate(()=>{window.__test.set(['leagueType'],1);window.__test.render()});assert.equal(await cards.count(),6);
   assert.equal(await page.evaluate(()=>JSON.parse(JSON.stringify(window.__test.getLeague())).tournamentCourts.championship.outerWoodC),'123456');
-  await page.evaluate(()=>{delete window.__test.getLeague().tournamentCourts;window.__test.render()});await cards.first().click();await page.getByRole('button',{name:'Back',exact:true}).click();
+  await page.evaluate(()=>{delete window.__test.getLeague().tournamentCourts;window.__test.render()});await disclosure.locator(':scope > summary').click();await cards.first().click();await page.getByRole('button',{name:'Back',exact:true}).click();
   assert.equal(await page.evaluate(()=>window.__test.getLeague().tournamentCourts?.firstRound),undefined);
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
