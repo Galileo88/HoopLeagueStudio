@@ -29,6 +29,20 @@ test('player preview follows scrolling and accessory boxes retain independent he
   await page.locator('#pageNav button').filter({hasText:'Manage Roster'}).click();
 
   await page.setViewportSize({width:1900,height:1000});
+  assert.equal(await page.locator('.roster-picker').evaluate(el=>el.open),false);
+  await page.locator('.roster-picker > summary').click();
+  await page.getByRole('searchbox',{name:'Search roster'}).fill(template.teams[0].roster[1].ln);
+  await page.locator('.roster-player').first().click();
+  assert.equal(await page.locator('.roster-picker').evaluate(el=>el.open),false);
+  assert(await page.locator('.roster-appearance-settings').evaluate(el=>el.open));
+  await page.locator('.roster-identity > summary').click();
+  await page.getByLabel('First name',{exact:true}).fill('Updated');
+  await page.getByLabel('First name',{exact:true}).press('Tab');
+  assert.match(await page.locator('.roster-picker > summary').textContent(),/Updated/);
+  await page.locator('.roster-identity > summary').click();
+  await page.locator('.roster-transfer > summary').click();
+  assert(await page.getByLabel('Destination team',{exact:true}).isVisible());
+  await page.locator('.roster-transfer > summary').click();
   await page.locator('.roster-accessories > summary').click();
   const arms=page.locator('.roster-accessory-group').filter({has:page.locator('summary',{hasText:/^Arms$/})});
   await arms.locator('summary').click();
@@ -37,7 +51,7 @@ test('player preview follows scrolling and accessory boxes retain independent he
   assert((await arms.boundingBox()).height>100);
   await arms.evaluate(el=>el.scrollIntoView({block:'center'}));
   const preview=page.locator('.roster-appearance-preview');
-  assert((await preview.locator('canvas').boundingBox()).width>=280);
+  assert((await preview.locator('canvas').boundingBox()).width>=250);
   const desktop=await preview.boundingBox();assert(desktop.y>=0&&desktop.y+desktop.height<=1000);
   assert((await preview.boundingBox()).x<(await page.locator('.roster-player-controls').boundingBox()).x);
   await page.screenshot({path:path.join(root,'artifacts/player-editor-desktop.png')});

@@ -108,3 +108,37 @@
 @media(min-width:1200px){.roster-manager{grid-template-columns:240px minmax(0,1fr)}}
 
 .roster-player-controls>.roster-accessories{margin-bottom:0}
+
+
+/* Player studio: one player picker, a generous live preview, and focused controls. */
+.roster-manager:not(.roster-free-agents){grid-template-columns:minmax(0,1fr);gap:12px}
+.roster-picker{margin:0;padding:14px 18px;background:#0b2946}
+.roster-picker>summary{font-size:15px;color:#79fff4}
+.roster-picker>.roster-list-panel{margin:16px 0 0;padding:0;border:0;box-shadow:none;background:transparent}
+.roster-picker .roster-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;max-height:440px}
+.roster-picker .roster-list-panel>h2,.roster-picker .roster-list-panel>p{display:none}
+.roster-picker .team-rating-summary{margin-bottom:12px}
+.roster-player-panel{margin-bottom:0}
+.roster-transfer{margin:12px 0;padding:10px 14px}
+.roster-transfer .roster-move{margin-top:12px}
+.roster-identity{margin:16px 0;padding:14px}
+.roster-identity>.roster-fields{margin-top:16px}
+.roster-player-controls>h2{font-size:24px;margin-bottom:6px}
+.roster-player-controls .roster-appearance-settings{margin-bottom:0}
+.roster-player-controls .roster-accessory-groups{grid-template-columns:minmax(0,1fr)}
+@container(min-width:780px){
+ .roster-player-workspace{grid-template-columns:minmax(300px,40%) minmax(0,1fr);gap:28px}
+ .roster-player-workspace>.roster-appearance-preview canvas{width:384px}
+ .roster-player-workspace>.roster-appearance-preview{padding:20px}
+}
+@media(min-width:1200px){
+ body:has(#content>.roster-manager:not(.roster-free-agents)) main{max-width:none;padding:24px}
+}
+
+@media(max-width:620px){
+ .roster-player-workspace>.roster-appearance-preview{grid-template-columns:minmax(0,1fr);gap:6px}
+ .roster-player-workspace>.roster-appearance-preview canvas{width:224px;max-height:36dvh;grid-row:1}
+ .roster-player-workspace>.roster-appearance-preview .roster-uniform-tabs{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .roster-player-workspace>.roster-appearance-preview .roster-uniform-tab{min-height:40px}
+ .roster-player-workspace>.roster-appearance-preview small{grid-column:1/-1}
+}

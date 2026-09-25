@@ -85,11 +85,11 @@
    };listPanel.insertBefore(add,search)}
    if(!freeAgents){const rating=node('div','team-rating-summary','Team rating');rating.append(window.HLSRatings.create(()=>window.HLSRatings.team(team),'Team rating'));listPanel.insertBefore(rating,search)}
    if(freeAgents)shell.classList.add('roster-free-agents');
-   shell.append(listPanel,editor);parent.append(shell);
+   const rosterPicker=freeAgents?null:node('details','roster-picker'),pickerSummary=freeAgents?null:node('summary','','Choose player');if(rosterPicker){rosterPicker.append(pickerSummary,listPanel);shell.append(rosterPicker,editor)}else shell.append(listPanel,editor);parent.append(shell);
    let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||roster[0])||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
-   const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
+   const drawList=()=>{if(pickerSummary)pickerSummary.textContent=active?`${active.num??'—'} · ${name(active)} — Choose player`:'Choose player';if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
    const isStarter=p=>Number.isInteger(p.linePos)&&p.linePos>=0&&p.linePos<5;
    const groups=freeAgents?[{players:roster}]:['PG · Point Guard','SG · Shooting Guard','SF · Small Forward','PF · Power Forward','C · Center','Unassigned'].map(title=>({title,players:[]}));
    if(!freeAgents)for(const player of roster){const position=[0,2,4,6,8].includes(player.teamPos)?player.teamPos:player.pos;const slot=isStarter(player)?player.linePos:Number.isInteger(position)&&position>=0&&position<=8?Math.floor(position/2):5;groups[slot].players.push(player)}
@@ -105,7 +105,7 @@
      summary.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));
      summary.onclick=event=>{event.preventDefault();active=active===player?null:player;selectedUniformIndex=0;drawList();drawEditor()};entry.append(summary);list.append(entry);if(entry.open){entry.append(editor);editor.hidden=false}continue;
     }
-    const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));list.append(button)
+    const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;rosterPicker.open=false;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));list.append(button)
     if(!freeAgents){const button=list.lastElementChild;button.prepend(node('span','roster-depth-role',isStarter(player)?'Starter':`Backup ${group.players.filter(p=>!isStarter(p)).indexOf(player)+1}`));target.append(button)}
    }}if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
    const drawEditor=()=>{
@@ -116,8 +116,8 @@
     for(const [index,other]of league.teams.entries())if(index!==teamIndex){const option=node('option','',`${other.city?other.city+' ':''}${other.name}`);option.value=String(index);target.append(option)}
     button.type='button';button.textContent=freeAgents?'Add to team':'Move player';button.disabled=!target.options.length;
     button.onclick=()=>freeAgents?move(Number(target.value),player.id):move(teamIndex,Number(target.value),player.id);
-    moveRow.append(target,button);editor.append(node('h3','',freeAgents?'Add to a team':'Move to another team'),moveRow)}
-    const identity=node('div','roster-fields');editor.append(node('h3','','Player Details'),identity);
+    moveRow.append(target,button);const transfer=node('details','roster-transfer');transfer.append(node('summary','',freeAgents?'Add to a team':'Move to another team'),moveRow);editor.append(transfer)}
+    const identity=node('div','roster-fields'),identitySection=node('details','roster-identity');identitySection.open=creating;identitySection.append(node('summary','','Player details'),identity);editor.append(identitySection);
     for(const [key,title]of [['fn','First name'],['ln','Last name'],['tag','Nickname']])if(key in player){const control=input(identity,title,player[key],value=>commit(player,key,value));if(creating&&['fn','ln'].includes(key))control.required=true}
     for(const [key,title]of [['num','Jersey number'],['age','Age'],['ht','Height (inches)'],['wt','Weight (pounds)'],['yrs','Years of experience'],['pot','Potential']])if(key in player)input(identity,title,player[key],value=>commit(player,key,value),{type:'number',min:0,max:key==='num'?99:key==='pot'?10:999,step:1});
     if('pos'in player)optionStepper(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
@@ -136,7 +136,7 @@
      };button.classList.toggle('selected',index===uniformIndex);uniformTabs.append(button)}
      preview.append(canvas,uniformTabs,node('small','','Appearance preview may differ slightly in Hoop Land.'));
      const appearanceSettings=node('details','roster-appearance-settings'),settingsSummary=node('summary','','Skin, eyes & hair'),fields=node('div','roster-appearance-fields');
-     appearanceSettings.append(settingsSummary,fields);appearance.append(preview,appearanceSettings);
+     appearanceSettings.open=true;appearanceSettings.append(settingsSummary,fields);appearance.append(preview,appearanceSettings);
      editor.append(node('h3','','Appearance'),appearance);
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
