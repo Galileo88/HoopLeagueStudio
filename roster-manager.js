@@ -90,6 +90,7 @@
    let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||null)||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
+   const closeEditor=()=>{if(!active)return;active=null;this.focusId=null;drawList();drawEditor()};
    const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
    const isStarter=p=>Number.isInteger(p.linePos)&&p.linePos>=0&&p.linePos<5;
    const groups=freeAgents?[{players:roster}]:['PG · Point Guard','SG · Shooting Guard','SF · Small Forward','PF · Power Forward','C · Center','Unassigned'].map(title=>({title,players:[]}));
@@ -113,7 +114,7 @@
    const drawEditor=()=>{
     editor.replaceChildren();shell.classList.toggle('roster-editor-open',!freeAgents&&!!active);if(!active){if(freeAgents)editor.append(node('h2','','No free agents yet'));else editor.hidden=true;return}
     editor.hidden=false;const player=active,base=path(player),creating=player===draftPlayer;let portraitRedraw=()=>{};
-    if(!freeAgents){const close=node('button','roster-editor-close','×');close.type='button';close.setAttribute('aria-label','Close player editor');close.onclick=()=>{active=null;this.focusId=null;drawList();drawEditor()};editor.append(close)}
+    if(!freeAgents){const close=node('button','roster-editor-close','×');close.type='button';close.setAttribute('aria-label','Close player editor');close.onclick=closeEditor;editor.append(close)}
     if(!freeAgents||creating){
      const header=node('div','roster-player-header'),portrait=node('canvas','roster-player-portrait'),info=node('div','roster-player-heading');
      portrait.width=180;portrait.height=146;portrait.setAttribute('role','img');portrait.setAttribute('aria-label',name(player)+' portrait');
@@ -201,6 +202,17 @@
     if(creating){const actions=node('div','roster-draft-actions'),create=node('button','primary','Create Free Agent'),cancel=node('button','','Cancel');
      create.type=cancel.type='button';create.onclick=()=>onCreatePlayer?.(player);cancel.onclick=()=>onCancelPlayer?.();actions.append(create,cancel);editor.append(actions)}
    };
+   parent._hlsRosterOutsideController?.abort?.();
+   if(!freeAgents){
+    const controller=new AbortController();parent._hlsRosterOutsideController=controller;
+    document.addEventListener('pointerdown',event=>{
+     if(!active||!shell.isConnected)return;
+     const target=event.target;if(!(target instanceof Element)||editor.contains(target))return;
+     // Let the existing player-row click handler switch directly to a new player.
+     if(target.closest('.roster-player'))return;
+     closeEditor()
+    },{capture:true,signal:controller.signal})
+   }
    search.oninput=drawList;drawList();drawEditor();
   }
  };
