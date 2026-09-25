@@ -146,7 +146,7 @@
   ctx.save();
   ctx.translate(canvas.width,0);
   ctx.scale(-1,1);
-  ctx.drawImage(source,14,0,100,104,0,0,canvas.width,canvas.height);
+  ctx.drawImage(source,18,12,92,92,0,0,canvas.width,canvas.height);
   ctx.restore()
  }
  window.HLSPlayerPreview={
