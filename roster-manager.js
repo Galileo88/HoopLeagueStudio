@@ -157,7 +157,7 @@
      copyButton.onclick=()=>{const gear=player.accessories?.[uniformIndex];if(!gear)return;const destination=copyDestination.value,targets=destination==='all'?(player.accessories||[]).map((_,index)=>index).filter(index=>index!==uniformIndex):[Number(destination)].filter(index=>Number.isInteger(index)&&index!==uniformIndex);
       for(const target of targets)change([...base,'accessories',target],JSON.parse(JSON.stringify(gear)))
      };
-     copyRow.append(copyDestination,copyButton);accessories.append(accessorySummary,accessoryGroups,copyRow);editor.append(accessories);
+     copyRow.append(copyDestination,copyButton);accessories.append(accessorySummary,accessoryGroups,copyRow);appearance.append(accessories);
      const drawAccessories=()=>{copyDestination.replaceChildren();for(const [index,title]of outfits)if(index!==uniformIndex){const option=node('option','',title);option.value=String(index);copyDestination.append(option)}
       if(outfits.length>2){const all=node('option','','All other uniforms');all.value='all';copyDestination.append(all)}copyButton.disabled=!copyDestination.options.length;
       accessoryGroups.replaceChildren();const gear=player.accessories?.[uniformIndex];if(!gear)return;
