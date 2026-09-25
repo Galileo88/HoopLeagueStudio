@@ -76,6 +76,7 @@
    const roster=Array.isArray(team?.roster)?team.roster:[];
    if(!team){parent.append(node('p','','Choose a team to manage its roster.'));return}
    const shell=node('div','roster-manager'),listPanel=node('section','card roster-list-panel'),editor=node('section','card roster-player-panel');
+   if(!freeAgents)shell.classList.add('roster-depth-first');
    const search=node('input');search.type='search';search.placeholder='Search roster';search.setAttribute('aria-label','Search roster');
    const list=node('div','roster-list');
    if(!freeAgents)listPanel.append(node('h2','',`${team.city?team.city+' ':''}${team.name} Depth Chart`),node('p','',`${roster.length} players`));listPanel.append(search,list);
@@ -86,13 +87,14 @@
    if(!freeAgents){const rating=node('div','team-rating-summary','Team rating');rating.append(window.HLSRatings.create(()=>window.HLSRatings.team(team),'Team rating'));listPanel.insertBefore(rating,search)}
    if(freeAgents)shell.classList.add('roster-free-agents');
    shell.append(listPanel,editor);parent.append(shell);
-   let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||roster[0])||null,selectedUniformIndex=0;
+   let active=draftPlayer||(freeAgents?null:roster.find(player=>player.id===this.focusId)||null)||null,selectedUniformIndex=0;
    const path=(player,...keys)=>player===draftPlayer?['draft',...keys]:freeAgents?['freeAgents',roster.indexOf(player),...keys]:['teams',teamIndex,'roster',roster.indexOf(player),...keys];
    const commit=(player,key,value)=>{change(path(player,key),value);drawList();if(player===draftPlayer)editor.querySelector('h2').textContent=name(player)};
    const drawList=()=>{if(freeAgents){shell.append(editor);editor.hidden=!draftPlayer}list.replaceChildren();const query=search.value.trim().toLocaleLowerCase();
    const isStarter=p=>Number.isInteger(p.linePos)&&p.linePos>=0&&p.linePos<5;
    const groups=freeAgents?[{players:roster}]:['PG · Point Guard','SG · Shooting Guard','SF · Small Forward','PF · Power Forward','C · Center','Unassigned'].map(title=>({title,players:[]}));
    if(!freeAgents)for(const player of roster){const position=[0,2,4,6,8].includes(player.teamPos)?player.teamPos:player.pos;const slot=isStarter(player)?player.linePos:Number.isInteger(position)&&position>=0&&position<=8?Math.floor(position/2):5;groups[slot].players.push(player)}
+   if(!freeAgents){const columns=node('div','roster-depth-columns');for(const [className,label]of [['roster-player-number','#'],['roster-player-name','Player'],['roster-player-position','Pos'],['roster-player-age','Age'],['roster-player-rating','Rating']])columns.append(node('span',className,label));list.append(columns)}
    for(const group of groups){
     if(group.title==='Unassigned'&&!group.players.length)continue;
     if(!freeAgents)group.players.sort((a,b)=>(Number.isInteger(a.linePos)&&a.linePos>=0?a.linePos:Infinity)-(Number.isInteger(b.linePos)&&b.linePos>=0?b.linePos:Infinity));
@@ -105,12 +107,13 @@
      summary.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));
      summary.onclick=event=>{event.preventDefault();active=active===player?null:player;selectedUniformIndex=0;drawList();drawEditor()};entry.append(summary);list.append(entry);if(entry.open){entry.append(editor);editor.hidden=false}continue;
     }
-    const button=node('button','roster-player',`${player.num??'—'} · ${name(player)} · ${positionNames[player.pos]||(player.pos??'—')}`);button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};button.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));list.append(button)
-    if(!freeAgents){const button=list.lastElementChild;button.prepend(node('span','roster-depth-role',isStarter(player)?'Starter':`Backup ${group.players.filter(p=>!isStarter(p)).indexOf(player)+1}`));target.append(button)}
+    const button=node('button','roster-player');button.type='button';button.classList.toggle('active',player===active);button.setAttribute('aria-pressed',String(player===active));button.setAttribute('aria-label',`${name(player)}, number ${player.num??'—'}, ${positionNames[player.pos]||(player.pos??'—')}, age ${player.age??'—'}`);button.onclick=()=>{active=player;selectedUniformIndex=0;this.focusId=player.id;drawList();drawEditor()};
+    const rating=window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null);rating.classList.add('roster-player-rating');button.append(node('span','roster-player-number',player.num??'—'),node('span','roster-player-name',name(player)),node('span','roster-player-position',positionNames[player.pos]||(player.pos??'—')),node('span','roster-player-age',player.age??'—'),rating);target.append(button)
    }}if(!list.children.length)list.append(node('p','',freeAgents&&!roster.length?'No free agents yet.':'No matching players.'))};
    const drawEditor=()=>{
-    editor.replaceChildren();if(!active){editor.append(node('h2','',freeAgents?'No free agents yet':'No players on this team'));return}
-    const player=active,base=path(player),creating=player===draftPlayer;
+    editor.replaceChildren();shell.classList.toggle('roster-editor-open',!freeAgents&&!!active);if(!active){if(freeAgents)editor.append(node('h2','','No free agents yet'));else editor.hidden=true;return}
+    editor.hidden=false;const player=active,base=path(player),creating=player===draftPlayer;
+    if(!freeAgents){const close=node('button','roster-editor-close','×');close.type='button';close.setAttribute('aria-label','Close player editor');close.onclick=()=>{active=null;this.focusId=null;drawList();drawEditor()};editor.append(close)}
     if(!freeAgents||creating){editor.append(node('h2','',creating&&!player.fn&&!player.ln?'New Free Agent':name(player)),node('p','roster-player-id',creating?'Set the player’s details before adding them to Free Agents.':`Player ID ${player.id} · Team ID ${player.tid}`));editor.append(window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null))}
     if(!creating){const moveRow=node('div','roster-move'),target=node('select'),button=node('button','primary','Move player');target.setAttribute('aria-label','Destination team');
     for(const [index,other]of league.teams.entries())if(index!==teamIndex){const option=node('option','',`${other.city?other.city+' ':''}${other.name}`);option.value=String(index);target.append(option)}
