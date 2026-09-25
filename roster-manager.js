@@ -116,7 +116,7 @@
     if(!freeAgents){const close=node('button','roster-editor-close','×');close.type='button';close.setAttribute('aria-label','Close player editor');close.onclick=()=>{active=null;this.focusId=null;drawList();drawEditor()};editor.append(close)}
     if(!freeAgents||creating){
      const header=node('div','roster-player-header'),portrait=node('canvas','roster-player-portrait'),info=node('div','roster-player-heading');
-     portrait.width=144;portrait.height=126;portrait.setAttribute('role','img');portrait.setAttribute('aria-label',name(player)+' portrait');
+     portrait.width=180;portrait.height=158;portrait.setAttribute('role','img');portrait.setAttribute('aria-label',name(player)+' portrait');
      info.append(node('h2','',creating&&!player.fn&&!player.ln?'New Free Agent':name(player)),node('p','roster-player-id',creating?'Set the player’s details before adding them to Free Agents.':`Player ID ${player.id} · Team ID ${player.tid}`),window.HLSRatings.create(()=>window.HLSRatings.player(player),'Player rating',()=>Number.isFinite(player.pot)?player.pot/2:null));
      header.append(portrait,info);editor.append(header);portraitRedraw=window.HLSPlayerPreview?.portrait?.(portrait,()=>({player,team,uniformIndex:selectedUniformIndex}))||portraitRedraw
     }
