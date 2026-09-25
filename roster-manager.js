@@ -129,16 +129,17 @@
      canvas.width=64;canvas.height=84;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Animated player appearance preview');
      let uniformIndex=selectedUniformIndex,redraw=()=>{};
      const outfits=(player.accessories||[]).map((_,index)=>[index,['Home','Road','Alt 1','Alt 2'][index]||`Uniform ${index+1}`]);
-     const uniformTabs=node('div','roster-uniform-tabs');uniformTabs.setAttribute('role','group');uniformTabs.setAttribute('aria-label','Uniform appearance');
-     for(const [index,title]of outfits){const button=node('button','roster-uniform-tab',title);button.type='button';button.setAttribute('aria-pressed',String(index===uniformIndex));button.onclick=()=>{
-      uniformIndex=selectedUniformIndex=index;
-      for(const tab of uniformTabs.children){const selected=tab===button;tab.classList.toggle('selected',selected);tab.setAttribute('aria-pressed',String(selected))}
-      drawAccessories();redraw()
-     };button.classList.toggle('selected',index===uniformIndex);uniformTabs.append(button)}
+     const uniformTabs=node('div','roster-uniform-picker');
+     if(outfits.length)optionStepper(uniformTabs,'Uniform',uniformIndex,outfits,value=>{uniformIndex=selectedUniformIndex=Number(value);drawAccessories();redraw()});
      preview.append(canvas,uniformTabs,node('small','','Appearance preview may differ slightly in Hoop Land.'));
-     const appearanceSettings=node('details','roster-appearance-settings'),settingsSummary=node('summary','','Skin, eyes & hair'),fields=node('div','roster-appearance-fields');
-     appearanceSettings.append(settingsSummary,fields);appearance.append(preview,appearanceSettings);
-     editor.append(node('h3','','Appearance'),appearance);
+     const appearanceSection=node('details','roster-editor-section'),appearanceSettings=node('div','roster-appearance-settings'),fields=node('div','roster-appearance-fields');
+     const navigation=node('div','roster-appearance-nav'),previousPage=node('button','','◀'),pageTitle=node('span'),nextPage=node('button','','▶');
+     previousPage.type=nextPage.type='button';previousPage.setAttribute('aria-label','Previous appearance settings');nextPage.setAttribute('aria-label','Next appearance settings');pageTitle.setAttribute('aria-live','polite');
+     navigation.append(previousPage,pageTitle,nextPage);appearanceSettings.append(fields);appearance.append(preview,navigation,appearanceSettings);
+     appearanceSection.append(node('summary','','Appearance'),appearance);editor.append(appearanceSection);
+     let activePage=0;
+     const showAppearancePage=()=>{const pages=[appearanceSettings,...accessoryGroups.children];activePage=(activePage+pages.length)%pages.length;pages.forEach((page,index)=>page.hidden=index!==activePage);accessories.hidden=activePage===0;pageTitle.textContent=(activePage===0?'Skin, eyes & hair':pages[activePage].dataset.title)+' · '+(activePage+1)+' of '+pages.length};
+     previousPage.onclick=()=>{activePage--;showAppearancePage()};nextPage.onclick=()=>{activePage++;showAppearancePage()};
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
       const control=node('input');control.type='color';control.value='#'+String(player.appearance[key]||'262539').replace('#','');control.className='roster-appearance-color';
@@ -152,15 +153,15 @@
       const options=Array.from({length:max+1},(_,index)=>[String(index).padStart(4,'0'),index?`Style ${index}`:empty]);
       const control=optionStepper(fields,title,player.appearance[key],options,value=>update(key,value));control.classList.add('roster-compact-select');control.parentElement?.parentElement?.classList.add('roster-style-field')
      }
-     const accessories=node('details','roster-accessories'),accessorySummary=node('summary','','Accessories'),copyRow=node('div','roster-accessory-copy'),copyDestination=node('select'),copyButton=node('button','','Copy to'),accessoryGroups=node('div','roster-accessory-groups');
+     const accessories=node('div','roster-accessories'),copyRow=node('div','roster-accessory-copy'),copyDestination=node('select'),copyButton=node('button','','Copy to'),accessoryGroups=node('div','roster-accessory-groups');
      copyDestination.setAttribute('aria-label','Copy accessories destination');copyButton.type='button';copyButton.className='roster-copy-accessories';
      copyButton.onclick=()=>{const gear=player.accessories?.[uniformIndex];if(!gear)return;const destination=copyDestination.value,targets=destination==='all'?(player.accessories||[]).map((_,index)=>index).filter(index=>index!==uniformIndex):[Number(destination)].filter(index=>Number.isInteger(index)&&index!==uniformIndex);
       for(const target of targets)change([...base,'accessories',target],JSON.parse(JSON.stringify(gear)))
      };
-     copyRow.append(copyDestination,copyButton);accessories.append(accessorySummary,accessoryGroups,copyRow);appearance.append(accessories);
+     copyRow.append(copyDestination,copyButton);accessories.append(accessoryGroups,copyRow);appearance.append(accessories);
      const drawAccessories=()=>{copyDestination.replaceChildren();for(const [index,title]of outfits)if(index!==uniformIndex){const option=node('option','',title);option.value=String(index);copyDestination.append(option)}
       if(outfits.length>2){const all=node('option','','All other uniforms');all.value='all';copyDestination.append(all)}copyButton.disabled=!copyDestination.options.length;
-      accessoryGroups.replaceChildren();const gear=player.accessories?.[uniformIndex];if(!gear)return;
+      accessoryGroups.replaceChildren();const gear=player.accessories?.[uniformIndex];if(!gear){showAppearancePage();return}
       const groups=[
        ['Head',[['headAcc','Head accessory','none'],['headAcc2','Second head accessory','0000']],[['headAccC','Head accessory color'],['headAcc2C','Second head accessory color']]],
        ['Arms',[],[['L_Shoulder','Left shoulder'],['R_Shoulder','Right shoulder'],['L_Elbow','Left elbow'],['R_Elbow','Right elbow'],['L_Wrist','Left wrist'],['R_Wrist','Right wrist']]],
@@ -169,13 +170,14 @@
       ];
       for(const [title,styles,colors]of groups){
        if(!styles.some(([key])=>key in gear)&&!colors.some(([key])=>key in gear))continue;
-       const section=node('details','roster-accessory-group'),summary=node('summary','',title),groupFields=node('div','roster-appearance-fields');section.append(summary,groupFields);accessoryGroups.append(section);
+       const section=node('div','roster-accessory-group'),groupFields=node('div','roster-appearance-fields');section.dataset.title=title+' accessories';section.append(groupFields);accessoryGroups.append(section);
        for(const [key,label,empty]of styles)if(key in gear){
         const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
         const control=optionStepper(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
        }
        for(const [key,label]of colors)if(key in gear)colorInput(groupFields,label,gear[key],value=>{change([...base,'accessories',uniformIndex,key],value);redraw()},team,title==='Arms'||title==='Legs'?()=>player.appearance.skinC:undefined)
       }
+      showAppearancePage();
      };drawAccessories();
      redraw=window.HLSPlayerPreview.mount(canvas,()=>({player,team,uniformIndex}));
     }

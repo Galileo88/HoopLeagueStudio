@@ -22,6 +22,13 @@
 .roster-attribute{border:1px solid var(--line);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .roster-attribute>strong{grid-column:1/-1}
 .roster-appearance{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+.roster-appearance [hidden]{display:none!important}
+.roster-appearance-nav{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;text-align:center;font-weight:700}
+.roster-appearance-nav button{min-height:44px;padding:4px}
+.roster-uniform-picker{width:100%}
+.roster-appearance .roster-accessory-groups{display:block;margin-top:0}
+.roster-appearance .roster-accessory-group{padding:0}
+.roster-appearance .roster-appearance-fields{margin-top:0}
 .roster-appearance-preview{display:grid;justify-items:center;gap:10px;padding:12px;border:1px solid var(--line);background:#0b2234}
 .roster-appearance-preview canvas{width:256px;height:auto;max-width:100%;image-rendering:pixelated}
 .roster-uniform-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}

@@ -1762,7 +1762,10 @@ html,body{overflow-x:clip}
 .court-editor-nav select{width:100%;min-width:0}
 .court-editor-count{font-size:12px;margin:6px 0 12px;text-align:center}
 .court-editor-panel[hidden]{display:none!important}
-.court-editor .court-editor-panel{grid-template-columns:minmax(0,1fr)}
+.court-editor .court-editor-panel{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))!important;gap:16px}
+.court-editor-panel>.field{min-width:0;grid-column:auto}
+.court-editor-panel>.field.wide{grid-column:1/-1}
+.court-editor-panel .color-line input:not([type=color]){min-width:0}
 @media(min-width:1200px){.court-editor-preview{top:16px}}
 @media(max-height:550px){.court-editor-preview{position:static}}
 </style></head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
