@@ -19,3 +19,6 @@
 .team-scroll-hint::after{content:"";position:absolute;left:50%;bottom:9px;width:8px;height:8px;border-right:2px solid #79fff4;border-bottom:2px solid #79fff4;transform:translateX(-50%) rotate(45deg)}
 .team-scroll-shell.can-scroll-down .team-scroll-hint{opacity:1}
 .team-scroll-shell.can-scroll-up::before{content:"";position:absolute;z-index:3;left:0;right:0;top:0;height:24px;pointer-events:none;background:linear-gradient(to bottom,rgba(9,31,51,.92),rgba(9,31,51,0))}
+
+/* League Studio is a sitemap entry; creation/import/load actions live in the top toolbar. */
+.workspace-league-actions{display:none!important}
