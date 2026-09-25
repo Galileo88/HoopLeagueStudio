@@ -106,6 +106,14 @@
     if(bridge?.open)bridge.close();
     error?reject(error):resolve()
    };
+   const finishAfterDelete=(error)=>{
+    setTimeout(()=>{
+     for(const extra of document.querySelectorAll('dialog.draft-dialog'))if(!existing.has(extra)&&extra!==bridge){
+      extra.classList.add('draft-dialog-bridge');extra.setAttribute('aria-hidden','true');if(extra.open)extra.close()
+     }
+     finish(error)
+    },80)
+   };
    const trigger=()=>{
     if(!bridge)return;
     const rows=[...bridge.querySelectorAll('.draft-row')];
@@ -117,8 +125,12 @@
    };
    const observer=new MutationObserver(records=>{
     for(const record of records)for(const node of record.addedNodes)if(node instanceof HTMLDialogElement&&node.matches('dialog.draft-dialog')&&!existing.has(node)){
+     if(bridge){
+      if(action==='delete'){node.classList.add('draft-dialog-bridge');node.setAttribute('aria-hidden','true');setTimeout(()=>{if(node.open)node.close()},0)}
+      continue
+     }
      bridge=node;bridge.classList.add('draft-dialog-bridge');bridge.setAttribute('aria-hidden','true');
-     bridge.addEventListener('close',()=>finish(),{once:true});
+     bridge.addEventListener('close',()=>action==='delete'?finishAfterDelete():finish(),{once:true});
      const status=bridge.querySelector('[role="status"]');
      if(status)new MutationObserver(()=>{
       if(!bridge?.open)return;
