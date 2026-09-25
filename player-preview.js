@@ -141,9 +141,9 @@
   const source=document.createElement('canvas');source.width=128;source.height=168;
   draw(source,player,team,uniformIndex,0);
   const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
-  // Crop the fixed first frame to the top 24 logical pixels: head, shoulders,
-  // and the upper jersey only.
-  ctx.drawImage(source,0,0,128,96,0,0,canvas.width,canvas.height)
+  // Crop the fixed first frame to the top 28 logical pixels so the portrait
+  // includes more of the shoulders and upper jersey while remaining a bust.
+  ctx.drawImage(source,0,0,128,112,0,0,canvas.width,canvas.height)
  }
  window.HLSPlayerPreview={
   mount(canvas,state){let frame=0;
