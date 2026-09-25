@@ -2742,6 +2742,7 @@ function attachArchiveDropdown(parent,input,key){
 }
 function attachImagePreview(parent,input,key){
  attachArchiveDropdown(parent,input,key);
+ if(key==='overlayURL')return;
  const box=el('div','image-url-preview');if(key==='overlayURL')box.classList.add('court-overlay-image-preview');box.hidden=true;parent.append(box);let timer,revision=0,resizeFrame=0,resizeObserver=null;
  const fitOverlayPreview=()=>{if(key!=='overlayURL')return;const available=Math.max(1,Math.floor(box.clientWidth||parent.clientWidth||321)),scale=Math.max(1,Math.floor(available/321)),width=321*scale,height=161*scale;box.style.setProperty('--overlay-preview-width',width+'px');box.style.setProperty('--overlay-preview-height',height+'px');const hoopCanvas=box.querySelector('.court-overlay-stage>canvas');if(hoopCanvas&&(hoopCanvas.width!==width||hoopCanvas.height!==height)){hoopCanvas.width=width;hoopCanvas.height=height;box.syncOverlayHoops?.()}};
  const queueOverlayFit=()=>{if(key!=='overlayURL')return;cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(fitOverlayPreview)};
