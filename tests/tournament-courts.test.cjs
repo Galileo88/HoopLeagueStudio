@@ -9,7 +9,7 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
  try{
   browser=await chromium.launch({headless:true,channel:'msedge'});const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
-  const data=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));data.leagueType=1;data.logoURL='';data.teams[0].logoURL='';data.teams[0].court.overlayURL='';
+  const data=JSON.parse(fs.readFileSync(path.join(root,'templates/pro/ProTemplate1.txt'),'utf8'));data.leagueType=1;data.logoURL='';data.teams[0].logoURL='';data.teams[0].court.overlayURL='data:image/png;base64,'+fs.readFileSync(path.join(root,'court/outer-court.png')).toString('base64');
   await page.locator('#import').setInputFiles({name:'college.txt',mimeType:'text/plain',buffer:Buffer.from(JSON.stringify(data))});
   const disclosure=page.locator('.tournament-courts-disclosure');await disclosure.waitFor();
   assert.equal(await disclosure.evaluate(el=>el.open),false);
@@ -27,6 +27,7 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
   if(process.env.TOURNAMENT_SCREENSHOT)await page.locator('#tournament-courts').screenshot({path:process.env.TOURNAMENT_SCREENSHOT});
   for(const round of ['firstRound','secondRound','top16','top8','top4','championship']){
    const card=page.locator(`[data-round="${round}"]`);await card.scrollIntoViewIfNeeded();const before=await page.evaluate(()=>scrollY);await card.click();
+   assert.equal(await page.evaluate(round=>window.__test.getLeague().tournamentCourts[round].overlayURL,round),'');
    await page.locator('#tournament-courts summary').filter({hasText:/^Wood$/}).click();
    assert.equal(await page.evaluate(round=>window.__test.getLeague().tournamentCourts[round].outerWoodC,round),data.teams[0].court.outerWoodC);
    await page.locator('#tournament-courts [data-path]').evaluateAll((fields,round)=>{const input=fields.find(n=>n.dataset.path===JSON.stringify(['tournamentCourts',round,'outerWoodC']));input.value='123456';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))},round);
@@ -37,6 +38,15 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
   assert.equal(await page.evaluate(()=>window.__test.getLeague().teams[0].court.outerWoodC),data.teams[0].court.outerWoodC);
   await cards.first().click();await page.getByRole('button',{name:'Back',exact:true}).click();
   assert.equal(await cards.count(),6);
+  assert.equal(await page.evaluate(()=>window.__test.getLeague().teams[0].court.overlayURL),data.teams[0].court.overlayURL);
+  await cards.first().click();
+  await page.locator('#tournament-courts summary').filter({hasText:/^Logo & Overlay$/}).click();
+  const urlInput=page.locator('#tournament-courts input[data-path]').filter({visible:true});
+  await urlInput.evaluateAll((inputs,url)=>{const input=inputs.find(n=>JSON.parse(n.dataset.path).at(-1)==='overlayURL');input.value=url;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))},data.teams[0].court.overlayURL);
+  await page.getByRole('button',{name:'Save court',exact:true}).click();
+  await cards.first().click();
+  assert.equal(await page.evaluate(()=>window.__test.getLeague().tournamentCourts.firstRound.overlayURL),data.teams[0].court.overlayURL);
+  await page.getByRole('button',{name:'Back',exact:true}).click();
   await page.evaluate(()=>{window.__test.set(['leagueType'],0);window.__test.render()});assert.equal(await cards.count(),0);
   await page.evaluate(()=>{window.__test.set(['leagueType'],1);window.__test.render()});assert.equal(await cards.count(),6);
   assert.equal(await page.evaluate(()=>JSON.parse(JSON.stringify(window.__test.getLeague())).tournamentCourts.championship.outerWoodC),'123456');

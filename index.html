@@ -3133,7 +3133,7 @@ function renderFacilities(parent,facilities,path){
  parent.append(section);
 }
 const tournamentRounds=[['firstRound','First Round'],['secondRound','Second Round'],['top16','Top 16'],['top8','Top 8'],['top4','Top 4'],['championship','Championship']];
-function tournamentDefaultCourt(){return league.court||league.defaultCourt||league.teams?.[0]?.court||standaloneSample.teams[0].court}
+function tournamentDefaultCourt(){const court=league.court||league.defaultCourt||league.teams?.[0]?.court||standaloneSample.teams[0].court;return {...court,overlayURL:''}}
 function tournamentCourt(round){return league.tournamentCourts?.[round]||tournamentDefaultCourt()}
 function courtPreviewOwner(path){
  if(path[0]==='tournamentCourts')return {...league.teams?.[0],name:league.leagueName,logoURL:league.logoURL||'',court:tournamentCourt(path[1])};
