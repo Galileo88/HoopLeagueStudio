@@ -130,12 +130,12 @@
 
 /* Static player portrait in the editor header */
 .roster-player-header{display:grid;grid-template-columns:180px minmax(0,1fr);gap:18px;align-items:start;margin:0 0 18px}
-.roster-player-portrait{display:block;width:180px;height:158px;max-width:100%;image-rendering:pixelated}
+.roster-player-portrait{display:block;width:180px;height:146px;max-width:100%;image-rendering:pixelated}
 .roster-player-heading{min-width:0;padding-top:2px}
 .roster-player-heading h2{margin:0 0 10px}
 .roster-player-heading .roster-player-id{margin-bottom:10px}
 .roster-player-heading>.star-rating{display:flex;margin:0}
 @media(max-width:480px){
  .roster-player-header{grid-template-columns:140px minmax(0,1fr);gap:12px}
- .roster-player-portrait{width:140px;height:123px}
+ .roster-player-portrait{width:140px;height:114px}
 }
