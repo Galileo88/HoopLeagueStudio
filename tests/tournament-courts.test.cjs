@@ -28,6 +28,7 @@ test('college tournament cards reuse the editor, preserve rounds, fall back and 
   for(const round of ['firstRound','secondRound','top16','top8','top4','championship']){
    const card=page.locator(`[data-round="${round}"]`);await card.scrollIntoViewIfNeeded();const before=await page.evaluate(()=>scrollY);await card.click();
    assert.equal(await page.evaluate(round=>window.__test.getLeague().tournamentCourts[round].overlayURL,round),'');
+   assert.deepEqual(await page.evaluate(round=>{const court=window.__test.getLeague().tournamentCourts[round];return [court.logoSize,court.logoLayer,court.overlayLayer]},round),[3,1,0]);
    await page.locator('#tournament-courts summary').filter({hasText:/^Wood$/}).click();
    assert.equal(await page.evaluate(round=>window.__test.getLeague().tournamentCourts[round].outerWoodC,round),data.teams[0].court.outerWoodC);
    await page.locator('#tournament-courts [data-path]').evaluateAll((fields,round)=>{const input=fields.find(n=>n.dataset.path===JSON.stringify(['tournamentCourts',round,'outerWoodC']));input.value='123456';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))},round);
