@@ -23,10 +23,10 @@
 .roster-attribute>strong{grid-column:1/-1}
 .roster-appearance{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
 .roster-appearance [hidden]{display:none!important}
-.roster-appearance h3{margin:0 0 10px;font-size:16px}
+.roster-appearance details>summary{cursor:pointer;font-size:18px;font-weight:700}
 .roster-appearance .roster-accessory-group+.roster-accessory-group{margin-top:18px}
 .roster-appearance .roster-accessory-groups{display:block;margin-top:0}
-.roster-appearance .roster-accessory-group{padding:0}
+.roster-appearance .roster-accessory-group{margin:0;padding:12px}
 .roster-appearance .roster-appearance-fields{margin-top:0}
 .roster-appearance-preview{display:grid;justify-items:center;gap:10px;padding:12px;border:1px solid var(--line);background:#0b2234}
 .roster-appearance-preview canvas{width:256px;height:auto;max-width:100%;image-rendering:pixelated}

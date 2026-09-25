@@ -132,9 +132,9 @@
      const uniformTabs=node('div','roster-uniform-tabs');uniformTabs.setAttribute('role','group');uniformTabs.setAttribute('aria-label','Uniform appearance');
      for(const [index,title]of outfits){const button=node('button','roster-uniform-tab',title);button.type='button';button.classList.toggle('selected',index===uniformIndex);button.setAttribute('aria-pressed',String(index===uniformIndex));button.onclick=()=>{uniformIndex=selectedUniformIndex=index;for(const tab of uniformTabs.children){tab.classList.toggle('selected',tab===button);tab.setAttribute('aria-pressed',String(tab===button))}drawAccessories();redraw()};uniformTabs.append(button)}
      preview.append(canvas,uniformTabs,node('small','','Appearance preview may differ slightly in Hoop Land.'));
-     const appearanceSection=node('details','roster-editor-section'),appearanceSettings=node('div','roster-appearance-settings'),fields=node('div','roster-appearance-fields');
-     const hairSettings=node('div','roster-appearance-settings'),hairFields=node('div','roster-appearance-fields');
-     appearanceSettings.append(node('h3','','Skin & Eyes'),fields);hairSettings.append(node('h3','','Hair'),hairFields);appearance.append(preview,appearanceSettings,hairSettings);
+     const appearanceSection=node('details','roster-editor-section'),appearanceSettings=node('details','roster-appearance-settings'),fields=node('div','roster-appearance-fields');
+     const hairSettings=node('details','roster-appearance-settings'),hairFields=node('div','roster-appearance-fields');
+     appearanceSettings.append(node('summary','','Skin & Eyes'),fields);hairSettings.append(node('summary','','Hair'),hairFields);appearance.append(preview,appearanceSettings,hairSettings);
      appearanceSection.append(node('summary','','Appearance'),appearance);editor.append(appearanceSection);
      const update=(key,value)=>{change([...base,'appearance',key],value);redraw()};
      for(const [key,title]of [['skinC','Skin'],['eyeC','Eyes'],['browC','Eyebrows'],['hairC','Hair color'],['fHairC','Facial hair color']])if(key in player.appearance){
@@ -166,7 +166,7 @@
       ];
       for(const [title,styles,colors]of groups){
        if(!styles.some(([key])=>key in gear)&&!colors.some(([key])=>key in gear))continue;
-       const section=node('div','roster-accessory-group'),groupFields=node('div','roster-appearance-fields');section.append(node('h3','',title==='Head'?'Headwear':title),groupFields);accessoryGroups.append(section);
+       const section=node('details','roster-accessory-group'),groupFields=node('div','roster-appearance-fields');section.append(node('summary','',title==='Head'?'Headwear':title),groupFields);accessoryGroups.append(section);
        for(const [key,label,empty]of styles)if(key in gear){
         const options=[[empty,'None'],...Array.from({length:25},(_,i)=>[String(i+1).padStart(4,'0'),`Style ${i+1}`])];
         const control=optionStepper(groupFields,label,gear[key],options,value=>{change([...base,'accessories',uniformIndex,key],value);redraw()});control.classList.add('roster-compact-select')
