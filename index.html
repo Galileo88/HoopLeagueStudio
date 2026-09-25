@@ -1763,26 +1763,7 @@ html,body{overflow-x:clip}
 .court-editor-count{font-size:12px;margin:6px 0 12px;text-align:center}
 .court-editor-panel[hidden]{display:none!important}
 .court-editor .court-editor-panel{grid-template-columns:minmax(0,1fr)}
-.court-editor-tabs{display:none}
-.court-editor-controls{container-type:inline-size}
-@media(min-width:1200px){
- .court-editor{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 24px}
- .court-editor-tabs{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;border-bottom:1px solid #299bd7;padding-bottom:12px}
- .court-editor-tabs button{padding:9px 14px;min-height:40px;font-size:13px;box-shadow:none}
- .court-editor-tabs button[aria-pressed="true"]{background:#64f5e8;color:#062743;border-color:#64f5e8}
- .court-editor-preview{top:16px}
- .court-editor-nav,.court-editor-count{display:none}
- .court-editor .court-editor-panel{gap:16px}
- .court-editor-panel>.field>span{font-size:13px;margin-bottom:6px}
- .court-editor-panel .color-line{flex-wrap:nowrap;gap:6px}
- .court-editor-panel .color-line input:not([type=color]){width:60px;flex:1;padding:8px}
- .court-editor-panel .color-line select{width:96px;padding:8px;flex-shrink:0}
-}
-@container(min-width:460px){
- .court-editor .court-editor-panel{grid-template-columns:repeat(2,minmax(0,1fr))}
- .court-editor .court-editor-panel>.field{grid-column:auto;min-width:0}
- .court-editor .court-editor-panel>.field.wide{grid-column:1/-1}
-}
+@media(min-width:1200px){.court-editor{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.court-editor-preview{top:16px}}
 @media(max-height:550px){.court-editor-preview{position:static}}
 </style></head><body><div id="pwaInstall" class="pwa-install" hidden role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-dialog">
@@ -2720,7 +2701,7 @@ function field(parent,key,value,path){if(renderContract(parent,key,value,path))r
  if(key==='adSize'){input.readOnly=true;wrap.querySelectorAll?.('small').forEach(n=>n.remove());wrap.append(el('small','','Detected automatically from the image width in pixels.'))}
  if(key==='logoSize'&&!path.includes('court')){input.readOnly=true;wrap.querySelectorAll?.('small').forEach(n=>n.remove());wrap.append(el('small','','Hoop Land logo scale value. Preserved from the league data; image pixel dimensions do not overwrite it.'))}
  if(key==='logoURL'||key==='adsURL'){const hint=el('small','','Checking image dimensions…');wrap.append(hint);let timer;const check=async()=>{const owner=league,typed=input.value.trim(),entered=typed||(preservedBuiltinLogo&&String(get(path)??'').trim()===preservedBuiltinLogo?preservedBuiltinLogo:''),url=archiveURL(entered,assets);const sizePath=key==='adsURL'?[...path.slice(0,-1),'adSize']:null;try{if(!isCustomImage(url)){hint.hidden=true;hint.textContent='';return}hint.hidden=false;let size;if(!url){size={width:0,height:0}}else{hint.textContent='Checking image dimensions…';const known=assets.find(a=>a.url===url);size=known?.width?{width:known.width,height:known.height}:await imageDimensions(url);if(key==='logoURL')validateImageSize(size)}if(league!==owner||String(get(path)??'').trim()!==entered)return;if(get(path)!==url){input.value=url;preservedBuiltinLogo='';builtinLogoBox?.remove();builtinLogoBox=null;set(path,url)}if(sizePath){if(get(sizePath)!==size.width)set(sizePath,size.width);for(const n of document.querySelectorAll('[data-path]'))if(n.dataset.path===JSON.stringify(sizePath))n.value=size.width}hint.textContent=size.width?`${size.width} × ${size.height} pixels${key==='adsURL'?' · size updated':' · logo scale preserved'}`:'No external image.'}catch(e){if(league===owner&&String(get(path)??'').trim()===entered){hint.hidden=false;hint.textContent=e.message}}};input.oninput=()=>{if(preservedBuiltinLogo){if(input.value.trim()){preservedBuiltinLogo='';builtinLogoBox?.remove();builtinLogoBox=null;set(path,input.value)}}else set(path,input.value);clearTimeout(timer);timer=setTimeout(check,300)};input.onchange=()=>{clearTimeout(timer);check()};Promise.resolve().then(check)}
- if(key==='overlayURL'&&path.includes('court'))attachArchiveDropdown(wrap,input,key);else if(/URL$/i.test(key))attachImagePreview(wrap,input,key);
+ if(/URL$/i.test(key))attachImagePreview(wrap,input,key);
  if(path.length===3&&path[0]==='awards'&&key==='name')input.addEventListener('input',()=>{const summary=wrap.closest('details')?.querySelector(':scope > summary');if(summary)summary.textContent=input.value||'Unnamed award'});
  if(path.length===2&&path[0]==='season'&&key==='optimization')wrap.append(el('small','','Low: custom logos, courts, table graphics, and box scores on. High: all four off.'));
  if(path.length===2&&((path[0]==='meta'&&key==='gender')||(path[0]==='season'&&key==='optimization')))wrap.classList.add('wide');
@@ -3131,7 +3112,7 @@ function renderFacilities(parent,facilities,path){
 }
 function renderCourtEditor(parent,court,path){
  const editor=el('div','court-editor'),preview=el('div','court-editor-preview'),controls=el('div','court-editor-controls');
- const tabs=el('div','court-editor-tabs');tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Court settings');parent.append(editor);editor.append(tabs,preview,controls);window.HLSCourtPreview?.mount(preview,()=>get(path.slice(0,2)));
+ parent.append(editor);editor.append(preview,controls);window.HLSCourtPreview?.mount(preview,()=>get(path.slice(0,2)));
  const groups=[
  ['Wood',['outerWood','outerWoodC','innerWood','innerWoodC']],
  ['Paint',['outerFT','outerFTC','innerFT','innerFTC','outerKey','outerKeyC','innerKey','innerKeyC']],
@@ -3144,11 +3125,9 @@ function renderCourtEditor(parent,court,path){
  const nav=el('div','court-editor-nav'),previous=el('button','','‹'),select=el('select'),next=el('button','','›'),counter=el('p','court-editor-count'),body=el('div','court-editor-body');
  previous.type=next.type='button';previous.setAttribute('aria-label','Previous court settings');next.setAttribute('aria-label','Next court settings');select.setAttribute('aria-label','Court settings group');counter.setAttribute('aria-live','polite');
  nav.append(previous,select,next);controls.append(nav,counter,body);
- const buttons=groups.map(([title],i)=>{const button=el('button','',title);button.type='button';button.setAttribute('aria-pressed','false');button.onclick=()=>show(i);tabs.append(button);return button});
- const courtLabels={outerWood:'Outer wood',outerWoodC:'Outer wood color',innerWood:'Inner wood',innerWoodC:'Inner wood color',outerFT:'Outer free throw',outerFTC:'Outer free throw color',innerFT:'Inner free throw',innerFTC:'Inner free throw color',outerKey:'Outer key',outerKeyC:'Outer key color',innerKey:'Inner key',innerKeyC:'Inner key color',baseline1:'Baseline 1 text',baseline1C:'Baseline 1 color',baseline2:'Baseline 2 text',baseline2C:'Baseline 2 color',sideline1:'Sideline 1 text',sideline1C:'Sideline 1 color',sideline2:'Sideline 2 text',sideline2C:'Sideline 2 color'};
- const panels=groups.map(([title,keys],i)=>{const option=el('option','',title);option.value=String(i);select.append(option);const panel=el('div','fields court-editor-panel');panel.setAttribute('role','group');panel.setAttribute('aria-label',title);body.append(panel);for(const key of keys)if(Object.hasOwn(court,key)){field(panel,key,court[key],[...path,key]);if(courtLabels[key])panel.lastElementChild.querySelector(':scope > span').textContent=courtLabels[key]}return panel});
+ const panels=groups.map(([title,keys],i)=>{const option=el('option','',title);option.value=String(i);select.append(option);const panel=el('div','fields court-editor-panel');panel.setAttribute('role','group');panel.setAttribute('aria-label',title);body.append(panel);for(const key of keys)if(Object.hasOwn(court,key))field(panel,key,court[key],[...path,key]);return panel});
  let active=0;
- function show(index){if(!canNavigate()){select.value=String(active);return}active=(index+groups.length)%groups.length;select.value=String(active);panels.forEach((panel,i)=>panel.hidden=i!==active);buttons.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===active)));counter.textContent=(active+1)+' of '+groups.length;}
+ function show(index){if(!canNavigate()){select.value=String(active);return}active=(index+groups.length)%groups.length;select.value=String(active);panels.forEach((panel,i)=>panel.hidden=i!==active);counter.textContent=(active+1)+' of '+groups.length;}
  previous.onclick=()=>show(active-1);next.onclick=()=>show(active+1);select.onchange=()=>show(Number(select.value));show(0);
 }
 function renderObject(parent,obj,path,depth=0,seasonSubset=false){if(path.length===3&&path[2]==='court'&&['teams','starTeams'].includes(path[0])){renderCourtEditor(parent,obj,path);return}if(path.length===3&&path.at(-1)==='uniforms'&&Array.isArray(obj)){renderUniformsEditor(parent,obj,path);return}if(path.length===1&&path[0]==='sliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'gameStyle',league.settings?.gameStyle??0,['settings','gameStyle'])}if(path.length===1&&path[0]==='awards'){renderAwards(parent);return}if(path.length===1&&path[0]==='simulationSliders'){const presetFields=el('div','fields');parent.append(presetFields);field(presetFields,'simulationPreset',league.season?.simulationPreset??0,['season','simulationPreset'])}if(path.length===2&&path[0]==='meta'&&path[1]==='generatedCountries'&&Array.isArray(obj)){renderCountries(parent,path);return}if(path.length===1&&path[0]==='season'&&!seasonSubset){renderSeason(parent,obj);return}if(path.at(-1)==='teamColors'){renderTeamColors(parent,path);return}if(isUniformPath(path))renderUniformPreview(parent,path);const teamRoot=path.length===2&&['teams','starTeams'].includes(path[0]);const fields=el('div','fields');parent.append(fields);for(const [k,v]of orderedFields(obj,path)){if(teamRoot&&k==='retiredNumbers'){renderTeamRetiredNumbers(parent,obj,[...path,k]);continue}if(path.length===0&&k==='conferences'){renderLeagueStructure(parent);continue}if(path.length===0&&k==='divisions')continue;if(path.length===0&&['gameballs','courts','settings','optimization','coachSettings'].includes(k))continue;if(path.length===1&&path[0]==='settings'&&['gameBall','referee','gameStyle'].includes(k))continue;if(path.length===1&&path[0]==='rules'&&['blockingFouls','partialShotClock'].includes(k))continue;if(path.length===1&&path[0]==='difficulty'&&['defensiveAssistance','offensiveAssistance'].includes(k))continue;if(teamRoot&&k==='frontOffice')renderTeamLocation(parent,obj,path);if(path.at(-1)==='frontOffice'&&['coins','condition','morale','fans','adsURL','adSize','scoutAssignment'].includes(k))continue;if(path.at(-1)==='frontOffice'&&k==='facilities'){renderFacilities(parent,v,[...path,k]);continue}if(protectedKeys.has(k)||hiddenState.has(k)||(['teams','starTeams'].includes(k)&&path.length===0))continue;if((teamRoot&&['city','location','logoSize'].includes(k))||(path.length===0&&k==='logoSize'))continue;if(path[0]==='teams'||path[0]==='starTeams'){if(['id','isPlayer','season','coinFlip','status','rnk','following'].includes(k))continue}if(path.length===1&&path[0]==='meta'&&!['generatedCountries'].includes(k))continue;

@@ -67,38 +67,22 @@ test('court preview renders extracted layers and updates colors, patterns and li
   });
   await page.waitForFunction(()=>document.querySelector('#content .court-preview-note')?.textContent.startsWith('Court preview'));
   assert.notEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.toDataURL()),beforeChange);
-  const beforeOverlay=await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.toDataURL());
   const overlayData='data:image/png;base64,'+fs.readFileSync(path.join(root,'court/outer-court.png')).toString('base64');
   await page.locator('#content input[data-path]').evaluateAll((inputs,url)=>{
    const input=inputs.find(node=>{const path=JSON.parse(node.dataset.path);return path.at(-1)==='overlayURL'&&path.at(-2)==='court'});
    if(!input)throw Error('Court overlay URL field missing');input.value=url;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));
   },overlayData);
-  assert.equal(await page.locator('#content .court-overlay-image-preview').count(),0);
-  await page.waitForFunction(previous=>document.querySelector('#content .court-preview canvas')?.toDataURL()!==previous,beforeOverlay);
-  const overlayBefore=await page.locator('#content .court-preview canvas').evaluate(canvas=>canvas.toDataURL());
+  await page.waitForFunction(()=>document.querySelector('#content .court-overlay-stage img')?.naturalWidth>0);
+  await page.waitForFunction(()=>{const canvas=document.querySelector('#content .court-overlay-stage canvas');return canvas&&canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.some((value,index)=>index%4===3&&value>0)});
+  const overlayBefore=await page.locator('#content .court-overlay-stage canvas').evaluate(canvas=>canvas.toDataURL());
   await page.locator('#content input[data-path]').evaluateAll(inputs=>{
    const input=inputs.find(node=>{const path=JSON.parse(node.dataset.path);return path.at(-1)==='hoopBase'&&path.at(-2)==='court'});
    if(!input)throw Error('Hoop base field missing');input.value='00FF00';input.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  await page.waitForFunction(previous=>document.querySelector('#content .court-preview canvas')?.toDataURL()!==previous,overlayBefore);
-  await page.locator('#content .court-preview').screenshot({path:path.join(root,'artifacts/court-reference/overlay-preview.png')});
-  await page.setViewportSize({width:1800,height:1000});
-  await page.locator('.court-editor-tabs').getByRole('button',{name:'Court text',exact:true}).click();
-  const textPanel=page.locator('.court-editor-panel[aria-label="Court text"]');
-  assert(await textPanel.isVisible());
-  const boxes=await textPanel.locator(':scope > .field').evaluateAll(fields=>fields.map(field=>{const r=field.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width}}));
-  assert.equal(boxes[0].y,boxes[1].y);assert(boxes[1].x>boxes[0].x);
-  assert.equal(await page.locator('.court-editor-nav').isVisible(),false);
-  await page.locator('.court-editor').screenshot({path:path.join(root,'artifacts/court-reference/desktop-builder.png')});
+  await page.waitForFunction(previous=>document.querySelector('#content .court-overlay-stage canvas')?.toDataURL()!==previous,overlayBefore);
+  await page.locator('#content .court-overlay-image-preview').screenshot({path:path.join(root,'artifacts/court-reference/overlay-preview.png')});
   await page.setViewportSize({width:390,height:844});
-  assert(await page.locator('.court-editor-nav').isVisible());
-  assert.equal(await page.locator('.court-editor-tabs').isVisible(),false);
-  assert.equal(await page.getByRole('combobox',{name:'Court settings group',exact:true}).inputValue(),'6');
-  await page.keyboard.press('Escape');await page.waitForTimeout(350);
-  await page.locator('.court-editor').evaluate(editor=>editor.scrollIntoView({block:'start'}));
-  await page.screenshot({path:path.join(root,'artifacts/court-reference/mobile-builder.png')});
-  const [width,height]=await page.locator('#content .court-preview canvas').evaluate(canvas=>{const rect=canvas.getBoundingClientRect();return [rect.width,rect.height]});
-  assert(width>0&&width<=321);assert(Math.abs(width/height-321/161)<0.01);
+  assert.deepEqual(await page.locator('#content .court-preview canvas').evaluate(canvas=>{const rect=canvas.getBoundingClientRect();return [rect.width,rect.height]}),[321,161]);
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
 });
