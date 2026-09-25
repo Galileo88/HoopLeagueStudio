@@ -194,8 +194,15 @@
     }const add=node('button','','Add skill');add.type='button';const nextSkill=skillIds.find(id=>!(player.skills||[]).some(skill=>skill.id===id));add.disabled=!nextSkill;add.onclick=()=>{change([...base,'skills'],[...(player.skills||[]),{id:nextSkill,xp:0,level:1,equipped:false}]);refreshSkills()};skills.append(add)};refreshSkills();
     if(creating){const actions=node('div','roster-draft-actions'),create=node('button','primary','Create Free Agent'),cancel=node('button','','Cancel');
      create.type=cancel.type='button';create.onclick=()=>onCreatePlayer?.(player);cancel.onclick=()=>onCancelPlayer?.();actions.append(create,cancel);editor.append(actions)}
+    const playerPreview=editor.querySelector('.roster-appearance-preview');
+    if(playerPreview){const workspace=node('div','roster-player-workspace'),controls=node('div','roster-player-controls');playerPreview.remove();controls.append(...editor.childNodes);workspace.append(playerPreview,controls);editor.append(workspace)}
    };
    search.oninput=drawList;drawList();drawEditor();
   }
  };
+ const header=document.querySelector('header');
+ if(header&&typeof ResizeObserver!=='undefined'){
+  const syncHeader=()=>{const floating=['sticky','fixed'].includes(getComputedStyle(header).position);document.documentElement.style.setProperty('--player-preview-top',floating?Math.ceil(header.getBoundingClientRect().height)+'px':'12px')};
+  new ResizeObserver(syncHeader).observe(header);window.addEventListener('resize',syncHeader,{passive:true});syncHeader();
+ }
 })();
