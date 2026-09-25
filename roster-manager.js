@@ -117,7 +117,8 @@
     button.type='button';button.textContent=freeAgents?'Add to team':'Move player';button.disabled=!target.options.length;
     button.onclick=()=>freeAgents?move(Number(target.value),player.id):move(teamIndex,Number(target.value),player.id);
     moveRow.append(target,button);editor.append(node('h3','',freeAgents?'Add to a team':'Move to another team'),moveRow)}
-    const identity=node('div','roster-fields');editor.append(node('h3','','Player Details'),identity);
+    const identitySection=node('details','roster-editor-section roster-details-section'),identitySummary=node('summary','','Player Details'),identity=node('div','roster-fields roster-editor-section-content');
+    identitySection.append(identitySummary,identity);editor.append(identitySection);
     for(const [key,title]of [['fn','First name'],['ln','Last name'],['tag','Nickname']])if(key in player){const control=input(identity,title,player[key],value=>commit(player,key,value));if(creating&&['fn','ln'].includes(key))control.required=true}
     for(const [key,title]of [['num','Jersey number'],['age','Age'],['ht','Height (inches)'],['wt','Weight (pounds)'],['yrs','Years of experience'],['pot','Potential']])if(key in player)input(identity,title,player[key],value=>commit(player,key,value),{type:'number',min:0,max:key==='num'?99:key==='pot'?10:999,step:1});
     if('pos'in player)optionStepper(identity,'Position',player.pos,positionNames.map((title,id)=>[id,title]),value=>commit(player,'pos',Number(value)));
