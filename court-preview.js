@@ -70,7 +70,7 @@
   wrapper.append(heading,viewport,note);parent.append(wrapper);let revision=0,resizeFrame=0;
   function fitPreview(){
    const available=Math.max(1,Math.floor(viewport.clientWidth||wrapper.clientWidth||BASE_WIDTH));
-   const scale=Math.max(1,Math.floor(available/BASE_WIDTH));
+   const scale=Math.min(2,Math.max(1,Math.floor(available/BASE_WIDTH)));
    const width=BASE_WIDTH*scale,height=BASE_HEIGHT*scale;
    wrapper.style.setProperty('--court-preview-width',`${width}px`);wrapper.style.setProperty('--court-preview-height',`${height}px`);
    viewport.setAttribute('aria-label',`Court preview, ${width} by ${height} pixels.`);
@@ -93,7 +93,8 @@
    try{
     const textures=await Promise.all(['outer-court.png',...filenames,'court-lines.png',college?'three-point-college.png':'three-point-pro.png',...hoopFiles].map(file=>load('./court/'+file)));
     const custom=await Promise.allSettled([court.overlayURL,team.logoURL].map(url=>validURL(url)?load(url):Promise.resolve(null)));
-    const logo=(custom[1].status==='fulfilled'&&custom[1].value)||await window.HLSTeamLogo.letterCanvas(team);
+    const customLogo=custom[1].status==='fulfilled'&&custom[1].value;
+    const logo=customLogo||await window.HLSTeamLogo.letterCanvas(team);
     if(current!==revision||!wrapper.isConnected)return;
     const ctx=canvas.getContext('2d');
     ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -105,7 +106,7 @@
      const overlay=custom[0].status==='fulfilled'?custom[0].value:null;
      if(overlay&&Number(court.overlayLayer)===layer)ctx.drawImage(overlay,0,0,LOGICAL_WIDTH,LOGICAL_HEIGHT);
      const scale=[0,.5,1,1.5,2][Number(court.logoSize)]??0;
-     if(logo&&scale&&Number(court.logoLayer)===layer){const size=128*scale,ratio=Math.min(size/logo.width,size/logo.height);ctx.drawImage(logo,512-logo.width*ratio/2,256-logo.height*ratio/2,logo.width*ratio,logo.height*ratio)}
+     if(logo&&scale&&Number(court.logoLayer)===layer){const size=128*scale,ratio=Math.min(size/logo.width,size/logo.height);ctx.save();ctx.imageSmoothingEnabled=!!customLogo;ctx.drawImage(logo,512-logo.width*ratio/2,256-logo.height*ratio/2,logo.width*ratio,logo.height*ratio);ctx.restore()}
     };
     drawCustom(0);
     ctx.drawImage(recolor(textures[7],null,palette(lineColors,court,team)),0,0);
